@@ -24,32 +24,30 @@
         <img width="43" height="43" src="/assets/icons/icon.svg" alt="" />
         <span class="identity-copy"><strong>RU Hoje</strong><small>O bandejão da UFMG</small></span>
       </a>
-      <span class="topbar-tag" aria-label="Consulta independente">não oficial</span>
+
     </header>
 
     <main id="main">
-      <section class="intro" aria-labelledby="hero-heading">
-        <div class="eyebrow"><span class="pulse"></span> CARDÁPIO DO DIA</div>
-        <h1 id="hero-heading">O que tem <span>no RU?</span></h1>
-        <p>Seu cardápio da UFMG, direto ao ponto.</p>
-      </section>
-
       <section class="restaurant-section" aria-labelledby="restaurant-label">
-        <div class="section-overline" id="restaurant-label">SEU RESTAURANTE</div>
+        <h1 class="sr-only" id="restaurant-label">Escolha seu restaurante universitário</h1>
         <button type="button" class="restaurant-picker" id="restaurant-trigger" aria-haspopup="dialog" aria-controls="restaurant-dialog">
           <span class="picker-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></span>
           <span class="picker-copy"><strong id="current-restaurant">Selecionar restaurante</strong><small id="restaurant-subtitle">Escolha onde você costuma almoçar</small></span>
           <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
         </button>
+        <div class="hours-wrap" id="hours-wrap" hidden>
+          <div class="hours-status" role="status"><span id="hours-dot" class="hours-dot"></span><span id="hours-status"></span></div>
+          <details class="hours-details"><summary>Horários</summary><div id="hours-list" class="hours-list"></div><p class="hours-caveat">Horários regulares. Feriados, férias e imprevistos podem alterar o atendimento.</p></details>
+        </div>
       </section>
 
       <section class="date-section" aria-labelledby="dates-heading">
-        <div class="section-heading"><div><span class="section-overline">ESCOLHA UMA DATA</span><h2 id="dates-heading">Outubro de 2026</h2></div><button type="button" class="today-link" id="today-button" hidden>Ir para hoje <span aria-hidden="true">↗</span></button></div>
+        <div class="section-heading"><div><h2 id="dates-heading">Outubro de 2026</h2></div><button type="button" class="today-link" id="today-button" hidden>Ir para hoje <span aria-hidden="true">↗</span></button></div>
         <div class="date-strip" id="date-strip" role="group" aria-label="Seleção de data"><div class="dates-placeholder" aria-hidden="true">Carregando datas…</div></div>
       </section>
 
       <section class="menu-section" aria-labelledby="menu-heading">
-        <div class="menu-heading-row"><div><span class="section-overline">NA SUA BANDEJA</span><h2 id="menu-heading">Cardápio de hoje</h2></div><button type="button" id="refresh-button" class="refresh-button" title="Atualizar cardápios" aria-label="Atualizar cardápios"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.5-4.5L3 9m0-6v6h6M4 13a8 8 0 0 0 14.5 4.5L21 15m0 6v-6h-6"/></svg></button></div>
+        <div class="menu-heading-row"><div><h2 id="menu-heading">Cardápio de hoje</h2></div><button type="button" id="refresh-button" class="refresh-button" title="Atualizar cardápios" aria-label="Atualizar cardápios"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.5-4.5L3 9m0-6v6h6M4 13a8 8 0 0 0 14.5 4.5L21 15m0 6v-6h-6"/></svg></button></div>
         <div class="notice" id="connection-notice" role="status" hidden></div>
         <div class="meal-list" id="meal-list" aria-live="polite"><div class="loading-shimmer"></div><div class="loading-shimmer"></div></div>
         <aside class="menu-disclaimer" role="note" aria-label="Aviso importante da FUMP"><span class="disclaimer-icon" aria-hidden="true">i</span><p><strong>Atenção:</strong> O cardápio pode sofrer alteração sem aviso prévio, e também, em casos de demanda acima da média nos Restaurantes Universitários.</p></aside>
@@ -57,7 +55,7 @@
       </section>
     </main>
 
-    <footer class="footer"><p>Feito para quem vive de bandejão. <span aria-hidden="true">✳</span></p><p>Informações de <a href="https://fump.ufmg.br/cardapio-do-dia/" target="_blank" rel="noopener noreferrer">FUMP/UFMG <span aria-hidden="true">↗</span></a>. Projeto independente, sujeito às alterações do cardápio oficial.</p></footer>
+    <footer class="footer"><p>Cardápios: <a href="https://fump.ufmg.br/cardapio-do-dia/" target="_blank" rel="noopener noreferrer">FUMP/UFMG ↗</a> · Consulta independente do site oficial.</p></footer>
   </div>
 
   <dialog id="restaurant-dialog" aria-labelledby="dialog-title">
@@ -65,7 +63,7 @@
       <div class="dialog-handle" aria-hidden="true"></div>
       <div class="dialog-title-row"><div><span class="section-overline">ONDE VAMOS HOJE?</span><h2 id="dialog-title">Escolha seu RU</h2><p id="dialog-help">Salvamos sua escolha neste aparelho.</p></div><button type="button" id="close-dialog" class="icon-btn" aria-label="Fechar seleção de restaurante"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
       <div class="restaurant-options" id="restaurant-options"></div>
-      <p class="dialog-footer">Você pode trocar de restaurante quando quiser.</p>
+
     </div>
   </dialog>
   <noscript><div class="noscript">Ative o JavaScript para consultar os cardápios. <a href="https://fump.ufmg.br/cardapio-do-dia/">Abrir a FUMP</a>.</div></noscript>

@@ -1,3 +1,4 @@
+import {currentOpening, weeklySummary} from './hours.js';
 const SOURCE_URL = 'https://fump.ufmg.br/cardapio-do-dia/';
 const STORAGE_RU = 'ruhoje:restaurant:v1';
 const STORAGE_PREFERS_CAFE = 'ruhoje:prefers-cafe:v1';
@@ -45,7 +46,8 @@ function selectedRu() { return RU_LIST.find(ru => ru.id === state.selectedRu); }
 function renderRestaurant() {
   const ru = selectedRu();
   $('current-restaurant').textContent = ru ? ru.name : 'Escolher restaurante';
-  $('restaurant-subtitle').textContent = ru ? ru.region + ' · toque para trocar' : 'Toque para salvar seu RU favorito';
+  $('restaurant-subtitle').textContent = ru ? ru.region : 'Toque para escolher';
+  renderHours();
   const items = $('restaurant-options');
   items.replaceChildren();
   for (const item of RU_LIST) {
@@ -68,6 +70,21 @@ function renderRestaurant() {
       $('restaurant-trigger').focus();
     });
     items.append(button);
+  }
+}
+function renderHours() {
+  const root=$('hours-wrap');
+  const ru=selectedRu();
+  root.hidden=!ru;
+  if (!ru) return;
+  const status=currentOpening(ru.id);
+  $('hours-status').textContent=status.message;
+  $('hours-dot').className='hours-dot '+(status.state==='open'?'is-open':'is-closed');
+  const list=$('hours-list');list.replaceChildren();
+  for(const block of weeklySummary(ru.id)) {
+    const row=el('div','hours-row');
+    row.append(el('strong','',block.day),el('span','',block.services.join(' · ')||'Não atende'));
+    list.append(row);
   }
 }
 function openDialog() {
@@ -208,8 +225,8 @@ function renderMenus() {
     $('connection-notice').textContent = 'Você está offline. Os dados disponíveis podem estar desatualizados.';
     $('connection-notice').hidden = false;
   }
-  const supported = ru.meals;
-  const entries = ['almoco','jantar','cafe'].filter(m => supported.includes(m) || data?.meals?.[m]);
+  // Exibir somente refeições efetivamente publicadas pela FUMP. Não criar cartões vazios.
+  const entries = ['almoco','jantar','cafe'].filter(m => Array.isArray(data?.meals?.[m]?.items) && data.meals[m].items.length > 0);
   const hasItems = entries.some(m => Array.isArray(data?.meals?.[m]?.items) && data.meals[m].items.length);
   if (!hasItems) {
     list.append(renderNoMenu(ru,day));
@@ -302,6 +319,7 @@ function boot() {
       if (state.selectedDate === previousToday) state.selectedDate = clock.iso;
       previousToday = clock.iso; renderDates({scroll:true}); renderMenus();
     } else if (previousMealPeriod !== currentPeriod) renderMenus();
+    renderHours();
     previousMealPeriod = currentPeriod;
   }
   setInterval(maybeTick,60_000); maybeTick();

@@ -40,3 +40,47 @@
   dialog::backdrop{background:rgba(23,16,46,.50)}
 }
 @media(max-width:350px){.topbar-tag{display:none}.featured-badge{padding:6px 8px;font-size:9px}.date-card{flex-basis:59px;min-width:59px}.intro h1{font-size:29px}}
+
+/* v1.7 — consulta mobile-first: somente restaurante, horários, datas e cardápio. */
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important}
+.site-wrap{max-width:680px;padding-top:18px}
+.topbar{margin-bottom:23px}.identity-copy small{font-size:11px}
+.restaurant-section{margin-top:0}.restaurant-picker{border-radius:17px;min-height:70px}
+.date-section{margin-top:20px}.section-heading,.menu-heading-row{align-items:center}
+.menu-section{margin-top:19px}.menu-heading-row{margin-bottom:10px}
+.hours-wrap[hidden]{display:none}
+.hours-wrap{margin:9px 1px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.hours-status{display:inline-flex;align-items:center;gap:7px;color:#625c6d;font-weight:680;font-size:12px;line-height:1.5;min-height:27px}
+.hours-dot{width:8px;height:8px;background:#9992a3;border-radius:100%;flex:none}
+.hours-dot.is-open{background:#25805f;box-shadow:0 0 0 3px #e4f5ed}
+.hours-dot.is-closed{background:#a29baa}
+.hours-details{position:relative;font-size:12px;color:var(--purpleDark)}
+.hours-details>summary{list-style:none;cursor:pointer;padding:7px 5px;font-weight:700;min-height:35px;display:flex;align-items:center}
+.hours-details>summary::-webkit-details-marker{display:none}
+.hours-details>summary::after{content:'⌄';margin-left:5px;font-size:14px}
+.hours-details[open]>summary::after{content:'⌃'}
+.hours-details[open]{width:100%;border-radius:12px;background:#fff;padding:0 10px 10px;border:1px solid var(--line)}
+.hours-list{display:grid;gap:8px;padding-top:5px}
+.hours-row{display:grid;grid-template-columns:66px minmax(0,1fr);gap:8px;color:#5d566a;font-size:11px;line-height:1.5}
+.hours-row strong{font-size:11px;color:var(--ink);font-weight:750}
+.hours-caveat{color:#817b8b;font-size:10px;line-height:1.5;margin:10px 0 0}
+.footer{display:block;margin-top:24px}.footer p,.footer p:first-child{white-space:normal;font-size:11px;font-weight:400}
+.footer a{font-weight:650}
+@media(max-width:650px){
+  .site-wrap{padding:16px 16px max(22px,env(safe-area-inset-bottom))}
+  .topbar{margin-bottom:17px}
+  .identity img{width:39px;height:39px}
+  .restaurant-picker{min-height:68px;padding:11px 13px}
+  .date-section{margin-top:20px}
+  .section-heading h2,.menu-heading-row h2{font-size:20px}
+  .date-strip{margin:0 -16px;padding:9px 16px 9px;scroll-padding-inline:16px}
+  .date-card{min-height:88px;flex-basis:62px;min-width:62px}
+  .menu-section{margin-top:17px}
+  .meal-card{padding:17px 15px}
+  .meal-contents{margin-top:13px}
+  .menu-group{margin-top:13px}
+  .hours-status{font-size:11px}
+  .hours-details{font-size:11px}
+  .footer{padding-top:14px;margin-top:22px}
+}
+@media(max-width:350px){.hours-wrap{gap:2px}.hours-status{font-size:10.7px}}
