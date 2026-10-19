@@ -1,0 +1,37 @@
+name: Diagnosticar rede da FUMP (Linux e Windows)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    name: Testar FUMP em ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 9
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar dependências
+        run: npm install --no-audit --no-fund
+      - name: Preparar Chromium (Linux)
+        if: runner.os == 'Linux'
+        run: npx playwright install --with-deps chromium
+      - name: Preparar Chromium (Windows)
+        if: runner.os == 'Windows'
+        run: npx playwright install chromium
+      - name: Diagnosticar DNS, HTTPS e navegador
+        run: node scripts/probe-fump.mjs
+      - name: Salvar relatório, mesmo em caso de falha
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fump-network-${{ runner.os }}
+          path: diagnostics/fump-network/
+          if-no-files-found: warn
+          retention-days: 7
