@@ -101,6 +101,11 @@ export async function auditApiDiagnostics(dir = DEFAULT_DIR, { requireToday = fa
     }
   }
   if (captured !== summary.success || empty !== summary.empty) fail('soma de fontes capturadas e vazias não confere');
+  // Datas com quatro fontes vazias não são autoritativas para remoção:
+  // podem representar um feriado ou uma publicação futura ainda não feita.
+  // Elas não derrubam o dia de hoje, mas também não apagam cardápios antigos.
+  const verifiedCompleteDates = dates.filter(date => rows.some(row =>
+    row.iso === date && row.status === 'capturado-nao-validado'));
 
   // Compara só o conteúdo (não a ordem incidental de inserção das chaves JSON).
   const normal = obj => {
@@ -113,7 +118,7 @@ export async function auditApiDiagnostics(dir = DEFAULT_DIR, { requireToday = fa
   }
   const size = Buffer.byteLength(JSON.stringify(candidate), 'utf8');
   if (size > 700_000) fail(`snapshot excessivo: ${size} bytes`);
-  return { snapshot: candidate, report: { dates, sourcesPerDay: RU_SOURCES.length, captured, empty, bytes: size, checkedAt: new Date().toISOString() } };
+  return { snapshot: candidate, report: { dates, verifiedCompleteDates, sourcesPerDay: RU_SOURCES.length, captured, empty, bytes: size, checkedAt: new Date().toISOString() } };
 }
 
 async function main() {
@@ -132,7 +137,7 @@ async function main() {
     }
     const tmp = `${ALLOWED_OUT}.tmp-${process.pid}`;
     try {
-      await fs.writeFile(tmp, JSON.stringify(snapshot,null,2)+'\n', { flag: 'wx' });
+      await fs.writeFile(tmp, JSON.stringify({...snapshot, verifiedCompleteDates:report.verifiedCompleteDates},null,2)+'\n', { flag: 'wx' });
       await fs.rename(tmp, ALLOWED_OUT);
     } finally { await fs.rm(tmp,{force:true}); }
     console.log('Candidato preparado APENAS no filesystem local. Nenhuma publicação Firebase efetuada.');
