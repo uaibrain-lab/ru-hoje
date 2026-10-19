@@ -30,6 +30,10 @@ function clean(line) {
 const IGNORE = [
   /^(observa[çc][aã]o|aten[çc][aã]o|card[aá]pio sujeito|o card[aá]pio pode|a fump|restaurante|fonte|data|data:|escolha|selecione|consultar|voltar|buscar|in[ií]cio|fale com|d[uú]vidas|institucional|programas|not[ií]cias|transpar[eê]ncia|endere[çc]o|atendimento|realiza[çc][aã]o|enviar|copyright|©|termos|pol[ií]tica|mapa do site|mais informa[çc][oõ]es|veja mais)/i,
   /^(prato prot[eé]ico|guarni[çc][aã]o|acompanhamento|entrada|sobremesa|refresco|saladas|protei[nn]a)$/i,
+  // Elementos comprovadamente misturados às respostas da FUMP em outubro/2026.
+  // É uma defesa adicional, não substitui selecionar o DOM de resultados.
+  /^(valorizamos sua privacidade|personalizar|aceitar tudo|aceitar todos|rejeitar todos|recusar tudo|salvar prefer[eê]ncias|prefer[eê]ncias de cookies|gerenciar cookies|configurar cookies|ir para o menu|ir para a busca|ir para o rodap[eé]|card[aá]pios dos rus|consentimento|pol[ií]tica de cookies)$/i,
+  /(?:^|\b)(cookies?|consentimento de cookies|privacidade dos seus dados|configura[çc][oõ]es de privacidade|personalizar prefer[eê]ncias)(?:\b|$)/i,
   /(RUs? da UFMG|Assist[eê]ncia Estudantil|Whatsapp|\bCEP\b|\bCNPJ\b|fump\.ufmg)/i,
 ];
 const STOP = /^(observa[çc][aã]o\s*:|aten[çc][aã]o\s*:|card[aá]pio sujeito|realiza[çc][aã]o|©|todos os direitos reservados)/i;
@@ -65,7 +69,7 @@ function mealHeading(line) {
 function likelyMenu(lines) {
   // Refeições reais quase sempre contêm ao menos quatro itens, entre eles acompanhantes.
   const markers = lines.filter(l=> /(arroz|feij[aã]o|salada|guarni[çc][aã]o|sobremesa|prato prot[eé]ico|refresco|suco|vegetarian)/i.test(l.name)).length;
-  return lines.length >= 4 && (markers >= 2 || lines.length >= 8);
+  return lines.length >= 4 && markers >= 2;
 }
 export function extractMenus(text, forcedMeal = null) {
   if (typeof text !== 'string') return {};

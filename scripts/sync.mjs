@@ -92,8 +92,14 @@ async function collectResponse(page,iso,ruId,mealVal=null) {
   // A FUMP pode manter recursos secundários pendentes no runner do GitHub.
   // O commit confirma a navegação; a presença do formulário continua obrigatória.
   await page.goto(SOURCE,{waitUntil:'commit',timeout:SETTINGS.timeout});
-  await page.locator('select').first().waitFor({state:'attached',timeout:6000});
-  await nap(500);
+  const restaurantSelect=page.locator('select[name="restaurante"],select#restaurante').first();
+  await restaurantSelect.waitFor({state:'attached',timeout:6000});
+  await page.waitForFunction(() => {
+    const select=document.querySelector('select[name="restaurante"],select#restaurante');
+    return select && [...select.options].some(option =>
+      /setorial|sa[uú]de|direito|\bica\b|montes claros/i.test(option.textContent || '')
+    );
+  },null,{timeout:12000});
   const form=await inspect(page);
   const controls=selectControls(form);
   if (!controls.restaurant) throw new Error(`Não identifiquei o seletor de restaurante (${form.selects.length} selects)`);
@@ -108,11 +114,15 @@ async function collectResponse(page,iso,ruId,mealVal=null) {
     else throw new Error(`Opção de refeição ${mealVal} não disponível`);
   }
   await clickSubmit(page);
-  const candidates = await page.evaluate(() => {
-    const selectors=['[id*="cardapio"]','[class*="cardapio"]','[id*="resultado"]','[class*="resultado"]', 'article','main'];
-    const nodes=selectors.flatMap(s=>[...document.querySelectorAll(s)]);
-    return [...new Set([...nodes,document.body])].map(n=>n.innerText||'').filter(s=>s.length>40).sort((a,b)=>a.length-b.length).slice(0,18);
-  });
+  const resultContainer=page.locator('#resultado');
+  await resultContainer.waitFor({state:'attached',timeout:6000});
+  await page.waitForFunction(() => {
+    const result=document.querySelector('#resultado');
+    return result && result.innerText.trim().length > 0;
+  },null,{timeout:7000}).catch(()=>{});
+  const candidates=[];
+  const resultText=(await resultContainer.innerText().catch(()=>'' )).trim();
+  if (resultText) candidates.push(resultText);
   // O formulário pode oferecer uma única refeição e retornar pratos sem título.
   // Somente forçar a refeição quando o select atual permite identificá-la.
   const chosenMealValue = mealVal ?? (current.meal ? await page.locator('select').nth(current.meal.index).inputValue().catch(()=>null) : null);
