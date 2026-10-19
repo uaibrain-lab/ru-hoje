@@ -3,20 +3,18 @@ on:
   workflow_dispatch:
     inputs:
       days:
-        description: 'Quantidade de dias para consultar (1 a 10)'
+        description: 'Quantidade de dias para consultar via API (1 a 3)'
         type: choice
         options: ['1', '2', '3']
         default: '3'
         required: true
       publish:
-        description: 'Publicar no Firestore? Usar somente APÓS revisar uma coleta real'
+        description: 'Publicar no Firestore? Somente APÓS autorização explícita'
         type: boolean
         default: false
         required: true
   schedule:
-    # 07h23, 12h23, 14h43 e 16h23 em Brasília, seg–sáb (UTC-3).
-    # Inicialmente faz SOMENTE coleta diagnóstica. Publicação automática requer
-    # a variável RU_SYNC_PUBLISH_ENABLED=true, definida depois da validação.
+    # Brasília UTC-3, segunda a sábado: 07h23, 12h23, 14h43, 16h23.
     - cron: '23 10,15,19 * * 1-6'
     - cron: '43 17 * * 1-6'
 permissions:
@@ -28,7 +26,8 @@ jobs:
   sync:
     if: ${{ github.event_name == 'workflow_dispatch' || vars.RU_SYNC_PUBLISH_ENABLED == 'true' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 28
+    # Não gasta minutos no agendamento enquanto publicação automática estiver desligada.
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -36,31 +35,37 @@ jobs:
           node-version: '22'
       - name: Instalar dependências
         run: npm install --no-audit --no-fund
-      - name: Instalar Chromium
-        run: npx playwright install --with-deps chromium
-      - name: Verificar parser e consistência
+      - name: Validar parser e regras de consolidação
         run: npm test
-      - name: Testar consulta simulada no PWA
-        run: npm run test:e2e
-      - name: Coletar cardápios oficiais
+      - name: Coletar JSON diretamente da API oficial da FUMP
         env:
           DAYS: ${{ github.event.inputs.days || '3' }}
-        run: npm run scrape -- --days "$DAYS"
+        run: node scripts/sync-api.mjs --days "$DAYS"
+      - name: Auditar respostas brutas e candidato
+        run: node scripts/prepare-api-snapshot.mjs --require-today
+      - name: Rejeitar solicitação de publicação não autorizada
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish == true && vars.RU_SYNC_PUBLISH_ENABLED != 'true' }}
+        run: |
+          echo 'Publicação bloqueada: RU_SYNC_PUBLISH_ENABLED não está true.'
+          exit 1
+      - name: Preparar arquivo temporário para publicação
+        if: ${{ vars.RU_SYNC_PUBLISH_ENABLED == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.publish == true) || github.event_name == 'schedule') }}
+        run: node scripts/prepare-api-snapshot.mjs --require-today --out public/data/cardapios.json --stage-local-json
       - name: Verificar credencial de publicação
-        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.publish == true) || (github.event_name == 'schedule' && vars.RU_SYNC_PUBLISH_ENABLED == 'true') }}
+        if: ${{ vars.RU_SYNC_PUBLISH_ENABLED == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.publish == true) || github.event_name == 'schedule') }}
         env:
           FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
         run: node scripts/check-config.mjs
-      - name: Publicar dados validados no Firestore (sem deploy de Hosting)
-        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.publish == true) || (github.event_name == 'schedule' && vars.RU_SYNC_PUBLISH_ENABLED == 'true') }}
+      - name: Publicar dados auditados no Firestore (não faz deploy Hosting)
+        if: ${{ vars.RU_SYNC_PUBLISH_ENABLED == 'true' && ((github.event_name == 'workflow_dispatch' && inputs.publish == true) || github.event_name == 'schedule') }}
         env:
           FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
-        run: npm run publish
-      - name: Guardar diagnóstico da FUMP
+        run: node scripts/publish.mjs
+      - name: Guardar diagnóstico da API
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: diagnostico-fump
-          path: diagnostics/
+          name: fump-api-sincronizacao
+          path: diagnostics/fump-api/
           if-no-files-found: ignore
           retention-days: 7
