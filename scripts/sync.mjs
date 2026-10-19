@@ -89,7 +89,10 @@ async function collectResponse(page,iso,ruId,mealVal=null) {
       if(s.length<120000) responses.push(s.replace(/<[^>]*>/g,'\n'));
     } catch {}
   });
-  await page.goto(SOURCE,{waitUntil:'domcontentloaded',timeout:SETTINGS.timeout});
+  // A FUMP pode manter recursos secundários pendentes no runner do GitHub.
+  // O commit confirma a navegação; a presença do formulário continua obrigatória.
+  await page.goto(SOURCE,{waitUntil:'commit',timeout:SETTINGS.timeout});
+  await page.locator('select').first().waitFor({state:'attached',timeout:6000});
   await nap(500);
   const form=await inspect(page);
   const controls=selectControls(form);
