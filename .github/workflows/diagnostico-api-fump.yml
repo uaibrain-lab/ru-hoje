@@ -1,0 +1,26 @@
+name: Diagnosticar API JSON da FUMP (sem publicar)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verificar parser JSON da API
+        run: node --test tests/fump-api.test.mjs
+      - name: Consultar 4 fontes oficiais para hoje (sem Firestore)
+        run: node scripts/sync-api.mjs --days 1
+      - name: Preservar diagnóstico sem publicar
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fump-api-diagnostico
+          path: diagnostics/fump-api/
+          if-no-files-found: ignore
+          retention-days: 7
