@@ -1,0 +1,21 @@
+{
+  "name": "ru-hoje-ufmg",
+  "version": "1.2.0",
+  "private": true,
+  "type": "module",
+  "description": "PWA independente para consulta dos cardápios dos RUs da UFMG.",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "scrape": "node scripts/sync.mjs",
+    "publish": "node scripts/publish.mjs",
+    "serve": "python -m http.server 8080 --directory public",
+    "test:e2e": "node scripts/smoke.mjs"
+  },
+  "dependencies": {
+    "playwright": "1.56.1",
+    "firebase-admin": "13.5.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

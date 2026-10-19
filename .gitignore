@@ -1,0 +1,12 @@
+node_modules/
+.firebase/
+.firebaserc
+*.log
+.env
+.env.*
+!*.example
+screenshots/
+test-results/
+
+# Relatórios com trechos da página externa e capturas de tela: não versionar
+diagnostics/

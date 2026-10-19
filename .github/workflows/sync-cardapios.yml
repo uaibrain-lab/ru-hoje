@@ -1,0 +1,65 @@
+name: Sincronizar cardápios FUMP (CATM UFMG)
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: 'Quantidade de dias para consultar (1 a 10)'
+        type: choice
+        options: ['1', '2', '3']
+        default: '3'
+        required: true
+      publish:
+        description: 'Publicar no Firestore? Usar somente APÓS revisar uma coleta real'
+        type: boolean
+        default: false
+        required: true
+  schedule:
+    # 07h23, 12h23, 14h43 e 16h23 em Brasília, seg–sáb (UTC-3).
+    # Inicialmente faz SOMENTE coleta diagnóstica. Publicação automática requer
+    # a variável RU_SYNC_PUBLISH_ENABLED=true, definida depois da validação.
+    - cron: '23 10,15,19 * * 1-6'
+    - cron: '43 17 * * 1-6'
+permissions:
+  contents: read
+concurrency:
+  group: ru-hoje-sync
+  cancel-in-progress: false
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar dependências
+        run: npm install --no-audit --no-fund
+      - name: Instalar Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Verificar parser e consistência
+        run: npm test
+      - name: Testar consulta simulada no PWA
+        run: npm run test:e2e
+      - name: Coletar cardápios oficiais
+        env:
+          DAYS: ${{ github.event.inputs.days || '3' }}
+        run: npm run scrape -- --days "$DAYS"
+      - name: Verificar credencial de publicação
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.publish == true) || (github.event_name == 'schedule' && vars.RU_SYNC_PUBLISH_ENABLED == 'true') }}
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+        run: node scripts/check-config.mjs
+      - name: Publicar dados validados no Firestore (sem deploy de Hosting)
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.publish == true) || (github.event_name == 'schedule' && vars.RU_SYNC_PUBLISH_ENABLED == 'true') }}
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+        run: npm run publish
+      - name: Guardar diagnóstico da FUMP
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostico-fump
+          path: diagnostics/
+          if-no-files-found: ignore
+          retention-days: 7

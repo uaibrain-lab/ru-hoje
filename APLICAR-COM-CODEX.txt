@@ -1,0 +1,1 @@
+Consulte README.md. Use o prompt único fornecido pelo ChatGPT na conversa para preparação local e envio ao repositório GitHub. Nenhum deploy autorizado.

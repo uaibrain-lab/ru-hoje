@@ -1,0 +1,14 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Apenas o JSON público de cardápios: uma única leitura, sem login.
+    match /publicMenus/current {
+      allow get: if true;
+      allow list, create, update, delete: if false;
+    }
+    // Atenção: nunca aplicar estas regras sobre um banco de outro aplicativo.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

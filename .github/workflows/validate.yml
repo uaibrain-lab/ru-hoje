@@ -1,0 +1,22 @@
+name: Validar projeto
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - run: npm test
+      - run: npm run test:e2e
+      - run: node --check public/assets/app.js && node --check public/service-worker.js && node --check scripts/sync.mjs && node --check scripts/publish.mjs
