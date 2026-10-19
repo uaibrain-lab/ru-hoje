@@ -26,6 +26,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   sync:
+    if: ${{ github.event_name == 'workflow_dispatch' || vars.RU_SYNC_PUBLISH_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 28
     steps:
