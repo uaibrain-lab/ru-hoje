@@ -54,7 +54,7 @@ test('v1.9.6: frontend usa sourceType, cache novo e integração offline mantida
   const app=readFileSync(new URL('../public/assets/app.js',import.meta.url),'utf8');
   const sw=readFileSync(new URL('../public/service-worker.js',import.meta.url),'utf8');
   assert.match(app,/publishedCategory\(item.category, name, item.sourceType\)/);
-  assert.match(sw,/bandeco-v196-fump-source-types/);
+  assert.match(sw,/const VERSION = 'bandeco-v19[0-9]-[a-z0-9-]+'/);
   assert.match(sw,/\/assets\/dish-category\.js/);
 });
 

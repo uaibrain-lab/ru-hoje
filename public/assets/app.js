@@ -1,5 +1,6 @@
 import {currentOpening, weeklySummary} from './hours.js';
 import {publishedCategory} from './dish-category.js';
+import {isMissingMenu, dateChipLabel} from './date-availability.js';
 const SOURCE_URL = 'https://fump.ufmg.br/cardapio-do-dia/';
 const STORAGE_RU = 'ruhoje:restaurant:v1';
 const STORAGE_PREFERS_CAFE = 'ruhoje:prefers-cafe:v1';
@@ -92,6 +93,7 @@ function renderRestaurant() {
       state.selectedRu = item.id;
       writeStore(STORAGE_RU, item.id);
       renderRestaurant();
+      renderDates();
       renderMenus();
       $('restaurant-dialog').close();
       $('restaurant-trigger').focus();
@@ -135,15 +137,17 @@ function renderDates({ scroll = false } = {}) {
     const iso = addDays(today, offset);
     const date = dayDate(iso);
     const isWeekend = [0, 6].includes(date.getUTCDay());
+    const withoutMenu = isMissingMenu(state.data, iso, state.selectedRu);
     const card = el('button', 'date-card');
     card.type = 'button';
     card.dataset.iso = iso;
     card.dataset.weekend = String(isWeekend);
+    card.dataset.missingMenu = String(withoutMenu);
     card.setAttribute('aria-pressed', String(iso === state.selectedDate));
-    card.setAttribute('aria-label', `${friendlyDate(iso, {weekday:'long',day:'numeric',month:'long'})}${iso === today ? ', hoje' : ''}`);
+    card.setAttribute('aria-label', `${friendlyDate(iso, {weekday:'long',day:'numeric',month:'long'})}${iso === today ? ', hoje' : ''}${withoutMenu ? ', sem cardápio disponível no aplicativo' : ''}`);
     card.append(el('span','weekday',friendlyDate(iso,{weekday:'short'}).replace('.','')),
       el('span','daynum',String(date.getUTCDate()).padStart(2,'0')),
-      el('span','daylabel',iso === today ? 'hoje' : (isWeekend ? '·' : '')));
+      el('span','daylabel',dateChipLabel(iso === today, withoutMenu)));
     card.addEventListener('click', (event) => {
       state.selectedDate = iso;
       renderDates();
@@ -287,6 +291,8 @@ function replaceIfNewer(value) {
   if (state.data && incoming < current) return false;
   state.data = value;
   try { writeStore(STORAGE_DATA, JSON.stringify(value)); } catch {}
+  // Os pontos dependem do cardápio efetivo: atualizar quando a coleta chegar.
+  renderDates();
   renderMenus();
   return true;
 }

@@ -1,6 +1,6 @@
 /**
  * Diagnóstico API JSON da FUMP. NÃO grava em public/data e NÃO publica Firestore.
- * Uso: node scripts/sync-api.mjs --days 1
+ * Uso: node scripts/sync-api.mjs --days 7
  */
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -10,9 +10,9 @@ import {API_BASE,SOURCE_PAGE,RU_SOURCES,dateInBrasilia,addDate,getJson,checkRest
 const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const DIAG=path.join(ROOT,'diagnostics','fump-api');
 const args=process.argv.slice(2);
-if(args.some(a=>a!=='--days' && !/^\d+$/.test(a))) throw new Error('Uso: node scripts/sync-api.mjs --days 1');
+if(args.some(a=>a!=='--days' && !/^\d+$/.test(a))) throw new Error('Uso: node scripts/sync-api.mjs --days 7');
 const ix=args.indexOf('--days');
-const days=ix<0 ? 1 : Number(args[ix+1]);
+const days=ix<0 ? 7 : Number(args[ix+1]);
 if(!Number.isInteger(days) || days<1 || days>7) throw new Error('Número de dias fora do intervalo 1 a 7');
 
 const snapshot={schemaVersion:1,generatedAt:null,source:SOURCE_PAGE,days:{}};
