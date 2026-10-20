@@ -1,22 +1,27 @@
 import {currentOpening, weeklySummary} from './hours.js';
+import {publishedCategory} from './dish-category.js';
 const SOURCE_URL = 'https://fump.ufmg.br/cardapio-do-dia/';
 const STORAGE_RU = 'ruhoje:restaurant:v1';
 const STORAGE_PREFERS_CAFE = 'ruhoje:prefers-cafe:v1';
 const STORAGE_DATA = 'ruhoje:menus:v1';
 const TIMEZONE = 'America/Sao_Paulo';
 const RU_LIST = [
-  { id: 'setorial-i', name: 'RU Setorial I', region: 'Campus Pampulha', meals: ['almoco', 'jantar'], saturday:true },
-  { id: 'setorial-ii', name: 'RU Setorial II', region: 'Campus Pampulha', meals: ['cafe', 'almoco'] },
-  { id: 'saude', name: 'RU Saúde', region: 'Campus Saúde', meals: ['cafe', 'almoco', 'jantar'], saturday:true },
-  { id: 'direito', name: 'RU Direito', region: 'Faculdade de Direito', meals: ['cafe', 'almoco', 'jantar'] },
-  { id: 'ica', name: 'RU ICA', region: 'Montes Claros', meals: ['cafe', 'almoco', 'jantar'], saturday:true },
+  { id: 'setorial-i', photo: '/assets/restaurantes/setorial-i.webp', name: 'RU Setorial I', region: 'Campus Pampulha', meals: ['almoco', 'jantar'], saturday:true },
+  { id: 'setorial-ii', photo: '/assets/restaurantes/setorial-ii.webp', name: 'RU Setorial II', region: 'Campus Pampulha', meals: ['cafe', 'almoco'] },
+  { id: 'saude', photo: '/assets/restaurantes/saude.webp', name: 'RU Saúde', region: 'Campus Saúde', meals: ['cafe', 'almoco', 'jantar'], saturday:true },
+  { id: 'direito', photo: '/assets/restaurantes/direito.webp', name: 'RU Direito', region: 'Faculdade de Direito', meals: ['cafe', 'almoco', 'jantar'] },
+  { id: 'ica', photo: '/assets/restaurantes/ica.webp', name: 'RU ICA', region: 'Montes Claros', meals: ['cafe', 'almoco', 'jantar'], saturday:true },
 ];
 const MEAL_INFO = {
-  almoco: { title: 'Almoço', icon: '<circle cx="12" cy="12" r="8"/><path d="M12 4v2m0 12v2m8-8h-2M6 12H4m13.7-5.7-1.4 1.4M7.7 16.3l-1.4 1.4m11.4 0-1.4-1.4M7.7 7.7 6.3 6.3"/>' },
+  almoco: { title: 'Almoço', icon: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/>' },
   jantar: { title: 'Jantar', icon: '<path d="M20.5 14.4A8.4 8.4 0 0 1 9.6 3.5 8.4 8.4 0 1 0 20.5 14.4Z"/>' },
   cafe: { title: 'Café da manhã', icon: '<path d="M4 9h12v5a6 6 0 0 1-12 0V9Zm12 1h2a3 3 0 0 1 0 6h-3M3 21h15M7 3v3m5-3v3"/>' },
 };
-const GROUP_ORDER = ['Pratos principais', 'Opção vegetariana', 'Guarnições', 'Acompanhamentos', 'Saladas', 'Sobremesas', 'Bebidas', 'Outros'];
+const GROUP_ORDER = ['Pratos principais','Opção vegetariana','Guarnições','Acompanhamentos','Saladas','Molhos','Sobremesas','Bebidas','Outros'];
+const GROUP_ICONS = Object.freeze({
+  'Pratos principais':'🍖','Opção vegetariana':'🌱','Guarnições':'🍲',
+  'Acompanhamentos':'🍚','Saladas':'🥗','Molhos':'🥣','Sobremesas':'🍮','Bebidas':'🥤','Outros':'🍽️'
+});
 const $ = (id) => document.getElementById(id);
 const state = { selectedRu: null, selectedDate: null, data: null, lastError: null, syncing: false, initialOpen: false };
 
@@ -43,10 +48,25 @@ function el(tag, className, text) { const e = document.createElement(tag); if (c
 function iconSVG(paths) { return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`; }
 function selectedRu() { return RU_LIST.find(ru => ru.id === state.selectedRu); }
 
+// Guardar as duas referências: o SVG de fallback é retirado fisicamente do DOM
+// quando há foto, impedindo que o grid o desenhe em uma segunda linha.
+const restaurantThumbHost = document.querySelector('#restaurant-trigger .picker-icon');
+const restaurantThumbPhoto = document.getElementById('restaurant-photo');
+const restaurantThumbFallback = document.getElementById('restaurant-fallback');
+
 function renderRestaurant() {
   const ru = selectedRu();
   $('current-restaurant').textContent = ru ? ru.name : 'Escolher restaurante';
   $('restaurant-subtitle').textContent = ru ? ru.region : 'Toque para escolher';
+  if (ru) {
+    restaurantThumbPhoto.src = ru.photo;
+    restaurantThumbPhoto.alt = '';
+    restaurantThumbPhoto.hidden = false;
+    restaurantThumbHost.replaceChildren(restaurantThumbPhoto);
+  } else {
+    restaurantThumbPhoto.hidden = true;
+    restaurantThumbHost.replaceChildren(restaurantThumbFallback);
+  }
   renderHours();
   const items = $('restaurant-options');
   items.replaceChildren();
@@ -54,8 +74,15 @@ function renderRestaurant() {
     const button = el('button', 'restaurant-option');
     button.type = 'button';
     button.setAttribute('aria-pressed', String(item.id === state.selectedRu));
-    const marker = el('span', 'option-icon');
-    marker.innerHTML = iconSVG('<path d="m3 21 3-12 6-5 6 5 3 12M6 21V9h12v12M9 21v-7h6v7"/>');
+    const marker = el('span', 'option-icon restaurant-thumb');
+    const photo = el('img', 'restaurant-thumb-img');
+    photo.src = item.photo;
+    photo.alt = '';
+    photo.width = 52;
+    photo.height = 52;
+    photo.loading = 'lazy';
+    photo.decoding = 'async';
+    marker.append(photo);
     const copy = el('span', 'option-label');
     copy.append(el('strong', '', item.name), el('small', '', item.region));
     const check = el('span', 'option-check', item.id === state.selectedRu ? '✓' : '');
@@ -104,7 +131,7 @@ function renderDates({ scroll = false } = {}) {
   const dateStrip = $('date-strip');
   const oldScrollLeft = dateStrip.scrollLeft;
   dateStrip.replaceChildren();
-  for (let offset = -4; offset < 11; offset++) {
+  for (let offset = 0; offset < 15; offset++) {
     const iso = addDays(today, offset);
     const date = dayDate(iso);
     const isWeekend = [0, 6].includes(date.getUTCDay());
@@ -129,8 +156,8 @@ function renderDates({ scroll = false } = {}) {
   $('dates-heading').textContent = friendlyDate(state.selectedDate, {month:'long',year:'numeric'}).replace(/^./, c=>c.toUpperCase());
   $('today-button').hidden = state.selectedDate === today;
   if (scroll) requestAnimationFrame(() => {
-    const active=dateStrip.querySelector('[aria-pressed="true"]');
-    if (active) dateStrip.scrollLeft=Math.max(0,active.offsetLeft - dateStrip.offsetLeft - (dateStrip.clientWidth-active.offsetWidth)/2);
+    // Hoje deve ser o primeiro cartão visível, não centralizado entre dias anteriores.
+    dateStrip.scrollLeft = 0;
   });
   else dateStrip.scrollLeft = oldScrollLeft;
 }
@@ -141,6 +168,7 @@ function categoryName(raw) {
   if (/(guarni|acompanhamento quente)/.test(t)) return 'Guarnições';
   if (/(acompanhamento|arroz|feij[aã]o)/.test(t)) return 'Acompanhamentos';
   if (/(entrada|salada)/.test(t)) return 'Saladas';
+  if (/(molho|condimento)/.test(t)) return 'Molhos';
   if (/(sobremesa|fruta)/.test(t)) return 'Sobremesas';
   if (/(refresco|suco|bebida)/.test(t)) return 'Bebidas';
   return 'Outros';
@@ -167,7 +195,7 @@ function renderMealCard(mealId, payload, isFeatured, ru) {
   for (const item of items) {
     const name = stripDangerous(typeof item === 'string' ? item : item.name);
     if (!name || name.length < 2) continue;
-    const category = categoryName(typeof item === 'string' ? '' : item.category);
+    const category = categoryName(typeof item === 'string' ? publishedCategory('', name) : publishedCategory(item.category, name, item.sourceType));
     if (!groups.has(category)) groups.set(category, []);
     if (!groups.get(category).includes(name)) groups.get(category).push(name);
   }
@@ -176,8 +204,11 @@ function renderMealCard(mealId, payload, isFeatured, ru) {
     const dishes = groups.get(groupName);
     if (!dishes?.length) continue;
     const group = el('section','menu-group');
-    // Itens sem rótulo oficial são apresentados de forma neutra.
-    group.append(el('h4','menu-group-title',groupName === 'Outros' ? 'No cardápio' : groupName));
+    const heading = el('h4','menu-group-title');
+    const symbol = el('span','category-emoji',GROUP_ICONS[groupName]);
+    symbol.setAttribute('aria-hidden','true');
+    heading.append(symbol,document.createTextNode(groupName === 'Outros' ? 'No cardápio' : groupName));
+    group.append(heading);
     const list = el('ul','dish-list');
     for (const name of dishes) list.append(el('li','',name));
     group.append(list); contents.append(group);
@@ -298,7 +329,55 @@ async function fetchMenus() {
     renderMenus();
   }
 }
+function initTheme() {
+  const key = 'bandeco:theme:v1';
+  const button = $('theme-toggle');
+  const menu = $('theme-menu');
+  const media = window.matchMedia('(prefers-color-scheme: dark)');
+  const read = () => {
+    try { return localStorage.getItem(key); } catch { return null; }
+  };
+  let preference = ['light','dark'].includes(read()) ? read() : 'auto';
+  const apply = () => {
+    const active = preference === 'auto' ? (media.matches ? 'dark' : 'light') : preference;
+    document.documentElement.dataset.theme = active;
+    document.documentElement.dataset.themePreference = preference;
+    const effectiveLabel = active === 'dark' ? 'escuro' : 'claro';
+    const modeLabel = preference === 'auto' ? `automático (${effectiveLabel} agora)` : effectiveLabel;
+    button.setAttribute('aria-label', `Tema ${modeLabel}. Escolher aparência`);
+    button.title = `Tema ${modeLabel}`;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content',active === 'dark' ? '#12121b' : '#f7f7fc');
+    for (const option of menu.querySelectorAll('[data-theme-option]')) {
+      option.setAttribute('aria-pressed',String(option.dataset.themeOption === preference));
+    }
+  };
+  const closeMenu = () => { menu.hidden = true; button.setAttribute('aria-expanded','false'); };
+  button.addEventListener('click',() => {
+    menu.hidden = !menu.hidden;
+    button.setAttribute('aria-expanded',String(!menu.hidden));
+    if(!menu.hidden) menu.querySelector(`[data-theme-option="${preference}"]`)?.focus();
+  });
+  menu.addEventListener('click',(event)=>{
+    const option=event.target.closest('[data-theme-option]');
+    if(!option)return;
+    preference=option.dataset.themeOption;
+    try { if(preference === 'auto')localStorage.removeItem(key);else localStorage.setItem(key,preference); } catch {}
+    apply();closeMenu();button.focus();
+  });
+  document.addEventListener('pointerdown',(event)=>{
+    if(!menu.hidden && !event.target.closest('.theme-control'))closeMenu();
+  });
+  document.addEventListener('keydown',(event)=>{
+    if(event.key==='Escape' && !menu.hidden){closeMenu();button.focus();}
+  });
+  const onChange=()=>{if(preference==='auto')apply();};
+  if(media.addEventListener)media.addEventListener('change',onChange);
+  else if(media.addListener)media.addListener(onChange);
+  apply();
+}
+
 function boot() {
+  initTheme();
   const savedRu = readStore(STORAGE_RU);
   state.selectedRu = RU_LIST.some(ru => ru.id === savedRu) ? savedRu : null;
   state.selectedDate = sPauloParts().iso;

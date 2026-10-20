@@ -1,3 +1,4 @@
+import {categoryFromSourceType} from '../public/assets/dish-category.js';
 /**
  * Adapter para o JSON usado pelo próprio formulário da FUMP.
  * Fonte: código-fonte público de https://fump.ufmg.br/cardapio-do-dia/
@@ -83,17 +84,8 @@ export function mealKey(tipo) {
   if(t==='cafe da manha' || t==='desjejum') return 'cafe';
   return null;
 }
-export function categoryKey(tipo) {
-  const t=norm(tipo);
-  if (t.includes('entrada')) return 'salada';
-  if (t.includes('sobremesa')) return 'sobremesa';
-  if (t.includes('um copo') || t.includes('refresco') || t.includes('bebida')) return 'bebida';
-  if (t.includes('guarnicao')) return 'guarnicao';
-  if (t.includes('acompanhamento')) return 'acompanhamento';
-  if (t.includes('vegetariano') || t.includes('vegano')) return 'vegetariana';
-  if (t.includes('proteico') || t.includes('proteina')) return 'proteina';
-  return '';
-}
+// API e aplicativo utilizam a MESMA interpretação de tipos da FUMP.
+export const categoryKey = categoryFromSourceType;
 function parseDate(value) {
   if (!value) return null;
   const text=String(value);
@@ -145,7 +137,12 @@ export function parseMenuJson(json, {iso, sourceId} = {}) {
         const lowered=norm(name);
         if(seen.has(lowered)) continue;
         seen.add(lowered);
-        items.push({name,category:categoryKey(prato?.tipoPrato)});
+        // Guardar o tipo original evita perder a distinção entre
+        // "Prato protéico 1" e "Prato protéico 3" no Firestore.
+        // O campo é opcional para compatibilidade com cardápios legados.
+        const sourceType = typeof prato?.tipoPrato === 'string'
+          ? prato.tipoPrato.trim().slice(0, 120) : '';
+        items.push({name,category:categoryKey(sourceType, name), ...(sourceType ? {sourceType} : {})});
       }
       if(items.length) result[key]={items:items.slice(0,40)};
     }
