@@ -1,0 +1,56 @@
+name: OCUPA UFMG - WIF QA (somente autenticacao)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ocupa-qa-wif-probe
+  cancel-in-progress: false
+jobs:
+  wif-probe:
+    if: ${{ github.repository == 'uaibrain-lab/ru-hoje' && github.repository_id == '1425884929' && github.repository_owner_id == '342577642' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Conferir identidade e ramo antes da autenticacao
+        shell: bash
+        env:
+          REPOSITORY: ${{ github.repository }}
+          REPOSITORY_ID: ${{ github.repository_id }}
+          OWNER_ID: ${{ github.repository_owner_id }}
+          REF: ${{ github.ref }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          test "$REPOSITORY" = 'uaibrain-lab/ru-hoje'
+          test "$REPOSITORY_ID" = '1425884929'
+          test "$OWNER_ID" = '342577642'
+          test "$REF" = 'refs/heads/main'
+          test "$EVENT" = 'workflow_dispatch'
+      - name: Checkout sem persistir credenciais
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Trocar OIDC por token temporario da conta QA sem Firestore
+        id: auth
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: bandeco-homologacao
+          workload_identity_provider: projects/342397522942/locations/global/workloadIdentityPools/bandeco-qa-github/providers/ocupa-qa-cardapios-probe
+          service_account: ocupa-qa-cardapios@bandeco-homologacao.iam.gserviceaccount.com
+          token_format: access_token
+          access_token_lifetime: 600s
+          create_credentials_file: false
+      - name: Confirmar obtencao do token sem revelar dados sensiveis
+        shell: bash
+        env:
+          AUTH_OUTCOME: ${{ steps.auth.outcome }}
+        run: |
+          set -euo pipefail
+          test "$AUTH_OUTCOME" = 'success'
+          echo 'OCUPA_P5E_WIF_TOKEN_EFEMERO_OK=1'
+          echo 'OCUPA_P5E_FIRESTORE_OPERACOES=0'
+          echo 'OCUPA_P5E_SEM_PUBLICACAO=1'
