@@ -1,5 +1,5 @@
-const VERSION = 'hub-ufmg-v260-20261027-interno-mobile-r4';
-const SHELL = ['/', '/index.html', '/favicon.ico', '/config.js', '/assets/app.js', '/assets/dish-category.js', '/assets/date-availability.js', '/assets/festas.js', '/assets/festas-core.js', '/assets/festas-backend.js', '/assets/festas-public-key.json', '/assets/hours.js', '/assets/styles.css', '/assets/restaurantes/setorial-i.webp', '/assets/restaurantes/setorial-ii.webp', '/assets/restaurantes/direito.webp', '/assets/restaurantes/saude.webp', '/assets/restaurantes/ica.webp', '/assets/icons/icon.svg', '/assets/icons/icon-192.png', '/assets/icons/icon-512.png', '/assets/icons/icon-maskable-192.png', '/assets/icons/icon-maskable-512.png', '/assets/icons/apple-touch-icon.png', '/manifest.webmanifest', '/data/cardapios.json'];
+const VERSION = 'hub-ufmg-v260-20261027-interno-mobile-r5';
+const SHELL = ['/', '/index.html', '/interno/index.html', '/favicon.ico', '/config.js', '/assets/app.js', '/assets/dish-category.js', '/assets/date-availability.js', '/assets/festas.js', '/assets/festas-core.js', '/assets/festas-backend.js', '/assets/festas-public-key.json', '/assets/hours.js', '/assets/styles.css', '/assets/restaurantes/setorial-i.webp', '/assets/restaurantes/setorial-ii.webp', '/assets/restaurantes/direito.webp', '/assets/restaurantes/saude.webp', '/assets/restaurantes/ica.webp', '/assets/icons/icon.svg', '/assets/icons/icon-192.png', '/assets/icons/icon-512.png', '/assets/icons/icon-maskable-192.png', '/assets/icons/icon-maskable-512.png', '/assets/icons/apple-touch-icon.png', '/manifest.webmanifest', '/data/cardapios.json'];
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(VERSION).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting()));
 });
@@ -14,7 +14,7 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(fetch(event.request).then(response => {
       if (response.ok) {const clone = response.clone(); caches.open(VERSION).then(cache => cache.put(event.request,clone)).catch(()=>{});}
       return response;
-    }).catch(async () => (await caches.match(event.request)) || (event.request.mode === 'navigate' ? caches.match('/index.html') : Response.error())));
+    }).catch(async () => (await caches.match(event.request)) || (event.request.mode === 'navigate' && url.pathname !== '/interno/index.html' ? caches.match('/index.html') : Response.error())));
     return;
   }
   event.respondWith(caches.match(event.request).then(cached => cached || fetch(event.request).then(response=>{

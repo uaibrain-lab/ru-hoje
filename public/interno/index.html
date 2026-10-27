@@ -254,12 +254,22 @@ if(window.L){
   route=L.layerGroup().addTo(map);sel=L.layerGroup().addTo(map);usr=L.layerGroup().addTo(map);
   D.paradas.forEach(p=>{const o=p.categoria!=='Parada Regular';
     L.circleMarker(p.coordenadas,{radius:o?11:8,color:dk?'#fff':'#101828',weight:3,fillColor:o?(dk?'#fff':'#101828'):(dk?'#14181f':'#fff'),fillOpacity:1}).addTo(map).bindTooltip(p.nome).on('click',()=>go({t:'stop',id:p.idParada}))});
-  // O iframe pode ficar oculto ao alternar abas; recalcular dimensões ao retornar.
+  // O iframe pode ficar oculto ao alternar abas; recalcular somente quando seu
+  // contêiner mudar de tamanho, sem recriar o mapa nem alterar o zoom.
+  let invalidateRaf=0;
+  const invalidateMap=()=>{
+    if(invalidateRaf)return;
+    invalidateRaf=requestAnimationFrame(()=>{
+      invalidateRaf=0;
+      map.invalidateSize({pan:false});
+    });
+  };
   window.addEventListener('message',e=>{
     if(e.origin!==window.location.origin || !e.data || e.data.type!=='bandeco:interno:shown')return;
-    requestAnimationFrame(()=>map.invalidateSize({pan:false}));
+    invalidateMap();
   });
-  window.addEventListener('resize',()=>map.invalidateSize({pan:false}));
+  window.addEventListener('resize',invalidateMap,{passive:true});
+  if(typeof ResizeObserver==='function')new ResizeObserver(invalidateMap).observe(document.documentElement);
 }else{
   document.body.classList.add('no-map');
 }

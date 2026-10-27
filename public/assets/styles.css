@@ -391,10 +391,11 @@ dialog{background:var(--card);color:var(--ink);border-color:var(--line)}
   .bandeco-tabs button:not(.sidebar-collapse){min-height:56px;min-width:0;flex-direction:column;gap:4px;justify-content:center;padding:6px 3px;font-size:11px}
   .bandeco-tabs button:not(.sidebar-collapse) svg{width:22px;height:22px}
   .site-wrap{padding-bottom:calc(122px + env(safe-area-inset-bottom,0px))}
-  .interno-page{min-height:calc(100dvh - 82px - env(safe-area-inset-bottom,0px));padding-top:0;padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
-  /* No celular, o mapa ocupa a área livre; a barra fixa permanece fora do iframe. */
   .interno-page .interno-heading{margin:0 0 6px;padding-top:2px}
-  .interno-frame{height:calc(100dvh - 155px - env(safe-area-inset-bottom,0px));min-height:0;border-radius:18px}
+  /* O mapa ocupa a área efetivamente disponível; a barra fixa é reservada uma única vez. */
+  .site-wrap.interno-active{height:100dvh;min-height:100dvh;display:grid;grid-template-rows:auto minmax(0,1fr);align-content:stretch;overflow:hidden;padding:17px 17px calc(88px + env(safe-area-inset-bottom,0px))}
+  .site-wrap.interno-active #interno-page{min-height:0;height:100%;display:grid;grid-template-rows:auto minmax(0,1fr);overflow:hidden;padding:0}
+  .site-wrap.interno-active .interno-frame{height:auto;min-height:0;width:100%;border-radius:18px}
 }
 .festa-card-v21{transition:transform .16s,box-shadow .16s}
 .festa-card-v21:hover{transform:translateY(-2px)}

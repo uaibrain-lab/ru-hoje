@@ -28,6 +28,7 @@ function switchTab(tab){
   const pages={menu:'bandeco-main',festas:'festas-page',interno:'interno-page',sobre:'sobre-page'};
   if(!Object.hasOwn(pages,tab))return;
   const changed=!Object.entries(pages).some(([name,id])=>name===tab && !$(id).hidden);
+  document.querySelector('.site-wrap')?.classList.toggle('interno-active',tab==='interno');
   for(const [name,id] of Object.entries(pages)){
     $(id).hidden=name!==tab;
     const button=$('tab-'+name);button.setAttribute('aria-current',name===tab?'page':'false');button.classList.toggle('is-active',name===tab);
