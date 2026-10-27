@@ -7,6 +7,16 @@ on:
     - cron: '10 19 * * 1-5'
     - cron: '0 13 * * 6'
   workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Modo da execução manual'
+        required: true
+        default: dry-run
+        type: choice
+        options:
+          - dry-run
+          - collect
+          - apply
 
 permissions:
   contents: read
@@ -38,4 +48,4 @@ jobs:
           workload_identity_provider: projects/858219271468/locations/global/workloadIdentityPools/hub-prod-actions/providers/hub-prod-sync
           service_account: hub-prod-sync@hubufmg.iam.gserviceaccount.com
       - run: npm ci --omit=dev --no-audit --no-fund
-      - run: node scripts/hub-production-menu-sync.mjs --mode=apply --days=7 --confirm=PUBLICAR_SOMENTE_HUB_UFMG
+      - run: node scripts/hub-production-menu-sync.mjs --mode=${{ github.event.inputs.mode || 'apply' }} --days=7 ${{ github.event.inputs.mode == 'apply' && '--confirm=PUBLICAR_SOMENTE_HUB_UFMG' || '' }}
