@@ -255,9 +255,12 @@ async function getRefreshDb() {
   const config = window.RU_CONFIG || {};
   if (config.firebaseProjectId !== 'hubufmg' || !config.firebaseWeb?.apiKey) throw new Error('CONFIGURACAO_PRODUCAO_AUSENTE');
   const appMod = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js');
+  const authMod = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js');
   const firestoreMod = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js');
   const app = appMod.getApps().find(item => item.name === 'hub-refresh-production') || appMod.initializeApp(config.firebaseWeb, 'hub-refresh-production');
-  state.refreshDb = { db: firestoreMod.getFirestore(app), ...firestoreMod };
+  const auth = authMod.getAuth(app);
+  if (!auth.currentUser) await authMod.signInAnonymously(auth);
+  state.refreshDb = { db: firestoreMod.getFirestore(app), auth, ...firestoreMod };
   return state.refreshDb;
 }
 async function readRefreshState() {
