@@ -1,4 +1,4 @@
-const VERSION = 'hub-ufmg-v260-20261027-prod';
+const VERSION = 'hub-ufmg-v260-20261027-interno-mobile-20261027';
 const SHELL = ['/', '/index.html', '/favicon.ico', '/config.js', '/assets/app.js', '/assets/dish-category.js', '/assets/date-availability.js', '/assets/festas.js', '/assets/festas-core.js', '/assets/festas-backend.js', '/assets/festas-public-key.json', '/assets/hours.js', '/assets/styles.css', '/assets/restaurantes/setorial-i.webp', '/assets/restaurantes/setorial-ii.webp', '/assets/restaurantes/direito.webp', '/assets/restaurantes/saude.webp', '/assets/restaurantes/ica.webp', '/assets/icons/icon.svg', '/assets/icons/icon-192.png', '/assets/icons/icon-512.png', '/assets/icons/icon-maskable-192.png', '/assets/icons/icon-maskable-512.png', '/assets/icons/apple-touch-icon.png', '/manifest.webmanifest', '/data/cardapios.json'];
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(VERSION).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting()));

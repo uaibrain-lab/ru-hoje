@@ -46,9 +46,10 @@ button{font:inherit;color:inherit;cursor:pointer}
 .fab{display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:999px;padding:9px 13px;background:var(--bg);color:var(--ink);font-size:14px;font-weight:700;box-shadow:var(--sh)}
 .fab .ic{width:18px;height:18px}
 .btn{border:0;border-radius:999px;padding:11px 15px;background:var(--ink);color:var(--bg);font-weight:700}
-#sheet{position:fixed;z-index:500;left:0;right:0;bottom:0;height:min(36dvh,315px);max-height:calc(100dvh - 75px);display:flex;flex-direction:column;overflow:hidden;background:var(--bg);border:1px solid var(--line);border-bottom:0;border-radius:22px 22px 0 0;box-shadow:0 -5px 24px rgba(16,24,40,.13);transition:height .23s ease}
+#sheet{position:fixed;z-index:500;left:0;right:0;bottom:0;height:min(42dvh,360px);max-height:calc(100dvh - 75px);display:flex;flex-direction:column;overflow:hidden;background:var(--bg);border:1px solid var(--line);border-bottom:0;border-radius:22px 22px 0 0;box-shadow:0 -5px 24px rgba(16,24,40,.13);transition:height .23s ease}
 #sheet.peek{height:calc(82px + env(safe-area-inset-bottom,0px))}
-#sheet.detail:not(.peek){height:min(44dvh,380px)}
+#sheet.detail:not(.peek){height:min(55dvh,480px)}
+#sheet.full,#sheet.detail.full{height:min(82dvh,calc(100dvh - 75px))}
 #grab{display:block;flex:none;z-index:2;width:100%;height:16px;border:0;background:var(--bg);padding:0;touch-action:pan-y}
 #grab::after{content:"";display:block;width:38px;height:4px;border-radius:3px;background:var(--mut);opacity:.5;margin:5px auto 0}
 .sheet-head{display:flex;align-items:center;gap:8px;flex:none;padding:3px 10px 9px 14px;min-height:54px}
@@ -141,7 +142,7 @@ const hav=(a,b,c,d)=>{const r=Math.PI/180,x=(c-a)*r,y=(d-b)*r,h=Math.sin(x/2)**2
 const fmD=d=>d<1000?Math.max(10,Math.round(d/10)*10)+' m':(d/1000).toFixed(1).replace('.',',')+' km';
 const walk=d=>Math.max(1,Math.round(d/80));
 
-let cat=dow()===6?'sabado':'diasUteis',tab='pontos',q='',view={t:'home'},hist=[],near={s:'loading'};
+let cat=dow()===6?'sabado':'diasUteis',tab='pontos',q='',view={t:'home'},hist=[],near={s:'loading'},sheetState=innerWidth>=760?'full':'peek';
 const isLive=()=>dow()!==0&&(cat==='sabado'?dow()===6:dow()!==6);
 const lines=()=>ALL.filter(l=>l.categoriaDia===cat);
 const byId=id=>ALL.find(l=>l.idRota===id);
@@ -208,16 +209,19 @@ function render(){
   el.innerHTML=fallback+(view.t==='home'?home():view.t==='stop'?stopView(view.id):view.t==='line'?lineView():nearView());
 }
 
-// O painel inicia recolhido no celular; selecao de mapa abre somente o necessario.
+// O painel inicia recolhido no celular e usa estados intermediário/expandido sem recriar o mapa.
 function syncSheet(){
   const alwaysOpen=document.body.classList.contains('no-map')||innerWidth>=760;
-  const expanded=alwaysOpen||!sh.classList.contains('peek');
+  const state=alwaysOpen?'full':sheetState;
+  sh.classList.toggle('peek',state==='peek');
+  sh.classList.toggle('full',state==='full');
   sh.classList.toggle('detail',view.t!=='home');
+  const expanded=state!=='peek';
   el.setAttribute('aria-hidden',String(!expanded));
   for(const id of ['grab','sheet-toggle']){
     const b=document.getElementById(id);
     b.setAttribute('aria-expanded',String(expanded));
-    b.setAttribute('aria-label',expanded?'Recolher lista':'Expandir lista');
+    b.setAttribute('aria-label',state==='peek'?'Expandir painel':state==='mid'?'Expandir detalhes':'Recolher painel');
   }
   for(const t of ['pontos','linhas']){
     const b=document.getElementById('quick-'+t),active=tab===t;
@@ -225,12 +229,12 @@ function syncSheet(){
     b.setAttribute('aria-pressed',String(active));
   }
 }
-function setExpanded(want){
-  if(document.body.classList.contains('no-map')||innerWidth>=760)want=true;
-  if(!want && el.contains(document.activeElement))document.getElementById('sheet-toggle').focus();
-  sh.classList.toggle('peek',!want);
-  syncSheet();
+function setSheetState(next){
+  if(document.body.classList.contains('no-map')||innerWidth>=760)next='full';
+  if(next==='peek' && el.contains(document.activeElement))document.getElementById('sheet-toggle').focus();
+  sheetState=next;syncSheet();
 }
+function setExpanded(want){setSheetState(want?'mid':'peek')}
 function pickQuickTab(t){
   tab=t;
   if(view.t!=='home'){hist=[];view={t:'home'};apply();}
@@ -259,7 +263,7 @@ if(window.L){
 }
 function focus(pts){if(!map)return;const m=innerWidth<760;
   // Considerar a altura final do painel, inclusive durante a animacao de abertura.
-  const covered=m?(sh.classList.contains('peek')?82:Math.round(Math.min(innerHeight*(view.t==='home'?.36:.44),view.t==='home'?315:380))):0;
+  const covered=m?(sh.classList.contains('peek')?82:sh.classList.contains('full')?Math.round(innerHeight*.82):Math.round(Math.min(innerHeight*(view.t==='home'?.42:.55),view.t==='home'?360:480))):0;
   map.fitBounds(L.latLngBounds(pts),{maxZoom:17,paddingTopLeft:[m?20:375,60],paddingBottomRight:[20,covered+24]})}
 function select(id){if(!sel)return;sel.clearLayers();L.circleMarker(S[id].coordenadas,{radius:14,color:'#2e90fa',weight:4,fill:false,interactive:false}).addTo(sel)}
 function apply(){if(route)route.clearLayers();if(sel)sel.clearLayers();
@@ -294,7 +298,7 @@ el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
 el.addEventListener('input',e=>{if(e.target.id==='q'){q=e.target.value;document.getElementById('list').innerHTML=stopsList()}});
 document.getElementById('loc').addEventListener('click',locate);
 setInterval(()=>{if(document.activeElement&&document.activeElement.id==='q')return;const s=el.scrollTop;render();el.scrollTop=s},30000);
-for(const id of ['grab','sheet-toggle'])document.getElementById(id).addEventListener('click',()=>setExpanded(sh.classList.contains('peek')));
+for(const id of ['grab','sheet-toggle'])document.getElementById(id).addEventListener('click',()=>setSheetState(sh.classList.contains('peek')?'mid':sh.classList.contains('full')?'peek':'full'));
 for(const t of ['pontos','linhas'])document.getElementById('quick-'+t).addEventListener('click',()=>pickQuickTab(t));
 // Deslizar sobre a cabecalho abre/fecha; rolagem da lista e gestos no mapa continuam nativos.
 let gestureStart=null;
