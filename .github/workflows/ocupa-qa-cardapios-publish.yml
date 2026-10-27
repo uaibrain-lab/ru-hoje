@@ -80,7 +80,7 @@ jobs:
         run: node --test tests/ocupa-qa-menu.test.mjs
 
       - name: Dry-run sem autenticação de escrita
-        if: ${{ !inputs.publish }}
+        if: ${{ !inputs.auth_probe && !inputs.publish }}
         working-directory: cardapios-qa
         run: node scripts/ocupa-qa-menu-sync.mjs --mode=dry-run --days=7
 

@@ -43,7 +43,7 @@ test('conta do probe não é reutilizada', () => assert.doesNotMatch(workflow,/o
 test('provider dedicado aparece no workflow', () => assert.match(workflow,/workloadIdentityPools\/ocupa-qa-publisher\/providers\/ocupa-qa-cardapios-publish/));
 test('auth probe exige publish desligado', () => assert.match(workflow,/test '\$\{\{ inputs\.publish \}\}' = 'false'/));
 test('auth probe exige confirmação desligada', () => assert.match(workflow,/test '\$\{\{ inputs\.confirm \}\}' = 'false'/));
-test('auth probe não executa sincronizador', () => { assert.match(workflow,/if: \$\{\{ !inputs\.auth_probe \}\}/); assert.match(workflow,/OCUPA_P5F2A_WIF_OK=1/); });
+test('auth probe não executa sincronizador', () => { assert.match(workflow,/if: \$\{\{ !inputs\.auth_probe && !inputs\.publish \}\}/); assert.match(workflow,/OCUPA_P5F2A_WIF_OK=1/); });
 test('auth usa token curto e não exporta ambiente', () => { assert.match(workflow,/access_token_lifetime: 300s/); assert.match(workflow,/export_environment_variables: false/); });
 test('publisher não usa secrets ou credenciais persistidas', () => { assert.doesNotMatch(workflow,/secrets\./); assert.match(workflow,/create_credentials_file: false/); });
 test('publisher não tem cron nem apply no probe', () => { assert.doesNotMatch(workflow,/schedule:/); assert.match(workflow,/!inputs\.auth_probe/); });
