@@ -1,0 +1,112 @@
+name: OCUPA UFMG - FUMP API monitor (read-only, 14 days)
+
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: 'Dias futuros consultados (1 a 7)'
+        required: true
+        default: '7'
+        type: string
+  schedule:
+    # América/São_Paulo; a janela termina em 2026-11-09 inclusive.
+    - cron: '0,30 5-7 * * 1-6'
+      timezone: 'America/Sao_Paulo'
+    - cron: '0,15,30,45 8-10 * * 1-6'
+      timezone: 'America/Sao_Paulo'
+    - cron: '0,30 11-13 * * 1-6'
+      timezone: 'America/Sao_Paulo'
+    - cron: '0,15,30,45 14-17 * * 1-6'
+      timezone: 'America/Sao_Paulo'
+    - cron: '0 18-21 * * 1-6'
+      timezone: 'America/Sao_Paulo'
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: ocupa-qa-cardapios-monitor
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: read
+      actions: read
+    env:
+      MONITOR_START_DATE: '2026-10-27'
+      MONITOR_WINDOW_DAYS: '14'
+      DAYS: ${{ inputs.days || '7' }}
+    steps:
+      - name: Validar repositório e janela
+        env:
+          REPOSITORY: ${{ github.repository }}
+          REPOSITORY_ID: ${{ github.repository_id }}
+          OWNER_ID: ${{ github.repository_owner_id }}
+          REF: ${{ github.ref }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          test "$REPOSITORY" = 'uaibrain-lab/ru-hoje'
+          test "$REPOSITORY_ID" = '1425884929'
+          test "$OWNER_ID" = '342577642'
+          test "$REF" = 'refs/heads/main'
+          test "$EVENT" = 'schedule' -o "$EVENT" = 'workflow_dispatch'
+          case "$DAYS" in 1|2|3|4|5|6|7) ;; *) echo 'DIAS_INVALIDOS'; exit 1;; esac
+
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: cardapios-qa/package-lock.json
+
+      - name: Instalar apenas dependências de leitura
+        working-directory: cardapios-qa
+        run: npm ci --omit=dev --no-audit --no-fund
+
+      - name: Localizar estado da execução anterior
+        id: previous
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'ocupa-qa-cardapios-monitor.yml',
+              branch: 'main',
+              status: 'completed',
+              per_page: 20
+            });
+            const previous = runs.find(run => run.id !== context.runId && run.conclusion === 'success');
+            core.setOutput('run_id', previous ? String(previous.id) : '');
+
+      - name: Recuperar estado read-only anterior
+        if: ${{ steps.previous.outputs.run_id != '' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: ocupa-qa-cardapios-monitor-state
+          path: cardapios-qa/monitor-state
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.previous.outputs.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Consultar API FUMP e calcular diferenças
+        working-directory: cardapios-qa
+        run: |
+          node scripts/ocupa-qa-api-monitor.mjs --days="$DAYS" --window-start="$MONITOR_START_DATE" --window-days="$MONITOR_WINDOW_DAYS" --state-dir=monitor-state
+
+      - name: Publicar estado e relatório como artefatos
+        uses: actions/upload-artifact@v4
+        with:
+          name: ocupa-qa-cardapios-monitor-state
+          path: cardapios-qa/monitor-state
+          if-no-files-found: error
+          retention-days: 14
