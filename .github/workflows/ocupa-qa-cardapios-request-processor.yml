@@ -1,0 +1,45 @@
+# PREPARADO LOCALMENTE — NÃO PUBLICADO/ATIVADO.
+name: OCUPA QA — processar pedido comunitário de cardápio
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Autorizar esta execução controlada QA'
+        required: true
+        default: false
+        type: boolean
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: ocupa-qa-cardapios-request
+  cancel-in-progress: false
+jobs:
+  process:
+    if: ${{ vars.OCUPA_QA_REFRESH_ENABLED == 'true' && github.repository == 'uaibrain-lab/ru-hoje' && github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || inputs.confirm == true) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Autenticar WIF QA
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.OCUPA_QA_REFRESH_WIF_PROVIDER }}
+          service_account: ${{ vars.OCUPA_QA_REFRESH_SERVICE_ACCOUNT }}
+      - name: Processar pedido, se houver
+        env:
+          GCLOUD_PROJECT: bandeco-homologacao
+          GOOGLE_CLOUD_PROJECT: bandeco-homologacao
+          OCUPA_QA_SYNC_ENABLED: 'true'
+          OCUPA_QA_PUBLISH_ENABLED: 'true'
+          OCUPA_QA_REFRESH_ENABLED: ${{ vars.OCUPA_QA_REFRESH_ENABLED }}
+          OCUPA_QA_ALLOWED_REPO: ${{ github.repository }}
+          OCUPA_QA_BACKUP_DIR: ${{ runner.temp }}/ocupa-qa-backups
+        run: node scripts/ocupa-qa-request-processor.mjs --mode=apply

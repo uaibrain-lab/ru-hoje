@@ -1,3 +1,4 @@
+// OCUPA_RU_P3_CLIENT_FIX
 import {currentOpening, weeklySummary} from './hours.js';
 import {publishedCategory} from './dish-category.js';
 import {isMissingMenu, dateChipLabel} from './date-availability.js';
@@ -7,8 +8,8 @@ const STORAGE_PREFERS_CAFE = 'ruhoje:prefers-cafe:v1';
 const STORAGE_DATA = 'ruhoje:menus:v1';
 const TIMEZONE = 'America/Sao_Paulo';
 const RU_LIST = [
-  { id: 'setorial-i', photo: '/assets/restaurantes/setorial-i.webp', name: 'RU Setorial I', region: 'Campus Pampulha', meals: ['almoco', 'jantar'], saturday:true },
-  { id: 'setorial-ii', photo: '/assets/restaurantes/setorial-ii.webp', name: 'RU Setorial II', region: 'Campus Pampulha', meals: ['cafe', 'almoco'] },
+  { id: 'setorial-i', photo: '/assets/restaurantes/setorial-i.webp', name: 'RU Setorial I', region: 'Campus Pampulha', meals: ['cafe', 'almoco'], saturday:true },
+  { id: 'setorial-ii', photo: '/assets/restaurantes/setorial-ii.webp', name: 'RU Setorial II', region: 'Campus Pampulha', meals: ['almoco', 'jantar'] },
   { id: 'saude', photo: '/assets/restaurantes/saude.webp', name: 'RU Saúde', region: 'Campus Saúde', meals: ['cafe', 'almoco', 'jantar'], saturday:true },
   { id: 'direito', photo: '/assets/restaurantes/direito.webp', name: 'RU Direito', region: 'Faculdade de Direito', meals: ['cafe', 'almoco', 'jantar'] },
   { id: 'ica', photo: '/assets/restaurantes/ica.webp', name: 'RU ICA', region: 'Montes Claros', meals: ['cafe', 'almoco', 'jantar'], saturday:true },
@@ -24,7 +25,7 @@ const GROUP_ICONS = Object.freeze({
   'Acompanhamentos':'🍚','Saladas':'🥗','Molhos':'🥣','Sobremesas':'🍮','Bebidas':'🥤','Outros':'🍽️'
 });
 const $ = (id) => document.getElementById(id);
-const state = { selectedRu: null, selectedDate: null, data: null, lastError: null, syncing: false, initialOpen: false };
+const state = { selectedRu: null, selectedDate: null, data: null, lastError: null, fallbackUsed: false, syncing: false, initialOpen: false, refreshMessage: '', refreshDb: null };
 
 function readStore(key) { try { return localStorage.getItem(key); } catch { return null; } }
 function writeStore(key, value) { try { localStorage.setItem(key, value); } catch {} }
@@ -239,6 +240,80 @@ function formatUpdate(iso) {
   if (!iso || !Number.isFinite(Date.parse(iso))) return '';
   return new Intl.DateTimeFormat('pt-BR', { timeZone: TIMEZONE, dateStyle:'short', timeStyle:'short' }).format(new Date(iso));
 }
+function setRefreshMessage(message) {
+  state.refreshMessage = message || '';
+  const line = $('update-line');
+  if (line) line.textContent = state.refreshMessage;
+}
+function formatRemaining(timestamp) {
+  const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
+  const minutes = Math.max(1, Math.ceil((date.getTime() - Date.now()) / 60000));
+  return minutes < 60 ? `${minutes} min` : `${Math.ceil(minutes / 60)} h`;
+}
+async function getRefreshDb() {
+  if (state.refreshDb) return state.refreshDb;
+  const config = window.RU_CONFIG || {};
+  if (config.firebaseProjectId !== 'hubufmg' || !config.firebaseWeb?.apiKey) throw new Error('CONFIGURACAO_PRODUCAO_AUSENTE');
+  const appMod = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js');
+  const firestoreMod = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js');
+  const app = appMod.getApps().find(item => item.name === 'hub-refresh-production') || appMod.initializeApp(config.firebaseWeb, 'hub-refresh-production');
+  state.refreshDb = { db: firestoreMod.getFirestore(app), ...firestoreMod };
+  return state.refreshDb;
+}
+async function readRefreshState() {
+  try {
+    const {db, doc, getDoc} = await getRefreshDb();
+    const snap = await getDoc(doc(db, 'menuSyncState', 'current'));
+    if (!snap.exists()) return null;
+    const value = snap.data();
+    const nextAllowedAt = value.nextAllowedAt?.toDate?.() || null;
+    if (value.status === 'success') {
+      setRefreshMessage('Cardápios atualizados');
+    } else if (value.status === 'no-change') {
+      setRefreshMessage('Nenhuma alteração encontrada');
+    } else if (value.status === 'error') {
+      setRefreshMessage('Tente novamente mais tarde');
+    } else if (value.status === 'running' || value.status === 'pending') {
+      setRefreshMessage('Verificando cardápios');
+    } else if (nextAllowedAt && nextAllowedAt > new Date()) {
+      setRefreshMessage(`Tente novamente mais tarde · próxima consulta em ${formatRemaining(nextAllowedAt)}`);
+    }
+    return value;
+  } catch (error) {
+    console.warn('Estado comunitário indisponível:', error);
+    return null;
+  }
+}
+async function requestCommunityRefresh() {
+  if (!navigator.onLine) {
+    setRefreshMessage('Você está offline. Cache local atualizado; nenhuma solicitação remota foi criada.');
+    return;
+  }
+  try {
+    const {db, doc, getDoc, runTransaction, serverTimestamp} = await getRefreshDb();
+    const stateRef = doc(db, 'menuSyncState', 'current');
+    const requestRef = doc(db, 'menuSyncRequests', 'current');
+    const result = await runTransaction(db, async tx => {
+      const stateSnap = await tx.get(stateRef);
+      const requestSnap = await tx.get(requestRef);
+      const syncState = stateSnap.exists() ? stateSnap.data() : {};
+      const nextAllowedAt = syncState.nextAllowedAt?.toDate?.() || null;
+      const currentStatus = syncState.status || requestSnap.data()?.status;
+      if (currentStatus === 'running' || currentStatus === 'pending') return {kind: 'pending'};
+      if (nextAllowedAt && nextAllowedAt > new Date()) return {kind: 'cooldown', nextAllowedAt};
+      const payload = {requestedAt: serverTimestamp(), status: 'pending'};
+      if (requestSnap.exists()) tx.update(requestRef, payload);
+      else tx.set(requestRef, payload);
+      return {kind: 'requested'};
+    });
+    if (result.kind === 'cooldown') setRefreshMessage(`Tente novamente mais tarde · próxima consulta em ${formatRemaining(result.nextAllowedAt)}`);
+    else if (result.kind === 'pending') setRefreshMessage('Verificando cardápios');
+    else setRefreshMessage('Atualização solicitada');
+  } catch (error) {
+    console.warn('Solicitação comunitária não registrada:', error);
+    setRefreshMessage('Tente novamente mais tarde');
+  }
+}
 function renderMenus() {
   const today = sPauloParts();
   const ru = selectedRu();
@@ -251,21 +326,26 @@ function renderMenus() {
   if (!ru) {
     const msg = el('div','no-menu');
     msg.append(el('h3','', 'Primeiro, escolha seu RU'), el('p','', 'Salvaremos sua preferência para abrir direto no cardápio das próximas vezes.'));
-    list.append(msg); $('update-line').textContent = ''; return;
+    list.append(msg); $('update-line').textContent = state.refreshMessage || ''; return;
   }
-  if (state.lastError && state.data && day === today.iso) {
-    $('connection-notice').textContent = 'Não foi possível atualizar agora. Exibindo os últimos dados disponíveis; confira a FUMP antes de sair.';
+  if (state.lastError && day === today.iso) {
+    $('connection-notice').textContent = state.data
+      ? 'Não foi possível atualizar agora. Exibindo os últimos dados disponíveis; confira a FUMP antes de sair.'
+      : 'Não foi possível consultar o cardápio neste momento. Confira os dados diretamente na FUMP.';
+    $('connection-notice').hidden = false;
+  } else if (state.fallbackUsed && day === today.iso) {
+    $('connection-notice').textContent = 'Dados carregados da cópia estática de contingência; confirme na FUMP antes de sair.';
     $('connection-notice').hidden = false;
   } else if (!navigator.onLine) {
     $('connection-notice').textContent = 'Você está offline. Os dados disponíveis podem estar desatualizados.';
     $('connection-notice').hidden = false;
   }
   // Exibir somente refeições efetivamente publicadas pela FUMP. Não criar cartões vazios.
-  const entries = ['almoco','jantar','cafe'].filter(m => Array.isArray(data?.meals?.[m]?.items) && data.meals[m].items.length > 0);
+  const entries = ['almoco','jantar','cafe'].filter(m => ru.meals.includes(m) && Array.isArray(data?.meals?.[m]?.items) && data.meals[m].items.length > 0);
   const hasItems = entries.some(m => Array.isArray(data?.meals?.[m]?.items) && data.meals[m].items.length);
   if (!hasItems) {
     list.append(renderNoMenu(ru,day));
-    $('update-line').textContent = fallbackUpdate ? `Última coleta: ${formatUpdate(fallbackUpdate)} · Fonte: FUMP` : 'Aguardando primeira sincronização dos cardápios da FUMP.';
+    $('update-line').textContent = state.refreshMessage || (fallbackUpdate ? `Última coleta: ${formatUpdate(fallbackUpdate)} · Fonte: FUMP` : 'Aguardando primeira sincronização dos cardápios da FUMP.');
     return;
   }
   const hasRealMeal = id => !!data?.meals?.[id]?.items?.length;
@@ -283,6 +363,7 @@ function renderMenus() {
     $('connection-notice').hidden = false;
   }
   $('update-line').textContent = updatedAt ? `Última consulta: ${formatUpdate(updatedAt)} · Fonte: FUMP` : 'Fonte: FUMP';
+  if (state.refreshMessage) $('update-line').textContent = state.refreshMessage;
 }
 function replaceIfNewer(value) {
   if (!isDataValid(value)) return false;
@@ -309,6 +390,7 @@ async function fetchMenus() {
   if (state.syncing) return;
   state.syncing = true;
   state.lastError = null;
+  state.fallbackUsed = false;
   $('refresh-button').classList.add('is-loading');
   $('refresh-button').disabled = true;
   try {
@@ -318,8 +400,25 @@ async function fetchMenus() {
       data = await getJSON(config.publicFeedUrl);
     } else if (config.firebaseProjectId) {
       const id = encodeURIComponent(config.firebaseProjectId);
-      const doc = await getJSON(`https://firestore.googleapis.com/v1/projects/${id}/databases/(default)/documents/publicMenus/current`);
-      data = JSON.parse(doc.fields?.payload?.stringValue || 'null');
+      try {
+        const doc = await getJSON(`https://firestore.googleapis.com/v1/projects/${id}/databases/(default)/documents/publicMenus/current`);
+        data = JSON.parse(doc.fields?.payload?.stringValue || 'null');
+      } catch (feedError) {
+        // Contingência exclusivamente com dados reais e recentes já publicados no próprio Hosting.
+        // O fallback vazio/desatualizado NÃO mascara a indisponibilidade do Firestore.
+        let staticData = null;
+        try { staticData = await getJSON('/data/cardapios.json'); } catch { /* conservar erro original */ }
+        const ageMs = Date.now() - Date.parse(staticData?.generatedAt || '');
+        const validAge = Number.isFinite(ageMs) && ageMs >= -600000 && ageMs <= 72 * 3600000;
+        const today = sPauloParts().iso;
+        const hasConfirmedLunch = Array.from({length: 5}, (_, n) => addDays(today, n)).some(date =>
+          ['setorial-i', 'setorial-ii'].some(ru =>
+            Array.isArray(staticData?.days?.[date]?.restaurants?.[ru]?.meals?.almoco?.items) &&
+            staticData.days[date].restaurants[ru].meals.almoco.items.length > 0));
+        if (!isDataValid(staticData) || !validAge || !hasConfirmedLunch) throw feedError;
+        data = staticData;
+        state.fallbackUsed = true;
+      }
     } else {
       data = await getJSON('/data/cardapios.json');
     }
@@ -391,7 +490,13 @@ function boot() {
   initDialog();
   renderRestaurant(); renderDates({scroll:true}); renderMenus();
   $('today-button').addEventListener('click',()=> {state.selectedDate=sPauloParts().iso;renderDates({scroll:true});renderMenus();});
-  $('refresh-button').addEventListener('click', fetchMenus);
+  $('refresh-button').addEventListener('click', async () => {
+    state.refreshMessage = '';
+    setRefreshMessage('Verificando cardápios');
+    await fetchMenus();
+    await readRefreshState();
+    await requestCommunityRefresh();
+  });
   window.addEventListener('online',fetchMenus);
   window.addEventListener('offline',renderMenus);
   document.addEventListener('visibilitychange',()=> { if(!document.hidden){maybeTick();fetchMenus();} });
@@ -409,6 +514,7 @@ function boot() {
   }
   setInterval(maybeTick,60_000); maybeTick();
   fetchMenus();
+  readRefreshState();
   if (!state.selectedRu) {requestAnimationFrame(() => openDialog());}
   if ('serviceWorker' in navigator && window.isSecureContext) window.addEventListener('load',()=>navigator.serviceWorker.register('/service-worker.js').catch(()=>{}));
 }

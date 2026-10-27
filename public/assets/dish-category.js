@@ -39,7 +39,13 @@ const VERIFIED_VEGETARIAN_LEGACY = new Set([
 ]);
 
 export function unregisteredCategory(name) {
-  return UNREGISTERED_OVERRIDES[normal(name)] || '';
+  const key = normal(name);
+  // A FUMP pode enviar strogonoff sem tipo cadastrado. O prato continua
+  // sendo principal; somente a variante explicitamente vegana é vegetariana.
+  if (/\bstrogonoff\b/.test(key)) {
+    return /\b(?:vegano|vegetariano)\b/.test(key) ? 'vegetariana' : 'proteina';
+  }
+  return UNREGISTERED_OVERRIDES[key] || '';
 }
 
 /**

@@ -1,14 +1,243 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Apenas o JSON público de cardápios: uma única leitura, sem login.
+    function signedIn() { return request.auth != null; }
+    // Um ÚNICO proprietário provisionado fora do navegador.
+    function adminPath() {return /databases/$(database)/documents/eventAdminAccess/owner;}
+    function isAdmin() {return signedIn() && exists(adminPath())
+      && get(adminPath()).data.enabled == true
+      && get(adminPath()).data.uid == request.auth.uid
+      && request.auth.token.firebase.sign_in_provider == 'google.com';}
+    function isParticipant() {return signedIn() && request.auth.token.firebase.sign_in_provider == 'anonymous';}
+    function eventPath(id) {return /databases/$(database)/documents/events/$(id);}
+    function entryPath(eventId, uid) {return /databases/$(database)/documents/events/$(eventId)/entries/$(uid);}
+    function profilePath(uid) {return /databases/$(database)/documents/eventProfiles/$(uid);}
+    function eventFieldsOK() {
+      return request.resource.data.keys().hasOnly([
+        'name','place','organizer','description','startsAt','ticketUrl','posterUrl','hasUploadedPoster',
+        'winnerCount','alternateCount','raffleStatus','published','archived',
+        'partnerLabel','participantCount','updatedAt','tags','rulesText','drawAt','drawAtUtc','drawAtTimestamp'
+      ]) && request.resource.data.name is string
+        && request.resource.data.name.size() <= 100
+        && request.resource.data.published is bool
+        && (!('archived' in request.resource.data) || request.resource.data.archived is bool)
+        && request.resource.data.participantCount is int
+        && request.resource.data.participantCount >= 0
+        && request.resource.data.raffleStatus in ['disabled','open','closed','drawn']
+        && request.resource.data.winnerCount is int && request.resource.data.winnerCount >= 0
+        && request.resource.data.alternateCount is int && request.resource.data.alternateCount >= 0
+        && (!('hasUploadedPoster' in request.resource.data) || request.resource.data.hasUploadedPoster is bool)
+        && (!('tags' in request.resource.data) || (request.resource.data.tags is list && request.resource.data.tags.size() <= 8))
+        && (!('rulesText' in request.resource.data) || (request.resource.data.rulesText is string && request.resource.data.rulesText.size() <= 1800))
+        && (!('drawAt' in request.resource.data) || (request.resource.data.drawAt is string && request.resource.data.drawAt.size() <= 16))
+        && (!('drawAtUtc' in request.resource.data) || (request.resource.data.drawAtUtc is string && request.resource.data.drawAtUtc.size() <= 30))
+        && (!('drawAtTimestamp' in request.resource.data) || request.resource.data.drawAtTimestamp is timestamp)
+        && (request.resource.data.raffleStatus == 'disabled'
+          || ('drawAtTimestamp' in request.resource.data && request.resource.data.drawAtTimestamp is timestamp));
+    }
+    // O cliente nunca publica resultado, mesmo quando administra o evento.
+    // Encerrados podem receber somente edição cosmética; deadline e premiação ficam congelados.
+    function adminEventUpdate(eventId) {
+      let changed = request.resource.data.diff(resource.data).affectedKeys();
+      let initial = resource.data.raffleStatus == 'disabled';
+      let archivedNow = request.resource.data.get('archived', false) == true;
+      let archiving = archivedNow && resource.data.get('archived', false) != true;
+      return isAdmin() && eventFieldsOK()
+        // Festa com resultado: SOMENTE visibilidade (sem mutar sorteio, inscrições ou dados).
+        && ((resource.data.raffleStatus == 'drawn'
+             && request.resource.data.raffleStatus == 'drawn'
+             && changed.hasOnly(['published','updatedAt'])
+             && request.resource.data.participantCount == resource.data.participantCount
+             && request.resource.data.get('archived', false) == resource.data.get('archived', false))
+        || (!exists(/databases/$(database)/documents/events/$(eventId)/results/official)
+        && !exists(/databases/$(database)/documents/events/$(eventId)/resultPrivate/official)
+        && resource.data.raffleStatus != 'drawn'
+        && request.resource.data.raffleStatus != 'drawn'
+        && request.resource.data.participantCount == resource.data.participantCount
+        // Não cancelar sorteio com inscritos por simples alternância de visibilidade.
+        && !(resource.data.raffleStatus == 'open'
+             && resource.data.participantCount > 0
+             && resource.data.published == true
+             && request.resource.data.published == false)
+        && (!archiving || (
+          resource.data.participantCount == 0
+          && !exists(/databases/$(database)/documents/events/$(eventId)/results/official)
+          && !exists(/databases/$(database)/documents/events/$(eventId)/resultPrivate/official)
+          && request.resource.data.published == false))
+        && (initial && resource.data.participantCount == 0
+          || changed.hasOnly(['name','place','organizer','description','startsAt','ticketUrl','posterUrl','hasUploadedPoster','published','partnerLabel','updatedAt','tags','archived'])
+          || (resource.data.raffleStatus == 'open'
+              && resource.data.participantCount == 0
+              && changed.hasOnly(['name','place','organizer','description','startsAt','ticketUrl','posterUrl','hasUploadedPoster','published','partnerLabel','updatedAt','tags','archived','rulesText','drawAt','drawAtUtc','drawAtTimestamp','winnerCount','alternateCount'])))
+        && (!changed.hasAny(['drawAt','drawAtUtc','drawAtTimestamp','raffleStatus']) ||
+          request.resource.data.raffleStatus == 'disabled' ||
+          (changed.hasAny(['drawAtTimestamp'])
+            && request.resource.data.drawAtTimestamp > request.time))));
+
+    }
+    // Inscrição silenciosa por Auth anônimo. Não expõe buscas por @ de terceiros.
+    // Só permite aumentar contador quando a MESMA transação cria uma entrada do UID.
+    function canJoinCount(eventId) {
+      return isParticipant() && resource.data.published == true
+        && (!('archived' in resource.data) || resource.data.archived == false)
+        && resource.data.raffleStatus == 'open'
+        && ('drawAtTimestamp' in resource.data)
+        && request.time < resource.data.drawAtTimestamp
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['participantCount'])
+        && request.resource.data.participantCount == resource.data.participantCount + 1
+        && resource.data.participantCount < 5000
+        && !exists(entryPath(eventId,request.auth.uid))
+        && existsAfter(entryPath(eventId,request.auth.uid))
+        && getAfter(entryPath(eventId,request.auth.uid)).data.createdAt == request.time;
+    }
+    // Leitura antiga do cardápio nunca depende de login.
     match /publicMenus/current {
       allow get: if true;
       allow list, create, update, delete: if false;
     }
-    // Atenção: nunca aplicar estas regras sobre um banco de outro aplicativo.
-    match /{document=**} {
-      allow read, write: if false;
+    // Estado sanitizado, escrito apenas pelo publicador QA privado.
+    match /menuSyncState/current {
+      allow get: if true;
+      allow list, create, update, delete: if false;
     }
+    // Pedido único global: o visitante só pode gravar o instante do pedido
+    // usando o relógio do servidor. O cooldown é conferido contra o estado
+    // privado do sincronizador; nenhum cardápio ou hash pode ser enviado.
+    match /menuSyncRequests/current {
+      allow get: if true;
+      allow create: if request.resource.data.keys().hasOnly(['requestedAt','status'])
+        && request.resource.data.status == 'pending'
+        && request.resource.data.requestedAt == request.time
+        && exists(/databases/$(database)/documents/menuSyncState/current)
+        && get(/databases/$(database)/documents/menuSyncState/current).data.acceptingRequests == true
+        && (!('status' in get(/databases/$(database)/documents/menuSyncState/current).data)
+          || get(/databases/$(database)/documents/menuSyncState/current).data.status != 'running')
+        && (!('nextAllowedAt' in get(/databases/$(database)/documents/menuSyncState/current).data)
+          || get(/databases/$(database)/documents/menuSyncState/current).data.nextAllowedAt <= request.time);
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['requestedAt','status'])
+        && request.resource.data.status == 'pending'
+        && request.resource.data.requestedAt == request.time
+        && resource.data.status != 'pending'
+        && exists(/databases/$(database)/documents/menuSyncState/current)
+        && get(/databases/$(database)/documents/menuSyncState/current).data.acceptingRequests == true
+        && (!('status' in get(/databases/$(database)/documents/menuSyncState/current).data)
+          || get(/databases/$(database)/documents/menuSyncState/current).data.status != 'running')
+        && (!('nextAllowedAt' in get(/databases/$(database)/documents/menuSyncState/current).data)
+          || get(/databases/$(database)/documents/menuSyncState/current).data.nextAllowedAt <= request.time);
+      allow list, delete: if false;
+    }
+    // Administrador deve ser provisionado via Console ou Admin SDK, nunca via navegador.
+    match /eventAdminAccess/{accessId} {
+      allow get: if accessId == 'owner' && signedIn()
+        && resource.data.enabled == true && resource.data.uid == request.auth.uid;
+      allow list, create, update, delete: if false;
+    }
+    // Eventos promocionais: visitante só vê publicações, admin vê rascunhos.
+    match /events/{eventId} {
+      allow get, list: if (resource.data.published == true
+        && resource.data.archived == false) || isAdmin();
+      allow create: if isAdmin() && eventFieldsOK()
+        && request.resource.data.participantCount == 0
+        && request.resource.data.get('archived', false) == false
+        && request.resource.data.raffleStatus != 'drawn'
+        && (request.resource.data.raffleStatus == 'disabled'
+            || request.resource.data.drawAtTimestamp > request.time);
+      allow update: if canJoinCount(eventId) || adminEventUpdate(eventId);
+      // Nenhum delete de evento/inscrições pelo SDK cliente: evita órfãos e perda parcial.
+      allow delete: if false;
+
+      match /entries/{uid} {
+        allow get: if isAdmin() || (signedIn() && request.auth.uid == uid);
+        allow list: if isAdmin();
+        allow create: if isParticipant() && request.auth.uid == uid
+          && request.resource.data.keys().hasOnly(['createdAt','termsAcceptedAt','encryptedProfile'])
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.termsAcceptedAt == request.time
+          && request.resource.data.encryptedProfile is map
+          && request.resource.data.encryptedProfile.keys().hasOnly(['version','algorithm','iv','wrappedKey','ciphertext'])
+          && request.resource.data.encryptedProfile.version == 1
+          && request.resource.data.encryptedProfile.algorithm == 'RSA-OAEP-SHA256+AES-256-GCM'
+          && request.resource.data.encryptedProfile.iv is string
+          && request.resource.data.encryptedProfile.wrappedKey is string
+          && request.resource.data.encryptedProfile.ciphertext is string
+          && request.resource.data.encryptedProfile.ciphertext.size() <= 12000
+          && request.resource.data.encryptedProfile.iv.size() <= 128
+          && request.resource.data.encryptedProfile.wrappedKey.size() <= 1500
+          && exists(profilePath(uid)) && exists(eventPath(eventId))
+          && get(eventPath(eventId)).data.published == true
+          && get(eventPath(eventId)).data.archived == false
+          && get(eventPath(eventId)).data.raffleStatus == 'open'
+          && ('drawAtTimestamp' in get(eventPath(eventId)).data)
+          && request.time < get(eventPath(eventId)).data.drawAtTimestamp
+          && getAfter(eventPath(eventId)).data.participantCount == get(eventPath(eventId)).data.participantCount + 1;
+        allow update: if false;
+        allow delete: if false;
+      }
+      match /resultPrivate/{resultId} {
+        allow get, list: if isAdmin();
+        allow create, update, delete: if false; // Somente executor Admin SDK.
+      }
+      match /results/{resultId} {
+        allow get: if isAdmin() || (resultId == 'official'
+          && resource.data.status == 'published'
+          && exists(eventPath(eventId))
+          && get(eventPath(eventId)).data.published == true
+          && get(eventPath(eventId)).data.archived == false);
+        allow list: if false;
+        // Publicação somente pelo executor privado com Admin SDK; o navegador,
+        // inclusive o administrador autenticado, não pode fabricar resultados.
+        allow create, update, delete: if false;
+      }
+    }
+    // Regras padrão: acessíveis e editáveis apenas por administradores autenticados.
+    match /eventSettings/{settingId} {
+      allow get: if settingId in ['raffleDefaults','tagCatalog'] && isAdmin();
+      allow list, delete: if false;
+      allow create, update: if isAdmin() && request.resource.data.updatedAt == request.time && (
+          (settingId == 'raffleDefaults'
+            && request.resource.data.keys().hasOnly(['rulesText','updatedAt'])
+            && request.resource.data.rulesText is string
+            && request.resource.data.rulesText.size() <= 1800)
+          || (settingId == 'tagCatalog'
+            && request.resource.data.keys().hasOnly(['tags','updatedAt'])
+            && request.resource.data.tags is list
+            && request.resource.data.tags.size() <= 30)
+        );
+    }
+    // Imagens otimizadas em documento próprio: o arquivo original NÃO é exposto.
+    // Limite de tamanho reduzido para respeitar Spark e o limite de 1 MiB/documento.
+    match /eventPosters/{eventId} {
+      allow get: if isAdmin() || (exists(eventPath(eventId)) && get(eventPath(eventId)).data.published == true
+        && get(eventPath(eventId)).data.archived == false);
+      allow list: if false;
+      allow create, update: if isAdmin() && existsAfter(eventPath(eventId))
+        && request.resource.data.keys().hasOnly(['imageDataUrl','updatedAt'])
+        && request.resource.data.imageDataUrl is string
+        && request.resource.data.imageDataUrl.size() <= 330000
+        && request.resource.data.imageDataUrl.matches('^data:image/(webp|jpeg);base64,[A-Za-z0-9+/=]+$')
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+    }
+    // Informações pessoais: SOMENTE conteúdo cifrado (sem nome/e-mail/@ legíveis).
+    match /eventProfiles/{uid} {
+      allow get: if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow list: if isAdmin();
+      allow create, update: if isParticipant() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['encrypted','updatedAt','schemaVersion'])
+        && request.resource.data.schemaVersion == 1
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.encrypted is map
+        && request.resource.data.encrypted.keys().hasOnly(['version','algorithm','iv','wrappedKey','ciphertext'])
+        && request.resource.data.encrypted.version == 1
+        && request.resource.data.encrypted.algorithm == 'RSA-OAEP-SHA256+AES-256-GCM'
+        && request.resource.data.encrypted.iv is string
+        && request.resource.data.encrypted.wrappedKey is string
+        && request.resource.data.encrypted.ciphertext is string
+        && request.resource.data.encrypted.ciphertext.size() <= 12000
+        && request.resource.data.encrypted.iv.size() <= 128
+        && request.resource.data.encrypted.wrappedKey.size() <= 1500;
+      allow delete: if (isParticipant() && request.auth.uid == uid) || isAdmin();
+    }
+    match /{document=**} {allow read, write: if false;}
   }
 }

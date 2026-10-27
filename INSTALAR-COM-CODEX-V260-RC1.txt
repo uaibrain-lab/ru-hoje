@@ -1,0 +1,109 @@
+EXECUTOR: CODEX — SOMENTE INSTALAÇÃO E VALIDAÇÃO DO PACOTE PRONTO
+PROJETO: BANDECO FESTAS V2.6.0-RC1
+
+OBJETIVO
+Instalar o ZIP CUMULATIVO E JÁ CORRIGIDO fornecido pelo ChatGPT em
+D:\Downloads\ru-hoje-homologacao, realizar backup, validações e, somente se
+seguro, publicar Rules e Preview Channel EXCLUSIVAMENTE em bandeco-homologacao.
+NÃO desenvolver, reescrever, auditar novamente nem corrigir código por conta
+própria. Se um teste falhar, interromper antes do deploy e devolver logs.
+
+PACOTE ESPERADO
+D:\Downloads\BANDECO-v2.6.0-RC1-CORRIGIDO.zip
+Ele contém a pasta ru-hoje-homologacao com todos os arquivos versionáveis.
+
+LIMITES ABSOLUTOS
+- PROIBIDO alterar cardapioufmg (Hosting, Auth, Rules, Firestore, IAM).
+- PROIBIDO git commit/push, GitHub secrets, alteração de jobs remotos.
+- PROIBIDO excluir festas, inscrições, dados ou chaves já existentes em QA.
+- PROIBIDO alterar chave RSA ou credenciais privadas existentes.
+- PROIBIDO habilitar Blaze/faturamento ou APIs adicionais.
+- PROIBIDO copiar config.js QA ao projeto de produção.
+- PROIBIDO instalar pacote/rodar comando sem confirmação do projeto-alvo QA.
+- Não editar nem ajustar a solução: o código é entregue pronto. Se precisar de
+  alterações por causa de erro, apenas reportar para o ChatGPT.
+
+ETAPA 1 — PREPARAÇÃO
+1. Confirmar o ZIP, calcular SHA-256 e comparar com SHA-256 informado pelo ChatGPT.
+2. Verificar se existe D:\Downloads\ru-hoje-homologacao.
+3. Criar backup COMPLETO fora da pasta de origem com timestamp, incluindo
+   private/, diagnostics/, .git/, configurações locais e informações de QA,
+   com ACL preservadas. NÃO enviar o backup para nuvem ou anexar aqui.
+4. Extrair o ZIP em staging separado, sem executá-lo a partir do ZIP.
+5. Validar estrutura, arquivos e ausência de caminhos fora da raiz.
+
+ETAPA 2 — INSTALAÇÃO LOCAL
+1. Copiar os arquivos do ZIP staging para a pasta de homologação existente,
+   substituindo APENAS arquivos correspondentes do código e adicionando novos.
+2. NÃO excluir qualquer arquivo anterior não presente no ZIP.
+3. Preservar integralmente: .git/, .firebase/, .firebaserc, private/,
+   node_modules/, diagnostics/ e qualquer credencial local.
+4. NÃO copiar .firebaserc.example como .firebaserc.
+5. Confirmar que public/config.js referencia exclusivamente
+   bandeco-homologacao e que o produto permanece sinalizado como QA.
+6. Confirmar `git status` somente leitura; não commitar.
+
+ETAPA 3 — VALIDAÇÃO LOCAL
+Executar na pasta de homologação:
+- npm ci
+- npm test (esperado >=141 aprovados, zero falhas)
+- npm run test:e2e
+- npm run test:festas
+- npm run test:festas:security
+- npm run test:festas:admin
+- npm run test:festas:visual:v245
+- node --check public/assets/festas.js
+- node --check scripts/run-raffles-qa.mjs
+- node --check scripts/migrate-archived-qa.mjs
+- Em github-qa-executor/: npm ci && npm test && npm run check.
+Verificar se scripts estão definidos no package.json. Se faltar dependência,
+Java, Emulator ou navegador, registrar BLOQUEIO e NÃO executar deploy.
+Nunca direcionar testes adversariais ao Firestore real.
+
+ETAPA 4 — MIGRAÇÃO NÃO DESTRUTIVA DE ARCHIVED, SOMENTE QA
+As novas Rules exigem archived=false nas festas públicas. Antes de publicá-las,
+inspecionar dados existentes QA sem modificar produção:
+- Conferir a identidade/ADC temporário exclusivo de QA, se já configurado.
+- Executar `node scripts/migrate-archived-qa.mjs --project=bandeco-homologacao`
+  (dry-run, somente leitura).
+- Se houver documentos sem archived: conferir snapshot e backup QA e executar
+  SOMENTE com credencial QA e confirmação explícita:
+  `node scripts/migrate-archived-qa.mjs --project=bandeco-homologacao --write --confirm=QA-ONLY-ARCHIVED-BACKFILL`
+- NÃO criar chave JSON permanente, NÃO usar credencial de produção, NÃO modificar
+  campos além de archived=false. Se faltarem credenciais QA, PARAR antes de
+  publicar as Rules; informar como habilitar sessão temporária já autorizada.
+- Confirmar `archived` no QA após a operação e leitura pública da listagem.
+
+ETAPA 5 — PUBLICAR SOMENTE NA HOMOLOGAÇÃO, SE TUDO PASSAR
+1. Reconfirmar identidade e projectId `bandeco-homologacao`.
+2. Fazer backup das Rules EFETIVAMENTE PUBLICADAS no QA.
+3. Confirmar teste de Rules no Emulator E backfill do archived concluídos.
+4. Publicar as Rules somente em QA, por exemplo:
+   `firebase deploy --only firestore:rules --project bandeco-homologacao`
+5. Verificar que a produção não sofreu alteração.
+6. Publicar apenas Hosting Preview QA:
+   `firebase hosting:channel:deploy qa-v260-rc1 --expires 7d --project bandeco-homologacao`
+7. Registrar URL EXATA do Preview retornada pela CLI e verificar cache PWA.
+8. Validar manualmente/Playwright: cardápio, festas visíveis, ocultas e
+   arquivadas, cartazes, modal admin, participante A/B, bloqueio de exclusões
+   destrutivas, encerramento por horário, resultados já existentes e login.
+9. Não criar participantes reais, não alterar sorteios já apurados, não executar
+   apuração manual ou agendada nesta instalação.
+
+ETAPA 6 — RELATÓRIO
+Criar diagnostics/RELATORIO-INSTALACAO-V260-RC1.md com:
+- Hash do ZIP, backup completo, arquivos instalados.
+- Resultados e logs dos comandos e testes executados.
+- Backfill QA (quantos documentos e quais campos, sem PII).
+- Resultado de compilação/testes das Rules.
+- Regras e Preview QA publicadas (ou bloqueio); URL real.
+- Estado do projeto principal INALTERADO.
+- Estado do Git INALTERADO (exceto arquivos locais), sem push/commit.
+- Pendências: cron QA ainda horário, execução `schedule` não comprovada,
+  proteção da chave privada web, retenção/privacidade e requisitos legais.
+Se qualquer passo falhar, interromper antes do próximo e preservar backup.
+
+ESTADO FINAL ESPERADO
+Código do ChatGPT instalado; nenhum trabalho de correção delegado ao Codex;
+validação de QA concluída e Preview QA publicado APENAS se todos os testes
+passarem; produção cardapioufmg intocada. NÃO prosseguir para produção.

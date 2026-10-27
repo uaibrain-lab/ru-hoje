@@ -8,7 +8,7 @@ const app=get('public/assets/app.js');
 const index=get('public/index.html');
 const sw=get('public/service-worker.js');
 test('nome do projeto e rodapé corretos',()=>{
-  assert.match(index,/<title>O que tem no bandeco\?<\/title>/);
+  assert.match(index,/<title>OCUPA UFMG<\/title>/);
   assert.doesNotMatch(index,/>RU Hoje</);
   assert.match(index,/instagram.com\/catmufmg/);
   assert.match(index,/fump.ufmg.br\/cardapio-do-dia/);

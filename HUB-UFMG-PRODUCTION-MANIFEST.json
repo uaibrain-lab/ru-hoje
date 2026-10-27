@@ -1,0 +1,578 @@
+{
+  "product": "Hub UFMG",
+  "version": "Production RC1",
+  "firebaseProject": "hubufmg",
+  "hostingSite": "hubufmg",
+  "firebaseQaProject": "bandeco-homologacao",
+  "generatedAt": "2026-10-27T19:31:38.2133873Z",
+  "files": [
+    {
+      "path": ".firebaserc.example",
+      "sha256": "6E3CAE6C2873A77C65FA390D1C661D42A82EE0E0B3859CDA11E536F6C2C4C246"
+    },
+    {
+      "path": ".github/workflows/diagnostico-api-fump.yml",
+      "sha256": "2164DB233307531FDBBA297F0C731DC538C71F0832E02C70E06AA62D25FA8E82"
+    },
+    {
+      "path": ".github/workflows/diagnostico-rede-fump.yml",
+      "sha256": "3CDAB47EBF0C06EABC3DF8E3412802B296EE6F4E53034E5D4CDD74EE13F4A14F"
+    },
+    {
+      "path": ".github/workflows/festas-apuracao-qa.yml",
+      "sha256": "279AB8EA46B16A660CD99C47CDD027357873BA94AB37F218BF6545B14F96BFFC"
+    },
+    {
+      "path": ".github/workflows/festas-apuracao.yml",
+      "sha256": "93D3F9CC8A26749B2EBA96AF7DB3F8656E975B023533EC933F65B16D9A7B5AAC"
+    },
+    {
+      "path": ".github/workflows/ocupa-qa-cardapios-request-processor.yml",
+      "sha256": "433B7EB30E13CC08B9A09CBA04573684C0FF6071BFB8FB01A351B3458A31953A"
+    },
+    {
+      "path": ".github/workflows/ocupa-qa-cardapios.yml",
+      "sha256": "57B773734BE6E9CDF35A426389CB315A31EB087E33834C6BD372A151A5DD83F9"
+    },
+    {
+      "path": ".github/workflows/sync-cardapios.yml",
+      "sha256": "76C807F18CC39E67FBA0DFA920FCBC2E2DE8C1392BAB6D99D1778C32E00B6A24"
+    },
+    {
+      "path": ".github/workflows/validate.yml",
+      "sha256": "8B8377A69F7549D4A5321FD4FD66D01069BBE60726D149EFAB960F7CFB21F773"
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "146DA6ADB01161C35D04ABD88A924A7B3C18C62A3BD4F3D54805F8DE1A6580F9"
+    },
+    {
+      "path": "APLICAR-COM-CODEX.txt",
+      "sha256": "2C4F1636BE976E5688E98F7AE23912E1AE65A255B3DD5E74D6723088614F6EEC"
+    },
+    {
+      "path": "config/firebase.production.js",
+      "sha256": "C19347F90C01E1AC01501935FBFA6DFF6EB926BFC8D0A73C2C5F82837831CE67"
+    },
+    {
+      "path": "config/firebase.qa.js",
+      "sha256": "088779A43F900FC1C860B31A98F381F62A6A8EB690A356D4BA7D32E0E5795095"
+    },
+    {
+      "path": "CORRECAO-V241.txt",
+      "sha256": "A2F88787C7570893F52202EA9F8C59987A785FE50A52CFA927262A42C8E6BAC4"
+    },
+    {
+      "path": "firebase.emulators.json",
+      "sha256": "A5D764DEE88448DECD064CDDDA10FB77617F21632C426E068D73A38080E48BEF"
+    },
+    {
+      "path": "firebase.json",
+      "sha256": "7B91D23A8F46EA9DA3ED825B1DC0782B7D90B2164BFBF6B1FFB932952B11FBF7"
+    },
+    {
+      "path": "firestore.rules",
+      "sha256": "8244D86DC8A04B5763E9D487E5826D2B5CE2081208C41ED5A3DC1F5F6FA2777B"
+    },
+    {
+      "path": "github-qa-executor/.github/workflows/bandeco-qa-raffles.yml",
+      "sha256": "62941CF8CD2304E861B74535EAC57DB0B7CED64E4F7932E79E93FB68DA6D902A"
+    },
+    {
+      "path": "github-qa-executor/.gitignore",
+      "sha256": "618EEC5F6A7D037CBC8314321C097CADD6DB2ABE202BC6B3AD7EFBA1EEB96CCA"
+    },
+    {
+      "path": "github-qa-executor/package-lock.json",
+      "sha256": "815A2B79DF17BC435B24F62F94951DCB920F94252535D1E3F5AD281A26CADA11"
+    },
+    {
+      "path": "github-qa-executor/package.json",
+      "sha256": "6D3F8DC609ABEE3BDD0CA8D419657C3AA2BD11EA616075D26FE7B505D07784CD"
+    },
+    {
+      "path": "github-qa-executor/public/assets/festas-core.js",
+      "sha256": "FDABA16F823A470A28E7058FC854CA65B7E9C48A90F1087909236210BD69D4E9"
+    },
+    {
+      "path": "github-qa-executor/README.md",
+      "sha256": "364B2FCAEB7D74B321F530E5B360E3B0AF6FD92A80087F3CA6E48249FEB25F6C"
+    },
+    {
+      "path": "github-qa-executor/scripts/raffle-engine.mjs",
+      "sha256": "CEE4776DB639D70F41CFD3D54B2C459C939B520019FB495E98BBF1B29D31595C"
+    },
+    {
+      "path": "github-qa-executor/scripts/run-raffles-qa.mjs",
+      "sha256": "353F6A8B6AB73F6307422528BDE1CEBBA6397EEECA2B693C46B9D683253CFD99"
+    },
+    {
+      "path": "github-qa-executor/tests/raffle-engine.test.mjs",
+      "sha256": "13BD975552818A9F084C8596305F36045989194CEAF7FC54C5205EECA157F6A0"
+    },
+    {
+      "path": "HUB-UFMG-PRODUCTION-MANIFEST.json",
+      "sha256": "7F1FB5694D6FBC4CC103A219D0D3DBFFF8D748D46F9FA80C3C45C0305E9F6A4E"
+    },
+    {
+      "path": "HUB-UFMG-RELEASE-MANIFEST.json",
+      "sha256": "6C27969D6653F5B5D0071F06CC3C89FCA06BA8F67883C94E72A22883B1D26AE9"
+    },
+    {
+      "path": "INICIAR-DEMO-LOCAL.ps1",
+      "sha256": "380335B72BBB6A61C6862A30055F30106A481158CA864B7E90B57F0F05C92E7E"
+    },
+    {
+      "path": "INSTALAR-COM-CODEX-V260-RC1.txt",
+      "sha256": "F542F543F7D84E454C8E407C984B48C5C35EB2B050D2ABF7BBA9826E42E961EC"
+    },
+    {
+      "path": "LEIA-ME-FESTAS-V2.md",
+      "sha256": "BA1EBFF4A9962609B84B4087E1416121A2518EECD5E01F3B30964915A8699197"
+    },
+    {
+      "path": "LEIA-ME-FESTAS-V21.md",
+      "sha256": "A06EE114025C950DDA9BF8571F270B56C14D06A2BA70E312CCD5F6F50CDC9199"
+    },
+    {
+      "path": "LEIA-ME-FESTAS-V22.md",
+      "sha256": "0C30A14CF8C89D43A6E3A2150A7A21DA0AC7BC356191874A92BC791D3EFCCD61"
+    },
+    {
+      "path": "LEIA-ME-FESTAS-V23.md",
+      "sha256": "A4C59D3F19BE4E68FC155DFDC8D5DC47A81D1E73FFF0F2181EE0A962D145EE6E"
+    },
+    {
+      "path": "LEIA-ME-FESTAS-V24.md",
+      "sha256": "7FF2CBF3CC55385F6B2A911E45C79735F2BD80C8654D550467C6A47FA7D17307"
+    },
+    {
+      "path": "LEIA-ME-FESTAS-V241.md",
+      "sha256": "B7052B5F07EC9AE248C6D597762130BD41215DE54BFBA82CAC3E5AD50C02C11A"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "9EB13B04D516FA14E856F6DAD30B8F5344ACE69AC405CC8E208C8A47D7DBFA9D"
+    },
+    {
+      "path": "package.json",
+      "sha256": "07A32C52E95D610C876204B43515F9341A03E7129DC00F37A62DE39522129A8A"
+    },
+    {
+      "path": "public/assets/app.js",
+      "sha256": "464D15E5529718B4196966F18D5E73EC39B1FEDD8C2B8567E072FE5D051CB768"
+    },
+    {
+      "path": "public/assets/date-availability.js",
+      "sha256": "3F6AC99CD6FDF23689D7A3C6E06B4F0E15EC987CB1A338A1FE8B5BE141B34EF3"
+    },
+    {
+      "path": "public/assets/dish-category.js",
+      "sha256": "5DFFE7D707CE9955D4F686FD4A339806F5A553B9C66FEEBC006047FA5AFB1F6A"
+    },
+    {
+      "path": "public/assets/festas-backend.js",
+      "sha256": "883D3EB2FCEBAE0120AF813D40375F229F9BBB96254FF24E826D2696360B1CFC"
+    },
+    {
+      "path": "public/assets/festas-core.js",
+      "sha256": "940902FD0E99B65D6EA053BB423AC80FA8046774C2CB235D331A7338790A18BD"
+    },
+    {
+      "path": "public/assets/festas-public-key.json",
+      "sha256": "6C3C3441866FB7F7A7D43A96D9D05BD0DA75E4C03D6F1C1910BD2145CE85410D"
+    },
+    {
+      "path": "public/assets/festas.js",
+      "sha256": "B4BDE5726A396BA4B41743E5F4DA69E7D2C65B6F1036D512B4F54337D148A110"
+    },
+    {
+      "path": "public/assets/hours.js",
+      "sha256": "CFB8D01D2A20D5BDE1D6D32E9D7D40763D372EA5B3FDA273FE65EC4AC2DF0F4B"
+    },
+    {
+      "path": "public/assets/icons/apple-touch-icon.png",
+      "sha256": "2523DE927BA9CDBD570846E2531C92E68527F79609D465E6AA3964BBCBC645DC"
+    },
+    {
+      "path": "public/assets/icons/icon-192.png",
+      "sha256": "003D953DBCC97473F08626F79194E8A3103C5FBD13F1B84DB703D29CF0B0CAB2"
+    },
+    {
+      "path": "public/assets/icons/icon-512.png",
+      "sha256": "E5E6899F698356E2805C259218594CAC26723BD5CBE5A6D1DFF971C5EF11E2D9"
+    },
+    {
+      "path": "public/assets/icons/icon-maskable-192.png",
+      "sha256": "3D3A54850F6A50E42A3DF13892D20BDFAA4A95BDFB4C82629362AB0D8BE3E478"
+    },
+    {
+      "path": "public/assets/icons/icon-maskable-512.png",
+      "sha256": "7F5C6D23573F6F2BED639C00C3276C42CE2BDEF7E1B8BC94063E250047A03E0A"
+    },
+    {
+      "path": "public/assets/icons/icon.svg",
+      "sha256": "892BFDFC0ABE78A03C60FDD4C7E9697C0527F88ADD28B873CA36831FE35C9BCE"
+    },
+    {
+      "path": "public/assets/restaurantes/direito.webp",
+      "sha256": "3E671100A49BB04B3C5E0CC3F3613A9AABE74758C1380C1BA4F3CDF3EC7F6DE7"
+    },
+    {
+      "path": "public/assets/restaurantes/ica.webp",
+      "sha256": "642421D6B8D17E082FC63C9F81B1437E2A6A08B1FE856E8EF69BC9B705E1B861"
+    },
+    {
+      "path": "public/assets/restaurantes/saude.webp",
+      "sha256": "ED6F96F6361D4FFD1A59A55C468AA0444E1549A2553D5F4093A50417BE51FA4E"
+    },
+    {
+      "path": "public/assets/restaurantes/setorial-i.webp",
+      "sha256": "E1FD467FD24FB0CE6B6A6ED1488D569C4CC726620E6B2EF72682C26991CE5A5A"
+    },
+    {
+      "path": "public/assets/restaurantes/setorial-ii.webp",
+      "sha256": "B106C64BA842333D10770F78ED94CF956EA03263BBC7CD43C1D1C82D0E7A3D58"
+    },
+    {
+      "path": "public/assets/styles.css",
+      "sha256": "7C36AD712C05074FFEC9A7034752C99C58C64046060EBC646C410E4FF062CA9C"
+    },
+    {
+      "path": "public/config.js",
+      "sha256": "2492F42E1C3F7AAB664E4AA7A1153F21693BD8996B0C3BA30CD9F3B66172F295"
+    },
+    {
+      "path": "public/data/cardapios.json",
+      "sha256": "868ABDAD5201036698099EF584297036DE6D84EA1BAA80C6B4640AACCD196F3F"
+    },
+    {
+      "path": "public/favicon.ico",
+      "sha256": "9B5A8E131EA7160266E6AC95E2C9FF6E7FEBE07A3CD19602951B53EFD5903720"
+    },
+    {
+      "path": "public/index.html",
+      "sha256": "DCA31A9834E955116004007F38763BA6756D91452078623D0CE1844F3DD41EEA"
+    },
+    {
+      "path": "public/interno/index.html",
+      "sha256": "0A8DA3010A8B20CB5F2008433DA3129CF5985B7352843639AD9788B2D452B4D8"
+    },
+    {
+      "path": "public/manifest.webmanifest",
+      "sha256": "A38CC0D68AC3FDA9C1A0263BB2EC6F3251C6FB25985A0A00F3B2F5F01479261C"
+    },
+    {
+      "path": "public/privacidade-festas.html",
+      "sha256": "060EDFFA7012895602CC04AFAA650FF762EB651E153B791BE85EB421C4FDACB2"
+    },
+    {
+      "path": "public/service-worker.js",
+      "sha256": "00B4E1464E56A2624919E42E785D82AEB85BCCC97380647E7BF53EAC41F59F25"
+    },
+    {
+      "path": "README.md",
+      "sha256": "CEF2ED60FF4AE152283903F6E49C8C17ADFD23607912203FE073B32499CD99DE"
+    },
+    {
+      "path": "RELATORIO-ENTREGA-V260-RC1.md",
+      "sha256": "A842BBD9DF17BFD8B0559E35F84102F9AEE532B06EE504C418019C29E76FC5DC"
+    },
+    {
+      "path": "REVISAO-PARA-OUTRA-IA.md",
+      "sha256": "A7D905C045E956D1E56988E07768E0C4EF37314E89A663BBF501C2E3C7750E9B"
+    },
+    {
+      "path": "scripts/audit-menus.mjs",
+      "sha256": "67A7923D8BF8AAA582C95F71CB8701113BBA1B201D82B8CB30C2376CAB67FB40"
+    },
+    {
+      "path": "scripts/check-config.mjs",
+      "sha256": "EA270CD540EFD7BF05CD525E6BCFC59A7FFBFBE3C2713F257C30F91F3EC7D8CD"
+    },
+    {
+      "path": "scripts/cleanup-festas-test-qa.mjs",
+      "sha256": "41E010195D8F965BF5A85DC67B1D58E6BC2E78DBF401EF5E60597721E093DC24"
+    },
+    {
+      "path": "scripts/copy-public-menu-homologation.mjs",
+      "sha256": "31EA8E91DA7E383FC6C1728B471984DE8F650B9976F7EB00631FC7CE098FACA9"
+    },
+    {
+      "path": "scripts/delete-festas-emulator.mjs",
+      "sha256": "879C86868852ED85E7FD6DDA42B2434369CBFE1FC2DCF804EC2FAB89741C69CE"
+    },
+    {
+      "path": "scripts/form-recognition.mjs",
+      "sha256": "056D175EFB942F5BC1660568CBE4BE12CA7F492ED8698E108F467959F722EC6A"
+    },
+    {
+      "path": "scripts/fump-api.mjs",
+      "sha256": "CC2C9A3AA3A8C56D6453BF29C55878B304FE4274D6BB4EA0638F5210BD6BAB94"
+    },
+    {
+      "path": "scripts/generate-festas-keys.mjs",
+      "sha256": "3BDFEF109D4183D19BDF52EEE282955A88F76680AA83436239A62F470938A029"
+    },
+    {
+      "path": "scripts/inspect-fump-result.mjs",
+      "sha256": "7D9334FFF04239FBDB2BB826FFEEF2F51F47370018D632BB4D9DA19AA34FB545"
+    },
+    {
+      "path": "scripts/merge-festas-local.mjs",
+      "sha256": "F8453BF684A8FF82A05E9DC6646A63A11C6102ECAFD498C0DB8C2C4441350806"
+    },
+    {
+      "path": "scripts/merge-snapshots.mjs",
+      "sha256": "2B2FC154E16DD49A11B253F33D51A3F3F8400BC22E582896D49653A544798115"
+    },
+    {
+      "path": "scripts/migrate-archived-qa.mjs",
+      "sha256": "7D04360A04DD3EE69E8731D34D8E243EE7EC10A8A47BD49BB1E16A0855AB1BAB"
+    },
+    {
+      "path": "scripts/ocupa-qa-menu-core.mjs",
+      "sha256": "D0FC856673D5901DEC784656EDC97088CB02B57F3081869387971C3911CF3076"
+    },
+    {
+      "path": "scripts/ocupa-qa-menu-sync.mjs",
+      "sha256": "484CDCA1FCC6436C4ADED8C32C704556BF52239D9993631300E4AE3EC83A8914"
+    },
+    {
+      "path": "scripts/ocupa-qa-request-processor.mjs",
+      "sha256": "35657CBC82034C9A3B074CF604737B518407B1C21FCF52CAB623D43D97F527A2"
+    },
+    {
+      "path": "scripts/parser.mjs",
+      "sha256": "40BB15D38070F3C7C665D9966CE98F5944EB95A9F2A137FF8DF1A808A9202994"
+    },
+    {
+      "path": "scripts/prepare-api-snapshot.mjs",
+      "sha256": "64B2562C33CD9E8F6939887DDB7A74ECD92F9A3614A76A51C2E745C6420D27CA"
+    },
+    {
+      "path": "scripts/probe-fump-local.mjs",
+      "sha256": "AED54DAC495073D3238F4E5C47DDB04CF0BD63FBCD0B4184C11515559C8E90E8"
+    },
+    {
+      "path": "scripts/probe-fump.mjs",
+      "sha256": "D595DFDF394F6C0329B7BE9A6DC7D5ECD46DD69753767E55A59F95E65187913A"
+    },
+    {
+      "path": "scripts/publish.mjs",
+      "sha256": "8E7488B2FC7D88A0E87E2F01FB5EEA2EDB74C1B9D3C27EE4256FB3DF96B7909C"
+    },
+    {
+      "path": "scripts/raffle-engine.mjs",
+      "sha256": "CEE4776DB639D70F41CFD3D54B2C459C939B520019FB495E98BBF1B29D31595C"
+    },
+    {
+      "path": "scripts/run-raffles-qa.mjs",
+      "sha256": "353F6A8B6AB73F6307422528BDE1CEBBA6397EEECA2B693C46B9D683253CFD99"
+    },
+    {
+      "path": "scripts/run-raffles.mjs",
+      "sha256": "1EDB09AB3BBDB7208E661CFCF6B55AD0DDB79200EBEF099A7E8D915779CCABE2"
+    },
+    {
+      "path": "scripts/smoke.mjs",
+      "sha256": "91F7705742D2AF6A718F050DB6DA14687B325FC4CAC50D9738D7041C7F23733E"
+    },
+    {
+      "path": "scripts/sync-api.mjs",
+      "sha256": "7A4950536E6CC2BD7EFB8A8EDA6E0E629D9C10BFF54A30C2DBB804756A136BBF"
+    },
+    {
+      "path": "scripts/sync.mjs",
+      "sha256": "80A40323FC291BB7685619F7C15C9082D90343C49916BA15395822248DD50504"
+    },
+    {
+      "path": "scripts/test-festas-deletion-emulator.mjs",
+      "sha256": "6515507D4AD2597D36727EA35AC6794121DB5FDD4FD8484281B39F013FCF014D"
+    },
+    {
+      "path": "scripts/test-festas-local.mjs",
+      "sha256": "BDDA6C2010C77070C4951249190E04ED4CDE04C0068598051F37877B4C387DB4"
+    },
+    {
+      "path": "scripts/test-festas-security-adversarial.mjs",
+      "sha256": "021E835AC4F6FA6A61185831A6F6CF6718082CE3B04BBBB9AB6807DD9CD73D35"
+    },
+    {
+      "path": "scripts/test-festas-security-emulator.mjs",
+      "sha256": "B3FF35A47F66C31FFB6DAF5EC99B6002144EA98964DED4A4B89529F91B787B25"
+    },
+    {
+      "path": "scripts/Test-Festas-Security-Standalone.ps1",
+      "sha256": "91C6E702891245F14BD1F0F6B1A54E69B06A0684380987B6C5F64313D0F592E3"
+    },
+    {
+      "path": "scripts/test-festas-v244-visual.mjs",
+      "sha256": "92368F6366254C95353BE952E1802F5CC85CA6A8535AC2BC1FCE1ACBE49D8812"
+    },
+    {
+      "path": "scripts/test-festas-v245-visual.mjs",
+      "sha256": "0FA913DEAEA5D3CB1C795A3B77D8A787FEFB3DC8500EF4CBC73F74FFFCFAF111"
+    },
+    {
+      "path": "scripts/test-festas-v252-published-rules.mjs",
+      "sha256": "62B847DED08A83054668BC724F291FCC1BC3A458B584299DEEEC497945D19495"
+    },
+    {
+      "path": "scripts/test-festas-v253-admin-emulator.mjs",
+      "sha256": "660E6EFD7261F957F4E358C372261B0FCB029C0213B4E57A55958FFFAF7D2A8A"
+    },
+    {
+      "path": "scripts/test-homologacao-online.mjs",
+      "sha256": "95ACE8C0925672FF801AA597F3A0AFD352FAD45D3233B474888717071E7B69CE"
+    },
+    {
+      "path": "tests/audit-menus.test.mjs",
+      "sha256": "C4158884930F31DF19C7E820A2EEEFACE38DDE17A331133D5A9742701E8D8A77"
+    },
+    {
+      "path": "tests/calendar-v198.test.mjs",
+      "sha256": "840974E54834A178FD6B5B3232A18E9574AF24ECF59C6BEA810A4DC4F9444172"
+    },
+    {
+      "path": "tests/categories-v194.test.mjs",
+      "sha256": "A3BC899406DAC28AB6C02A07C95EA2A5011824895C34920862A0936E15CF9817"
+    },
+    {
+      "path": "tests/categories-v195.test.mjs",
+      "sha256": "DCE33B5E1ADA6D02C087C1A9C60644E806AD2A8D2CDBC0BCEC1FA09E9A088CF4"
+    },
+    {
+      "path": "tests/categories-v196.test.mjs",
+      "sha256": "B0C680844C062E10889A9BC4F309F25880E5FC2EDCDE3E2EA41C359B0802596E"
+    },
+    {
+      "path": "tests/festas-admin-link-fix.test.mjs",
+      "sha256": "570FB813439F1F0D3EAA34097143F9CB234ABE74F4D5547B07D44090FABA0FB2"
+    },
+    {
+      "path": "tests/festas-admin-ux-p3.test.mjs",
+      "sha256": "DDC4864F393B7EB59E1F49493EF0B3ABA1553C775258DE3635D4A85C0E93A3A9"
+    },
+    {
+      "path": "tests/festas-core.test.mjs",
+      "sha256": "37D5E01F7E0553A8A278CFDD1A7BEE67452E71D12396D70434447832D4FC552B"
+    },
+    {
+      "path": "tests/festas-draw-v24.test.mjs",
+      "sha256": "13BD975552818A9F084C8596305F36045989194CEAF7FC54C5205EECA157F6A0"
+    },
+    {
+      "path": "tests/festas-poster-cache-r6b.test.mjs",
+      "sha256": "6C42D2C71E74EFFDE94B48FFBB48EC502E78DE657BA9AB76503F8F86BE4FE7AB"
+    },
+    {
+      "path": "tests/festas-poster-readback-r6a.test.mjs",
+      "sha256": "F23217FB2A912E138786170AEBEAEFB66168B723EE2968DFDE34D1BBE232FDAA"
+    },
+    {
+      "path": "tests/festas-smoke-v202.test.mjs",
+      "sha256": "FD503DA6739254245BF8CC2296EBD2C7548B86CF7F2C95CAB8FB0E60581508DA"
+    },
+    {
+      "path": "tests/festas-smoke-v203.test.mjs",
+      "sha256": "7D6FD6570480CF92491EA5D8310779F2D3DB4A0698375B01BBACE33ED31EC6B0"
+    },
+    {
+      "path": "tests/festas-smoke-v241.test.mjs",
+      "sha256": "EA8CB663EB616936F0B7EA6A4089C6455C04661508D11E78DA76CDFBC17996E4"
+    },
+    {
+      "path": "tests/festas-v21.test.mjs",
+      "sha256": "618E6CD657AF4E4EB42BD2A72046501D2E707BC20184BAABA41D2DFC52C4CA79"
+    },
+    {
+      "path": "tests/festas-v22.test.mjs",
+      "sha256": "5B77397785A4A702E2A7F62DE79A96AF5765D760E414A7CAE2FF299C4769185D"
+    },
+    {
+      "path": "tests/festas-v23.test.mjs",
+      "sha256": "7E7001C1ABB38AE6A3CBD6EF0A65D622229D55514E8ECBD5692B090653209E6E"
+    },
+    {
+      "path": "tests/festas-v24-ui-security.test.mjs",
+      "sha256": "68A835B184B371CA02D486A833866FEC970F92FC3A69B0FD25277B7A4450C9B6"
+    },
+    {
+      "path": "tests/festas-v257e-r1.test.mjs",
+      "sha256": "7AB37489D843505E2CC3AE127D163A081257392E4AD347A7D96AD7CA7AD7A692"
+    },
+    {
+      "path": "tests/festas-v257f-r2.test.mjs",
+      "sha256": "C393199095CF20AC723ABCF5E12E80A7EA629F316326AD0A11AF2808845030B6"
+    },
+    {
+      "path": "tests/festas-v257g.test.mjs",
+      "sha256": "FB4696DDDCBDC4089DD57481A1EB0A47174800998AD844F5A0AF885C0FFADB28"
+    },
+    {
+      "path": "tests/festas-v260-safety.test.mjs",
+      "sha256": "7F7FB28BF78F45CECAEC98107F6C290FE33E47BF7866338FD26EFDC1ACD35D77"
+    },
+    {
+      "path": "tests/form-recognition.test.mjs",
+      "sha256": "639B6449B8EFC1611472810C052C72FB0E58E5BBA36BF96F0E4E1ACF65E3BF99"
+    },
+    {
+      "path": "tests/frontend-v19.test.mjs",
+      "sha256": "0FAC1322DD5E51966C53E7FECED27C6E7F3F1079305AC6F14E49B8DF609DD484"
+    },
+    {
+      "path": "tests/frontend-v191.test.mjs",
+      "sha256": "3E606D74F30DDB6E3C9C5B09DB68794DF3FD57F0140EA6952682FA2A9415ECDC"
+    },
+    {
+      "path": "tests/frontend-v192.test.mjs",
+      "sha256": "F422C5D37844FA8DB58EFB263668F2DBF276FA6F9BFFCED509DFD6513E86A698"
+    },
+    {
+      "path": "tests/fump-api.test.mjs",
+      "sha256": "5593A50DC1708DDD5A359DE19188F7BB09B6DC90DCA6E4D5F021A5B186CE3A7D"
+    },
+    {
+      "path": "tests/hours.test.mjs",
+      "sha256": "D3DF2F3053F836E22A84A3ED385319A59CCF1BE23F3C975BC042227F08EF8F9D"
+    },
+    {
+      "path": "tests/merge-snapshots.test.mjs",
+      "sha256": "561768E6E8333BDAAF86330AD845D3273CDDEA2DE938894DFFFD2AAA6C169FFE"
+    },
+    {
+      "path": "tests/ocupa-qa-menu.test.mjs",
+      "sha256": "C64662C99A6B8DE4AFC738C4D56F3CA40A0731CD8C393F4FAFD40E6D4B8A4A79"
+    },
+    {
+      "path": "tests/parser-hardening.test.mjs",
+      "sha256": "2F6A16F5AFA51909AF23C65B91A8F11A4F4DB03769FF5EE7987B7D81E40666BD"
+    },
+    {
+      "path": "tests/parser.test.mjs",
+      "sha256": "10F7FE40B90FFC64AEB2DBAEB3546D4DDB025C914CB1F2EB60305270C87BB8F8"
+    },
+    {
+      "path": "tests/prepare-api-snapshot.test.mjs",
+      "sha256": "5EE02C5236E53B506054F8D5870C6D6CD9B05CBD693294CFC72433265FD9C7CE"
+    },
+    {
+      "path": "tests/sync-horizon-v197.test.mjs",
+      "sha256": "9C5C2533E6CE1FA84A20BBC339E883DEE50882867AEE75186942B5768C34F37A"
+    },
+    {
+      "path": "tests/test-interno-static.cjs",
+      "sha256": "36B658A21C066F6ACE6D788EEAA1239B885F7FD1AAC549EF722FA2187A164CBA"
+    },
+    {
+      "path": "tests/verified-coverage.test.mjs",
+      "sha256": "BA615380DB9318DDB49185165AB28B947D8D5685E8ACA39925D74A7E7B10C0F0"
+    },
+    {
+      "path": "VERIFICAR-FESTAS-LOCAL.ps1",
+      "sha256": "DC582D65B49A696FA6F8015276432FDD8C639B0DEFE8F015B9B13632A0B9D5F5"
+    }
+  ]
+}

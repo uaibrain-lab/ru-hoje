@@ -1,0 +1,44 @@
+name: Festas — apuração QA
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Repositório privado no plano gratuito: até 744 execuções/mês.
+    # O GitHub não garante pontualidade; executa na primeira janela disponível.
+    - cron: '17 * * * *'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  raffle-qa:
+    if: vars.RU_FESTAS_QA_DRAW_ENABLED == 'true' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    concurrency:
+      group: bandeco-qa-raffles
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.BANDECO_QA_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.BANDECO_QA_SERVICE_ACCOUNT }}
+          project_id: bandeco-homologacao
+          create_credentials_file: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Executar apuração QA
+        env:
+          RU_FESTAS_QA_DRAW_ENABLED: ${{ vars.RU_FESTAS_QA_DRAW_ENABLED }}
+          RU_FESTAS_QA_PROJECT_ID: bandeco-homologacao
+          RU_FESTAS_QA_WIF_PROVIDER: ${{ vars.BANDECO_QA_WORKLOAD_IDENTITY_PROVIDER }}
+          RU_FESTAS_QA_SERVICE_ACCOUNT: ${{ vars.BANDECO_QA_SERVICE_ACCOUNT }}
+          RU_FESTAS_QA_PRIVATE_KEY_JWK: ${{ secrets.BANDECO_QA_PRIVATE_KEY_JWK }}
+        run: node scripts/run-raffles-qa.mjs --commit

@@ -31,7 +31,7 @@ test('thumbnail substitui o SVG em vez de colocar um abaixo do outro',()=>{
  assert.match(css,/\.picker-photo\{display:block;flex:0 0 100%;width:100%;height:100%;object-fit:cover/);
 });
 test('service worker atualiza o cache dos arquivos visuais',()=>{
- assert.match(sw,/const VERSION = 'bandeco-v19[3-9][^']*'/);
+ assert.match(sw,/const VERSION = 'bandeco-v(?:19[3-9]|[2-9][0-9]{2})[^']*'/);
  for (const path of [
    '/assets/icons/icon-192.png',
    '/assets/icons/icon-512.png',

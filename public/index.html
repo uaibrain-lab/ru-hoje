@@ -4,11 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#f7f7fc" />
-  <meta name="description" content="O que tem no bandeco? Consulte o cardápio dos restaurantes universitários da UFMG." />
+  <meta name="description" content="Cardápios, transporte interno, festas e serviços da comunidade universitária UFMG." />
+  <meta name="robots" content="noindex,nofollow,noarchive" />
   <meta name="color-scheme" content="light dark" />
-  <meta property="og:title" content="O que tem no bandeco?" />
-  <meta property="og:description" content="O cardápio do bandejão, sem complicação." />
+  <meta property="og:title" content="Hub UFMG" />
+  <meta property="og:description" content="Cardápios, transporte interno, festas e serviços da comunidade universitária UFMG." />
   <meta property="og:type" content="website" />
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png" />
   <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
   <link rel="manifest" href="/manifest.webmanifest" />
@@ -25,16 +27,17 @@
     })();
   </script>
   <link rel="stylesheet" href="/assets/styles.css" />
-  <title>O que tem no bandeco?</title>
+  <title>Hub UFMG</title>
   <script src="/config.js" defer></script>
   <script src="/assets/app.js" type="module"></script>
+  <script src="/assets/festas.js" type="module"></script>
 </head>
 <body>
   <div class="site-wrap">
     <header class="topbar">
-      <h1 class="site-title"><a class="identity" href="/" aria-label="O que tem no bandeco? — início">
+      <h1 class="site-title"><a class="identity" href="/" aria-label="Hub UFMG — início">
         <img width="43" height="43" src="/assets/icons/icon-192.png" alt="" />
-        <span class="identity-copy">O que tem no bandeco?</span>
+        <span class="identity-copy">Hub UFMG</span>
       </a></h1>
       <div class="theme-control">
         <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Alterar tema" aria-haspopup="true" aria-expanded="false" aria-controls="theme-menu" title="Escolher tema">
@@ -48,8 +51,27 @@
         </div>
       </div>
     </header>
+    <div class="homologation-banner" role="note">Ambiente de testes · homologação</div>
 
-    <main id="main">
+    <nav class="bandeco-tabs" id="bandeco-navigation" aria-label="Navegação principal">
+      <div class="sidebar-brand"><span class="sidebar-brand-mark" aria-hidden="true">✦</span><span class="sidebar-brand-title">Explorar</span>
+        <button type="button" class="sidebar-collapse" id="sidebar-collapse" aria-expanded="true" aria-label="Recolher menu lateral" title="Recolher menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+      </div>
+      <button type="button" id="tab-menu" class="is-active" aria-current="page" aria-controls="bandeco-main">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v8a3 3 0 0 0 6 0V3M8 3v18M17 3v18M17 3c-3 1-4 5-4 8h4"/></svg><span>Cardápio</span>
+      </button>
+      <button type="button" id="tab-interno" aria-current="false" aria-controls="interno-page">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16V6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5V16"/><path d="M3 16h18v3H3zM7 19v2m10-2v2M7 9h10M7 12h10"/><circle cx="7" cy="16" r="1"/><circle cx="17" cy="16" r="1"/></svg><span>Interno</span>
+      </button>
+      <button type="button" id="tab-festas" aria-current="false" aria-controls="festas-page">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m4 20 3.2-10L14 17l-10 3ZM14.5 3l.5 2m5 3-2 .4M7 4l.6 2M19 15l2 .5M13 8l3-3M4 8l-2 1"/><path d="m7 10 7 7"/></svg><span>Festas</span>
+      </button>
+      <button type="button" id="tab-sobre" aria-current="false" aria-controls="sobre-page">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg><span>Sobre</span>
+      </button>
+      <div class="sidebar-footer" aria-hidden="true">CATM · UFMG</div>
+    </nav>
+    <main id="bandeco-main">
       <section class="restaurant-section" aria-labelledby="restaurant-label">
         <h2 class="sr-only" id="restaurant-label">Escolha seu restaurante universitário</h2>
         <button type="button" class="restaurant-picker" id="restaurant-trigger" aria-haspopup="dialog" aria-controls="restaurant-dialog">
@@ -77,9 +99,39 @@
       </section>
     </main>
 
+    <section id="interno-page" class="interno-page" aria-labelledby="interno-heading" hidden>
+      <div class="interno-heading">
+        <span class="section-overline">TRANSPORTE INTERNO</span>
+        <h2 id="interno-heading">Ônibus interno da UFMG</h2>
+      </div>
+      <iframe id="interno-frame" class="interno-frame" title="Interno UFMG — pontos, linhas e horários" src="/interno/index.html" loading="lazy" allow="geolocation"></iframe>
+    </section>
+
+    <section id="festas-page" class="festas-page" aria-labelledby="festas-heading" hidden>
+      <div class="festas-heading"><div><span class="section-overline">PARCERIAS CATM</span><h2 id="festas-heading">Festas e benefícios</h2></div></div>
+      <p class="festa-intro">Festas, ingressos e sorteios da comunidade universitária.</p>
+      <p id="festas-status" class="festas-status" role="status" aria-live="polite"></p>
+      <div id="festas-list" class="festas-list"><p class="festas-empty">Abra a aba para consultar festas.</p></div>
+    </section>
+
+    <section id="sobre-page" class="sobre-page" aria-labelledby="sobre-heading" hidden>
+      <div class="sobre-header">
+        <span class="section-overline">CENTRO ACADÊMICO DA TROPA DO MANTÉM</span>
+        <h2 id="sobre-heading">Sobre o CATM</h2>
+      </div>
+      <div class="sobre-content">
+        <p>O CATM (Centro Acadêmico da Tropa do Mantém) surgiu como uma demanda da luta de ocupação da universidade, sendo seu braço de divulgação nas redes sociais, conscientizando sobre a importância dessa ocupação e divulgando eventos realizados de forma gratuita dentro desse espaço.</p>
+        <p>É importante entender o lazer como um direito social, que é negado a muitas pessoas quando transformado em mercadoria de consumo. Ao ocupar o espaço público para produzir e vivenciar os seus próprios lazeres, a comunidade transforma o ambiente em um local ativo de produção cultural, colabora pro bem estar social e permite uma maior inclusão e democratização do lazer, incentivando atividades gratuitas de interação em um ambiente que ainda é majoritariamente elitista e segregado da comunidade externa.</p>
+        <p>Porém, nosso objetivo não se limita a mera divulgação dos rolês classificados como "clandestinos" pela reitoria, lutamos pela regularização!</p>
+        <p>É fato inegável que a proibição não impede a realização, e isso reforça a necessidade de um diálogo entre a Universidade e os estudantes.</p>
+        <p>A regularização não é só pra contornar restrições e evitar perseguições aos estudantes, mas buscar uma integração mais organizada, segura e acolhedora pra toda a comunidade, respeitando e ocupando o patrimônio público.</p>
+      </div>
+    </section>
+
     <footer class="footer">
-      <p>Fonte oficial: <a href="https://fump.ufmg.br/cardapio-do-dia/" target="_blank" rel="noopener noreferrer">FUMP/UFMG</a></p>
+      <p>Fonte oficial do cardápio: <a href="https://fump.ufmg.br/cardapio-do-dia/" target="_blank" rel="noopener noreferrer">FUMP/UFMG</a></p>
       <p>Projeto desenvolvido pelo <a href="https://www.instagram.com/catmufmg/" target="_blank" rel="noopener noreferrer">Centro Acadêmico da Tropa do Mantém</a></p>
+      <button id="admin-lock" type="button" class="admin-lock" aria-label="Acesso restrito" title="Acesso restrito" hidden><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="10" width="15" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></button>
     </footer>
   </div>
 
@@ -89,6 +141,104 @@
       <div class="dialog-title-row"><div><span class="section-overline">ONDE VAMOS HOJE?</span><h2 id="dialog-title">Escolha seu RU</h2><p id="dialog-help">Salvamos sua escolha neste aparelho.</p></div><button type="button" id="close-dialog" class="icon-btn" aria-label="Fechar seleção de restaurante"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
       <div class="restaurant-options" id="restaurant-options"></div>
 
+    </div>
+  </dialog>
+  <dialog id="signup-dialog" class="festa-dialog" aria-labelledby="signup-title">
+    <div class="festa-dialog-inner">
+      <div class="festa-dialog-title"><h2 id="signup-title">Sorteio</h2><button type="button" class="icon-btn" data-close aria-label="Fechar">×</button></div>
+      <div id="signup-step-rules" class="festa-step">
+        <div id="signup-rules" class="festa-rules"></div>
+        <p class="festa-small">Confira as condições de participação e a data da apuração.</p>
+        <label class="festa-check"><input id="signup-event-terms" type="checkbox" /> Li e aceito as regras deste sorteio e a <a href="/privacidade-festas.html" target="_blank" rel="noopener noreferrer">política de privacidade</a>.</label>
+        <button id="signup-rules-next" type="button" class="festa-primary">Próximo</button>
+      </div>
+      <div id="signup-step-handle" class="festa-step" hidden>
+        <p id="signup-participant-identity" class="festa-participant-identity">Participante neste dispositivo · perfil 1</p>
+        <button id="signup-switch-participant" type="button" class="festa-secondary">Inscrever outra pessoa</button>
+        <label for="signup-ig">Seu @ do Instagram</label><input id="signup-ig" maxlength="31" placeholder="@usuario" autocomplete="off" />
+        <button id="signup-continue" type="button" class="festa-primary">Próximo</button>
+      </div>
+      <form id="signup-form" class="festa-step" hidden>
+        <div id="signup-profile">
+          <label for="signup-name">Nome completo</label><input id="signup-name" maxlength="100" autocomplete="name" required />
+          <label for="signup-email">E-mail</label><input id="signup-email" maxlength="160" type="email" autocomplete="email" required />
+          <label class="festa-check"><input id="signup-marketing" type="checkbox" /> Aceito receber descontos, publicidade de festas e avisos de sorteios por e-mail. (Opcional)</label>
+          <button id="signup-submit" class="festa-primary" type="submit">Finalizar inscrição</button>
+        </div>
+      </form>
+      <p id="signup-result" role="status" aria-live="polite"></p>
+      <p class="festa-small" id="signup-protection-note">Seus dados ficam protegidos e não aparecem para outros participantes.</p>
+      <div id="participant-switch-dialog" class="festa-save-result" role="dialog" aria-modal="true" aria-labelledby="participant-switch-title" hidden>
+        <div class="festa-dialog-inner"><div class="festa-dialog-title"><h2 id="participant-switch-title">Inscrever outra pessoa?</h2><button type="button" id="participant-switch-cancel-x" class="icon-btn" aria-label="Cancelar troca">×</button></div><p>Será iniciada uma nova sessão neste dispositivo. A inscrição anterior continuará registrada, mas o acesso à sessão anterior poderá ser perdido.</p><div class="festa-form-tools"><button type="button" id="participant-switch-cancel" class="festa-secondary">Cancelar</button><button type="button" id="participant-switch-continue" class="festa-primary">Continuar</button></div></div>
+      </div>
+    </div>
+  </dialog>
+  <dialog id="result-dialog" class="festa-dialog" aria-labelledby="result-title"><div class="festa-dialog-inner"><div class="festa-dialog-title"><h2 id="result-title">Resultados</h2><button type="button" class="icon-btn" data-close aria-label="Fechar">×</button></div><div id="result-body"></div><p class="festa-small">Nomes parcialmente censurados; dados completos apenas no painel restrito.</p></div></dialog>
+  <dialog id="poster-dialog" class="festa-dialog poster-dialog" aria-labelledby="poster-title"><div class="festa-dialog-inner"><div class="festa-dialog-title"><h2 id="poster-title">Cartaz completo</h2><button type="button" class="icon-btn" data-close aria-label="Fechar">×</button></div><img id="poster-full" class="poster-full" alt="" /></div></dialog>
+  <dialog id="admin-dialog" class="festa-dialog festa-admin-dialog" aria-labelledby="admin-title">
+    <div class="festa-dialog-inner">
+      <div class="festa-dialog-title"><h2 id="admin-title">Área restrita</h2><button type="button" class="icon-btn" data-close aria-label="Fechar">×</button></div>
+      <p id="admin-status" role="status" aria-live="polite"></p>
+      <button id="admin-login" type="button" class="festa-primary">Entrar como administrador</button>
+      <div id="admin-panel" hidden>
+        <nav class="festa-admin-tabs" aria-label="Painel administrativo"><button type="button" id="admin-tab-events" aria-current="page">Festas</button><button type="button" id="admin-tab-forms" aria-current="false">Formulários</button></nav>
+        <section id="admin-events-panel">
+          <div id="admin-events-list-wrap" class="festa-admin-list-wrap"><div class="festa-admin-list-heading"><h3>Festas cadastradas</h3><button type="button" id="admin-create-event" class="festa-primary">＋ Criar festa</button></div><div id="admin-events-list"></div><details id="admin-hidden-wrap" class="festa-archived-list" hidden><summary>Ocultas</summary><div id="admin-hidden-list"></div></details><details id="admin-archived-wrap" class="festa-archived-list" hidden><summary>Arquivadas</summary><div id="admin-archived-list"></div></details></div>
+          <form id="admin-editor" class="festa-admin-fields" hidden>
+            <div class="festa-admin-list-heading"><div><h3 id="admin-editor-title">Criar festa</h3><p id="admin-editor-hint" class="festa-small" role="status"></p></div><button type="button" id="admin-back-list" class="festa-secondary">← Voltar à lista</button></div>
+            <label for="admin-name">Nome da festa</label><input id="admin-name" maxlength="100" required />
+            <label for="admin-organizer">Atlética / organização</label><input id="admin-organizer" maxlength="100" required />
+            <label for="admin-startsAt">Data e hora da festa</label><input id="admin-startsAt" type="datetime-local" required />
+            <label for="admin-place">Local</label><input id="admin-place" maxlength="130" required />
+            <label for="admin-description">Descrição (opcional)</label><textarea id="admin-description" maxlength="700" rows="3"></textarea>
+            <label for="admin-poster-file">Imagem da festa — enviar PNG, JPG ou WebP (até 3 MB; versão otimizada para publicação)</label><input id="admin-poster-file" type="file" accept="image/png,image/jpeg,image/webp" />
+            <img id="admin-poster-preview" alt="Prévia da arte" class="festa-admin-art-preview" hidden />
+
+            <label for="admin-ticketUrl">Link de ingressos (botão INGRESSOS 🔥)</label><input id="admin-ticketUrl" type="text" inputmode="url" autocomplete="url" spellcheck="false" placeholder="sympla.com.br/evento" aria-describedby="admin-ticketUrl-hint" /><small id="admin-ticketUrl-hint" class="festa-small">Pode colar o link sem https://. O endereço seguro será completado automaticamente.</small>
+            <fieldset class="festa-tag-picker"><legend>🏷️ Tags da festa</legend>
+              <p class="festa-small festa-tag-hint">Selecione uma ou mais opções. Você também pode criar suas próprias tags.</p>
+              <div id="admin-tags"></div>
+              <div class="festa-custom-tag">
+                <button type="button" class="festa-secondary festa-tag-reveal" id="admin-show-tag" aria-controls="admin-tag-composer" aria-expanded="false">＋ Adicionar outra tag</button>
+                <div id="admin-tag-composer" class="festa-tag-composer" hidden>
+                  <input id="admin-new-tag" maxlength="28" placeholder="Nome da nova tag" aria-label="Nome da nova tag" />
+                  <button type="button" class="festa-secondary" id="admin-add-tag">Salvar tag</button>
+                  <button type="button" class="festa-tag-cancel" id="admin-cancel-tag" aria-label="Cancelar nova tag">✕</button>
+                </div>
+              </div>
+            </fieldset>
+            <label class="festa-check"><input id="admin-published" type="checkbox" /> Exibir festa na aba pública</label>
+            <details class="festa-raffle-admin"><summary>Sorteio (opcional)</summary>
+              <label for="admin-raffleStatus">Situação</label><select id="admin-raffleStatus"><option value="disabled">Desativado</option><option value="open">Inscrições abertas</option><option value="closed">Inscrições encerradas</option><option value="drawn" disabled>Resultado publicado pelo sistema</option></select><p class="festa-small">A publicação dos resultados é realizada automaticamente pelo sistema após a apuração. O painel não fabrica vencedores.</p>
+              <label for="admin-winnerCount">Número de ganhadores</label><input id="admin-winnerCount" type="number" min="0" max="100" value="0" />
+              <label for="admin-alternateCount">Número de suplentes</label><input id="admin-alternateCount" type="number" min="0" max="100" value="0" />
+              <label for="admin-drawAt">Data e horário do sorteio (Brasília)</label><input id="admin-drawAt" type="datetime-local" />
+              <label for="admin-rulesText">Regras apresentadas no modal</label><textarea id="admin-rulesText" maxlength="1800" rows="4" placeholder="Ex.: seguir @catmufmg, inscrição até a data definida..."></textarea>
+              <div class="festa-form-tools"><button type="button" id="admin-use-default-rules" class="festa-secondary">Usar regras padrão</button></div>
+              <label class="festa-check"><input id="admin-save-default-rules" type="checkbox" /> Salvar essas regras como padrão para as próximas festas</label>
+
+
+            </details>
+            <button type="submit" class="festa-primary">Salvar festa</button>
+            <button type="button" id="admin-duplicate-event" class="festa-secondary" hidden>Duplicar para novo teste</button>
+          </form>
+          <div id="admin-draw-controls" class="festa-draw-panel" hidden><p class="festa-small">Apuração real desabilitada até existir executor confiável no backend.</p></div>
+        </section>
+        <section id="admin-forms-panel" hidden>
+
+          <p id="admin-forms-counter" class="festa-small"></p>
+          <div class="festa-form-tools"><button type="button" id="admin-export-csv" class="festa-secondary">Exportar CSV</button><button type="button" id="admin-delete-all" class="festa-secondary">Apagar todos</button></div>
+          <div id="admin-forms-list"></div>
+          <section class="festa-admin-key" id="admin-private-key-panel" hidden>
+            <label for="admin-private-key">Chave privada do administrador (arquivo JWK; somente nesta sessão)</label>
+            <input type="file" id="admin-private-key" accept=".json,application/json" />
+            <button type="button" id="admin-unlock-private" class="festa-secondary">Desbloquear cadastros</button>
+          </section>
+        </section>
+      <div id="admin-save-dialog" class="festa-dialog festa-save-result" role="dialog" aria-modal="true" aria-labelledby="admin-save-title" hidden>
+        <div class="festa-dialog-inner"><div class="festa-dialog-title"><h2 id="admin-save-title">Festa salva</h2><button type="button" class="icon-btn" data-close aria-label="Fechar">×</button></div><p id="admin-save-message" role="status" aria-live="polite"></p><div class="festa-form-tools"><button id="admin-save-ok" type="button" class="festa-primary">OK</button><button id="admin-save-retry" type="button" class="festa-secondary" hidden>Tentar novamente</button></div></div>
+      </div>
+      </div>
     </div>
   </dialog>
   <noscript><div class="noscript">Ative o JavaScript para consultar os cardápios. <a href="https://fump.ufmg.br/cardapio-do-dia/">Abrir a FUMP</a>.</div></noscript>

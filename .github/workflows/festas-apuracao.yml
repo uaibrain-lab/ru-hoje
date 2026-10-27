@@ -1,0 +1,28 @@
+name: Bandeco Festas - Apuração (desabilitada por padrão)
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: bandeco-festas-apuracao
+  cancel-in-progress: false
+jobs:
+  apurar:
+    if: vars.RU_FESTAS_DRAW_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Apurar eventos vencidos (server-side)
+        env:
+          RU_FESTAS_DRAW_ENABLED: ${{ vars.RU_FESTAS_DRAW_ENABLED }}
+          RU_FESTAS_PROJECT_ID: cardapioufmg
+          RU_FESTAS_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.RU_FESTAS_FIREBASE_SERVICE_ACCOUNT }}
+          RU_FESTAS_PRIVATE_KEY_JWK: ${{ secrets.RU_FESTAS_PRIVATE_KEY_JWK }}
+        run: node scripts/run-raffles.mjs --commit

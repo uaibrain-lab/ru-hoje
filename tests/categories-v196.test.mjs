@@ -43,6 +43,15 @@ test('v1.9.6: tipo oficial prevalece mesmo quando nome constar de exceções ant
   assert.equal(categoryKey('Prato proteico 3','Quibe de Cenoura'),'vegetariana');
 });
 
+test('v1.9.6: strogonoff sem tipo cadastrado continua em pratos principais',()=>{
+  assert.equal(categoryKey('Tipo de item não cadastrado','Strogonoff'),'proteina');
+  assert.equal(publishedCategory('', 'Strogonoff'),'proteina');
+  assert.equal(publishedCategory('', 'Strogonoff de frango'),'proteina');
+  assert.equal(categoryKey('Tipo de item não cadastrado','Strogonoff vegano'),'vegetariana');
+  assert.equal(publishedCategory('', 'Strogonoff vegetariano'),'vegetariana');
+  assert.equal(publishedCategory('', 'Strogonoff','Prato protéico 1'),'proteina');
+});
+
 test('v1.9.6: desconhecidos continuam sem suposição e sem reclassificação',()=>{
   assert.equal(publishedCategory('', 'Item não reconhecido'),'');
   assert.equal(categoryKey('Tipo de item não cadastrado','Item não reconhecido'),'');
@@ -54,7 +63,7 @@ test('v1.9.6: frontend usa sourceType, cache novo e integração offline mantida
   const app=readFileSync(new URL('../public/assets/app.js',import.meta.url),'utf8');
   const sw=readFileSync(new URL('../public/service-worker.js',import.meta.url),'utf8');
   assert.match(app,/publishedCategory\(item.category, name, item.sourceType\)/);
-  assert.match(sw,/const VERSION = 'bandeco-v19[0-9]-[a-z0-9-]+'/);
+  assert.match(sw,/const VERSION = 'bandeco-v(?:19[0-9]|2[0-9][0-9])-[a-z0-9-]+'/);
   assert.match(sw,/\/assets\/dish-category\.js/);
 });
 

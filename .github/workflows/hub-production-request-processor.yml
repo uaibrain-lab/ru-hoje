@@ -1,0 +1,38 @@
+name: Hub UFMG — solicitações de atualização
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: hub-production-request-processor
+  cancel-in-progress: false
+
+jobs:
+  process:
+    if: vars.HUB_PROD_SYNC_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      GCLOUD_PROJECT: hubufmg
+      GOOGLE_CLOUD_PROJECT: hubufmg
+      HUB_PROD_SYNC_ENABLED: ${{ vars.HUB_PROD_SYNC_ENABLED || 'false' }}
+      HUB_PROD_PUBLISH_ENABLED: ${{ vars.HUB_PROD_PUBLISH_ENABLED || 'false' }}
+      HUB_PROD_BACKUP_DIR: /tmp/hub-prod-backup
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/858219271468/locations/global/workloadIdentityPools/hub-prod-actions/providers/hub-prod-refresh
+          service_account: hub-prod-refresh@hubufmg.iam.gserviceaccount.com
+      - run: npm ci --omit=dev --no-audit --no-fund
+      - run: node scripts/hub-production-request-processor.mjs --mode=apply

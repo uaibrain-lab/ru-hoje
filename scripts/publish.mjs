@@ -23,9 +23,12 @@ try { credentials=JSON.parse(raw); } catch { throw new Error('Credenciais do Fir
 if(!credentials.project_id || !credentials.client_email || !credentials.private_key) throw new Error('Credenciais do Firebase incompletas.');
 if (credentials.project_id !== 'cardapioufmg') throw new Error('Credencial do projeto errado: esperado cardapioufmg.');
 if (/uaibrain/i.test(credentials.project_id)) throw new Error('Não usar Firebase do UaiBrain.');
-const {default:admin}=await import('firebase-admin');
-admin.initializeApp({credential:admin.credential.cert(credentials)});
-const db=admin.firestore();
+const [{initializeApp,cert},{getFirestore,FieldValue}]=await Promise.all([
+  import('firebase-admin/app'),
+  import('firebase-admin/firestore')
+]);
+const firebaseAdminApp=initializeApp({credential:cert(credentials)});
+const db=getFirestore(firebaseAdminApp);
 const docRef=db.doc('publicMenus/current');
 // Read/merge/write in a transaction so a partially failed collection cannot
 // delete unrelated restaurant/day data previously confirmed by the FUMP.
@@ -43,6 +46,6 @@ await db.runTransaction(async tx=>{
   if(old && JSON.stringify(old.days)===JSON.stringify(merged.days)) {
     console.log('Sem mudanças de cardápio. Mantendo documento remoto.');return;
   }
-  tx.set(docRef,{payload,updatedAt:admin.firestore.FieldValue.serverTimestamp()});
+  tx.set(docRef,{payload,updatedAt:FieldValue.serverTimestamp()});
   console.log(`Projeto ${credentials.project_id}: ${Object.keys(merged.days).length} dias consolidados.`);
 });

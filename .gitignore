@@ -10,3 +10,6 @@ test-results/
 
 # Relatórios com trechos da página externa e capturas de tela: não versionar
 diagnostics/
+
+# Chave privada de inscrições. NUNCA versionar.
+private/

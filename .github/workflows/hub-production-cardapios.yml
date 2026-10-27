@@ -1,0 +1,41 @@
+name: Hub UFMG — sincronização FUMP produção
+
+on:
+  schedule:
+    - cron: '40 8 * * 1-5'
+    - cron: '30 12 * * 1-5'
+    - cron: '10 19 * * 1-5'
+    - cron: '0 13 * * 6'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: hub-production-cardapios
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: vars.HUB_PROD_SYNC_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      GCLOUD_PROJECT: hubufmg
+      GOOGLE_CLOUD_PROJECT: hubufmg
+      HUB_PROD_SYNC_ENABLED: 'true'
+      HUB_PROD_PUBLISH_ENABLED: ${{ vars.HUB_PROD_PUBLISH_ENABLED || 'false' }}
+      HUB_PROD_BACKUP_DIR: /tmp/hub-prod-backup
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/858219271468/locations/global/workloadIdentityPools/hub-prod-actions/providers/hub-prod-sync
+          service_account: hub-prod-sync@hubufmg.iam.gserviceaccount.com
+      - run: npm ci --omit=dev --no-audit --no-fund
+      - run: node scripts/hub-production-menu-sync.mjs --mode=apply --days=7 --confirm=PUBLICAR_SOMENTE_HUB_UFMG

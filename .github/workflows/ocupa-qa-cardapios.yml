@@ -1,0 +1,72 @@
+name: OCUPA UFMG - Cardápios QA (desativado por padrão)
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publicar apenas no QA? Exige variáveis e WIF verificados.'
+        type: boolean
+        default: false
+        required: true
+  schedule:
+    - cron: '55 5 * * 1-5'
+      timezone: 'America/Sao_Paulo'
+    - cron: '20 9 * * 1-5'
+      timezone: 'America/Sao_Paulo'
+    - cron: '0 16 * * 1-5'
+      timezone: 'America/Sao_Paulo'
+    - cron: '30 9 * * 6'
+      timezone: 'America/Sao_Paulo'
+permissions:
+  contents: read
+concurrency:
+  group: ocupa-qa-cardapios
+  cancel-in-progress: false
+jobs:
+  sync-qa:
+    # Opt-in: sem OCUPA_QA_SYNC_ENABLED, nada executa em cron.
+    if: ${{ vars.OCUPA_QA_SYNC_ENABLED == 'true' && vars.OCUPA_QA_ALLOWED_REPO == github.repository && (github.event_name == 'workflow_dispatch' || vars.OCUPA_QA_PUBLISH_ENABLED == 'true') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --omit=dev --no-audit --no-fund
+      - name: Testar proteção do projeto QA
+        run: node --test tests/ocupa-qa-menu.test.mjs
+      - name: Coleta e simulação pública (não escreve)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish != true }}
+        run: node scripts/ocupa-qa-menu-sync.mjs --mode=dry-run --days=7
+      - name: Autenticação WIF temporária para publicação QA
+        if: ${{ vars.OCUPA_QA_PUBLISH_ENABLED == 'true' && (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.publish == true)) }}
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: bandeco-homologacao
+          workload_identity_provider: ${{ vars.OCUPA_QA_WIF_PROVIDER }}
+          service_account: ${{ vars.OCUPA_QA_SERVICE_ACCOUNT }}
+          create_credentials_file: true
+      - name: Publicar feed somente em bandeco-homologacao
+        if: ${{ vars.OCUPA_QA_PUBLISH_ENABLED == 'true' && (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.publish == true)) }}
+        env:
+          GOOGLE_CLOUD_PROJECT: bandeco-homologacao
+          OCUPA_QA_SYNC_ENABLED: ${{ vars.OCUPA_QA_SYNC_ENABLED }}
+          OCUPA_QA_PUBLISH_ENABLED: ${{ vars.OCUPA_QA_PUBLISH_ENABLED }}
+          OCUPA_QA_ALLOWED_REPO: ${{ vars.OCUPA_QA_ALLOWED_REPO }}
+          OCUPA_QA_BACKUP_DIR: ${{ runner.temp }}/ocupa-qa-backups
+        run: node scripts/ocupa-qa-menu-sync.mjs --mode=apply --days=7 --ack=PUBLICAR_SOMENTE_OCUPA_QA
+      - name: Bloquear publicação manual com gate desligado
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish == true && vars.OCUPA_QA_PUBLISH_ENABLED != 'true' }}
+        run: exit 1
+      - name: Preservar backup privado do feed QA (7 dias)
+        if: ${{ always() && vars.OCUPA_QA_PUBLISH_ENABLED == 'true' && (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.publish == true)) }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ocupa-qa-menu-backup-${{ github.run_id }}
+          path: ${{ runner.temp }}/ocupa-qa-backups/
+          if-no-files-found: ignore
+          retention-days: 7

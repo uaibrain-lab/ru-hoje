@@ -1,6 +1,4123 @@
 {
   "schemaVersion": 1,
-  "generatedAt": null,
+  "generatedAt": "2026-10-27T19:38:52.069Z",
   "source": "https://fump.ufmg.br/cardapio-do-dia/",
-  "days": {}
+  "days": {
+    "2026-10-20": {
+      "restaurants": {
+        "setorial-i": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Salada de Alface com Rúcula",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Maionese com Repolho",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Abobrinha à Napolitana",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Carne de porco frita",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Bolinho de Ervilha",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                },
+                {
+                  "name": "Molho Verde",
+                  "category": "molho",
+                  "sourceType": "Tipo de item não cadastrado"
+                }
+              ],
+              "fetchedAt": "2026-10-20T19:40:40.154Z"
+            }
+          },
+          "fetchedAt": "2026-10-20T19:40:40.154Z",
+          "sourceRestaurantId": "6"
+        },
+        "setorial-ii": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Salada de Alface com Rúcula",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Maionese com Repolho",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Abobrinha à Napolitana",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Carne de porco frita",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Bolinho de Ervilha",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce de Paçoca",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                },
+                {
+                  "name": "Molho Verde",
+                  "category": "molho",
+                  "sourceType": "Tipo de item não cadastrado"
+                }
+              ],
+              "fetchedAt": "2026-10-20T19:40:40.343Z"
+            },
+            "jantar": {
+              "items": [
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Salada de Alface com Alface Roxa",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Grão-de-Bico ao Vinagrete",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Canjiquinha",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Copa Lombo Assado",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Soja Refogada com Legumes",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Banana",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                },
+                {
+                  "name": "Molho de Tomate com Orégano",
+                  "category": "molho",
+                  "sourceType": "Tipo de item não cadastrado"
+                }
+              ],
+              "fetchedAt": "2026-10-20T19:40:40.343Z"
+            }
+          },
+          "fetchedAt": "2026-10-20T19:40:40.343Z",
+          "sourceRestaurantId": "1"
+        },
+        "saude": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface com Rúcula",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de repolho com maionese",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Legumes ao Alho e Óleo",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Bolinho de Ervilha",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                },
+                {
+                  "name": "Frango Xadrez",
+                  "category": "proteina",
+                  "sourceType": "Tipo de item não cadastrado"
+                }
+              ],
+              "fetchedAt": "2026-10-20T19:40:40.535Z"
+            },
+            "jantar": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface Crespa",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Chuchu com Milho Verde",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Sopa de mandioca",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Carne de porco frita",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Bife de milho",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Fruta",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-20T19:40:40.535Z"
+            }
+          },
+          "fetchedAt": "2026-10-20T19:40:40.535Z",
+          "sourceRestaurantId": "2"
+        },
+        "direito": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface com Rúcula",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de repolho com maionese",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Legumes ao Alho e Óleo",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Bolinho de Ervilha",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                },
+                {
+                  "name": "Frango Xadrez",
+                  "category": "proteina",
+                  "sourceType": "Tipo de item não cadastrado"
+                }
+              ],
+              "fetchedAt": "2026-10-20T19:40:40.535Z"
+            },
+            "jantar": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface Crespa",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Chuchu com Milho Verde",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Sopa de mandioca",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Carne de porco frita",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Bife de milho",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Fruta",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-20T19:40:40.535Z"
+            }
+          },
+          "fetchedAt": "2026-10-20T19:40:40.535Z",
+          "sourceRestaurantId": "2"
+        },
+        "ica": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Arroz Integral",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Acelga",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada Provençal",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Batata ao Forno",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Carne Cozida",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Cassoulet Vegetariano",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Gelatina de Morango",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-20T19:40:40.741Z"
+            },
+            "jantar": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Arroz Integral",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Acelga com Abacaxi",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Maionese com Repolho",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Purê de Abóbora",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Isca de Frango à Milanesa",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Cassoulet Vegetariano",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce de Amendoim em Tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-20T19:40:40.741Z"
+            }
+          },
+          "fetchedAt": "2026-10-20T19:40:40.741Z",
+          "sourceRestaurantId": "5"
+        }
+      }
+    },
+    "2026-10-21": {
+      "restaurants": {
+        "setorial-i": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Salada de Alface",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Angu ao Sugo",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Carne Moída com Azeitonas",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Bife de milho",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Banana Nanica",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                },
+                {
+                  "name": "Molho de Manjericão",
+                  "category": "",
+                  "sourceType": "Tipo de item não cadastrado"
+                }
+              ],
+              "fetchedAt": "2026-10-21T19:39:12.758Z"
+            }
+          },
+          "fetchedAt": "2026-10-21T19:39:12.758Z",
+          "sourceRestaurantId": "6"
+        },
+        "setorial-ii": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Salada de Alface Crespa",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Cenoura com Brócolis",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Angu ao Sugo",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Carne Moída com Azeitonas",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Bife de milho",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Banana",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                },
+                {
+                  "name": "Molho de Manjericão",
+                  "category": "",
+                  "sourceType": "Tipo de item não cadastrado"
+                }
+              ],
+              "fetchedAt": "2026-10-21T19:39:12.966Z"
+            },
+            "jantar": {
+              "items": [
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Salada Grega",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Seleta de legumes",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Sopa de batata",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Isca de Frango Colorida",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Cuscuz de legumes com coentro",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce de Amendoim em Tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                },
+                {
+                  "name": "Molho Verde",
+                  "category": "molho",
+                  "sourceType": "Tipo de item não cadastrado"
+                }
+              ],
+              "fetchedAt": "2026-10-21T19:39:12.966Z"
+            }
+          },
+          "fetchedAt": "2026-10-21T19:39:12.966Z",
+          "sourceRestaurantId": "1"
+        },
+        "saude": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Tutu à Mineira",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface Crespa",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Beterraba Cozida",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Couve Refogada",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Bife de Porco Acebolado",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Quibe de Cenoura",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Fruta",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-21T19:39:13.193Z"
+            },
+            "jantar": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface Crespa",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Berinjela com Orégano",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Sopa de legumes",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Fricassé de Frango",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Bolinho de soja com batata",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-21T19:39:13.193Z"
+            }
+          },
+          "fetchedAt": "2026-10-21T19:39:13.193Z",
+          "sourceRestaurantId": "2"
+        },
+        "direito": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Tutu à Mineira",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface Crespa",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Beterraba Cozida",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Couve Refogada",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Bife de Porco Acebolado",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Quibe de Cenoura",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Fruta",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-21T19:39:13.193Z"
+            },
+            "jantar": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface Crespa",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Berinjela com Orégano",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Sopa de legumes",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Fricassé de Frango",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Bolinho de soja com batata",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-21T19:39:13.193Z"
+            }
+          },
+          "fetchedAt": "2026-10-21T19:39:13.193Z",
+          "sourceRestaurantId": "2"
+        },
+        "ica": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Arroz Integral",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Acelga",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Pepino ao Vinagrete",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Macarrão ao Alho e Óleo",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Frango Gratinado com Creme de Milho",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Couve-Flor Gratinada",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Banana",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-21T19:39:13.399Z"
+            },
+            "jantar": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Arroz Integral",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Beterraba Cozida",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Farofa de Cenoura",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Bisteca ao Molho",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Couve-Flor Gratinada",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Laranja",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-21T19:39:13.399Z"
+            }
+          },
+          "fetchedAt": "2026-10-21T19:39:13.399Z",
+          "sourceRestaurantId": "5"
+        }
+      }
+    },
+    "2026-10-22": {
+      "restaurants": {
+        "setorial-i": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Salada de Acelga",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Beterraba Cozida",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Chuchu Tropeiro",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Sobrecoxa de frango assada",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Soja Refogada com Legumes",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce de Banana em Tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                },
+                {
+                  "name": "Molho Agridoce com Mostarda",
+                  "category": "",
+                  "sourceType": "Tipo de item não cadastrado"
+                }
+              ],
+              "fetchedAt": "2026-10-22T19:39:19.322Z"
+            }
+          },
+          "fetchedAt": "2026-10-22T19:39:19.322Z",
+          "sourceRestaurantId": "6"
+        },
+        "setorial-ii": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Salada de Acelga",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Beterraba Cozida",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Chuchu Tropeiro",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Sobrecoxa de frango assada",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Soja Refogada com Legumes",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce de Banana em Tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                },
+                {
+                  "name": "Molho Agridoce com Mostarda",
+                  "category": "",
+                  "sourceType": "Tipo de item não cadastrado"
+                }
+              ],
+              "fetchedAt": "2026-10-22T19:39:19.529Z"
+            },
+            "jantar": {
+              "items": [
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Salada de Acelga",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Pepino com Couve-Flor",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Sopa de fubá",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Bife de Panela",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Quibe de Cenoura",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Melancia",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                },
+                {
+                  "name": "Molho Agridoce com Mostarda",
+                  "category": "",
+                  "sourceType": "Tipo de item não cadastrado"
+                }
+              ],
+              "fetchedAt": "2026-10-22T19:39:19.529Z"
+            }
+          },
+          "fetchedAt": "2026-10-22T19:39:19.529Z",
+          "sourceRestaurantId": "1"
+        },
+        "saude": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Acelga",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Tomate",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Penne ao Manjericão",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Sobrecoxa de frango assada",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Espinafre com ricota e abobrinha",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-22T19:39:19.740Z"
+            },
+            "jantar": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada Síria",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Canjiquinha",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Bife de Panela",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Lasanha de Soja",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Fruta",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-22T19:39:19.740Z"
+            }
+          },
+          "fetchedAt": "2026-10-22T19:39:19.740Z",
+          "sourceRestaurantId": "2"
+        },
+        "direito": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Acelga",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Tomate",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Penne ao Manjericão",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Sobrecoxa de frango assada",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Espinafre com ricota e abobrinha",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-22T19:39:19.740Z"
+            },
+            "jantar": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada Síria",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Canjiquinha",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Bife de Panela",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Lasanha de Soja",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Fruta",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-22T19:39:19.740Z"
+            }
+          },
+          "fetchedAt": "2026-10-22T19:39:19.740Z",
+          "sourceRestaurantId": "2"
+        },
+        "ica": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Arroz Integral",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Pepino ao Vinagrete",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Mandioca Ensopada",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Carne Moída com Azeitonas",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Soja Refogada com Legumes",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce de Amendoim em Tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-22T19:39:19.972Z"
+            },
+            "jantar": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Arroz Integral",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Acelga com Abacaxi",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Maionese com Legumes",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Angu com Quiabo",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Coxa de Frango ao Molho",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Soja Refogada com Legumes",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce de Banana em Tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-22T19:39:19.972Z"
+            }
+          },
+          "fetchedAt": "2026-10-22T19:39:19.972Z",
+          "sourceRestaurantId": "5"
+        }
+      }
+    },
+    "2026-10-23": {
+      "restaurants": {
+        "setorial-i": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Salada de Alface",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Tomate",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Batata corada ao forno",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Strogonoff de Carne",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Cuscuz de legumes com coentro",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Maçã",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                },
+                {
+                  "name": "Molho de salsão",
+                  "category": "",
+                  "sourceType": "Tipo de item não cadastrado"
+                }
+              ],
+              "fetchedAt": "2026-10-23T19:38:43.508Z"
+            }
+          },
+          "fetchedAt": "2026-10-23T19:38:43.508Z",
+          "sourceRestaurantId": "6"
+        },
+        "setorial-ii": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Salada de Alface Crespa",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Tomate",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Batata corada ao forno",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Strogonoff de Carne",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Cuscuz de legumes com coentro",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Melancia",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                },
+                {
+                  "name": "Molho de salsão",
+                  "category": "",
+                  "sourceType": "Tipo de item não cadastrado"
+                }
+              ],
+              "fetchedAt": "2026-10-23T19:38:43.688Z"
+            },
+            "jantar": {
+              "items": [
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Salada de Alface Crespa",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Tomate",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Salada de Legumes",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Sobrecoxa de frango assada",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Ratatule",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce de Banana em Tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                },
+                {
+                  "name": "Molho de Manjericão",
+                  "category": "",
+                  "sourceType": "Tipo de item não cadastrado"
+                }
+              ],
+              "fetchedAt": "2026-10-23T19:38:43.688Z"
+            }
+          },
+          "fetchedAt": "2026-10-23T19:38:43.688Z",
+          "sourceRestaurantId": "1"
+        },
+        "saude": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface Crespa",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada Diferente",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Abobrinha no Fubá",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Hambúrguer de grão-de-bico",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Fruta",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                },
+                {
+                  "name": "Strogonoff de Carne",
+                  "category": "",
+                  "sourceType": "Tipo de item não cadastrado"
+                }
+              ],
+              "fetchedAt": "2026-10-23T19:38:43.873Z"
+            },
+            "jantar": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Pepino com Couve-Flor",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Sopa de fubá",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Torta de frango",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Ratatule",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-23T19:38:43.873Z"
+            }
+          },
+          "fetchedAt": "2026-10-23T19:38:43.873Z",
+          "sourceRestaurantId": "2"
+        },
+        "direito": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface Crespa",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada Diferente",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Abobrinha no Fubá",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Hambúrguer de grão-de-bico",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Fruta",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                },
+                {
+                  "name": "Strogonoff de Carne",
+                  "category": "",
+                  "sourceType": "Tipo de item não cadastrado"
+                }
+              ],
+              "fetchedAt": "2026-10-23T19:38:43.873Z"
+            },
+            "jantar": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Pepino com Couve-Flor",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Sopa de fubá",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Torta de frango",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Ratatule",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-23T19:38:43.873Z"
+            }
+          },
+          "fetchedAt": "2026-10-23T19:38:43.873Z",
+          "sourceRestaurantId": "2"
+        },
+        "ica": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Arroz Integral",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Tomate",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Farofa de Couve",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Falso Lombo Recheado com Calabresa",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Bolinho de Soja",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Laranja",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-23T19:38:44.052Z"
+            },
+            "jantar": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Arroz Integral",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Tomate",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Macarrão ao Alho e Óleo",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Carne Cozida",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Bolinho de Soja",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Banana",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-23T19:38:44.052Z"
+            }
+          },
+          "fetchedAt": "2026-10-23T19:38:44.052Z",
+          "sourceRestaurantId": "5"
+        }
+      }
+    },
+    "2026-10-24": {
+      "restaurants": {
+        "setorial-i": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Salada de Alface",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada Tabule",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Macarronada",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Bife de Porco Acebolado",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Soja Refogada com Legumes",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Melancia",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                },
+                {
+                  "name": "Molho de Tomate com Orégano",
+                  "category": "molho",
+                  "sourceType": "Tipo de item não cadastrado"
+                }
+              ],
+              "fetchedAt": "2026-10-23T19:38:44.229Z"
+            }
+          },
+          "fetchedAt": "2026-10-23T19:38:44.229Z",
+          "sourceRestaurantId": "6"
+        },
+        "saude": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface Crespa",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salpicão de Legumes",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Soja Refogada com Legumes",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Linguiça Toscana Assada",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Doce tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-23T19:38:44.539Z"
+            }
+          },
+          "fetchedAt": "2026-10-23T19:38:44.539Z",
+          "sourceRestaurantId": "2"
+        },
+        "direito": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface Crespa",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salpicão de Legumes",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Soja Refogada com Legumes",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Linguiça Toscana Assada",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Doce tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-23T19:38:44.539Z"
+            }
+          },
+          "fetchedAt": "2026-10-23T19:38:44.539Z",
+          "sourceRestaurantId": "2"
+        },
+        "ica": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Arroz Integral",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Acelga com Alface",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Beterraba Ralada",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Batata ao Forno",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Strogonoff de Frango",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Strogonoff de Soja",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce de Banana em Tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-23T19:38:44.722Z"
+            }
+          },
+          "fetchedAt": "2026-10-23T19:38:44.722Z",
+          "sourceRestaurantId": "5"
+        }
+      }
+    },
+    "2026-10-25": {
+      "restaurants": {
+        "setorial-i": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Salada de Acelga",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Repolho Bicolor",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Virado de Couve",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Bife de Porco Acebolado",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Cuscuz de legumes com coentro",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Fruta",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "",
+                  "sourceType": "Tipo de item não cadastrado"
+                },
+                {
+                  "name": "Molho Verde",
+                  "category": "molho",
+                  "sourceType": "Tipo de item não cadastrado"
+                }
+              ],
+              "fetchedAt": "2026-10-23T19:38:44.900Z"
+            }
+          },
+          "fetchedAt": "2026-10-23T19:38:44.900Z",
+          "sourceRestaurantId": "6"
+        }
+      }
+    },
+    "2026-10-26": {
+      "restaurants": {
+        "setorial-i": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Acelga",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Tomate",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Farofa de Repolho",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Bife de Panela",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 2"
+                },
+                {
+                  "name": "Assado de Grão-de-Bico",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Laranja",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                },
+                {
+                  "name": "Molho Agridoce com Mostarda",
+                  "category": "",
+                  "sourceType": "Tipo de item não cadastrado"
+                }
+              ],
+              "fetchedAt": "2026-10-26T23:27:50.448Z"
+            }
+          },
+          "fetchedAt": "2026-10-26T23:27:50.448Z",
+          "sourceRestaurantId": "6"
+        },
+        "setorial-ii": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Salada de Alface",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Tomate",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Farofa de Repolho",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Bife de Panela",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Assado de Grão-de-Bico",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Laranja",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                },
+                {
+                  "name": "Molho de Manjericão",
+                  "category": "",
+                  "sourceType": "Tipo de item não cadastrado"
+                }
+              ],
+              "fetchedAt": "2026-10-26T23:27:50.527Z"
+            },
+            "jantar": {
+              "items": [
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Salada de Alface",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada Tabule",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Sopa de abóbora",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Isca de Frango Colorida",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Bolinho de Ervilha",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Laranja",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                },
+                {
+                  "name": "Molho de Manjericão",
+                  "category": "",
+                  "sourceType": "Tipo de item não cadastrado"
+                }
+              ],
+              "fetchedAt": "2026-10-26T23:27:50.527Z"
+            }
+          },
+          "fetchedAt": "2026-10-26T23:27:50.527Z",
+          "sourceRestaurantId": "1"
+        },
+        "saude": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface Crespa",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salpicão de Legumes",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Angu com Quiabo",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Carne Moída à Jardineira",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Bife de milho",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Laranja",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-26T23:27:50.605Z"
+            },
+            "jantar": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface Crespa",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada Síria",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Sopa de legumes",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Strogonoff de Frango",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Bolinho de soja com batata",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-26T23:27:50.605Z"
+            }
+          },
+          "fetchedAt": "2026-10-26T23:27:50.605Z",
+          "sourceRestaurantId": "2"
+        },
+        "direito": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface Crespa",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salpicão de Legumes",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Angu com Quiabo",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Carne Moída à Jardineira",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Bife de milho",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Laranja",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-26T23:27:50.605Z"
+            },
+            "jantar": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface Crespa",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada Síria",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Sopa de legumes",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Strogonoff de Frango",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Bolinho de soja com batata",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-26T23:27:50.605Z"
+            }
+          },
+          "fetchedAt": "2026-10-26T23:27:50.605Z",
+          "sourceRestaurantId": "2"
+        },
+        "ica": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Arroz Integral",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Pepino ao Vinagrete",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Acelga",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Purê de Abóbora",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Coxa de Frango Assada",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Soja Refogada com Legumes",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce de Amendoim em Tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-26T23:27:50.683Z"
+            },
+            "jantar": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Arroz Integral",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Maionese com Repolho",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Macarrão ao Alho e Óleo",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Linguiça Toscana Acebolada",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Soja Refogada com Legumes",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Laranja",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-26T23:27:50.683Z"
+            }
+          },
+          "fetchedAt": "2026-10-26T23:27:50.683Z",
+          "sourceRestaurantId": "5"
+        }
+      }
+    },
+    "2026-10-27": {
+      "restaurants": {
+        "setorial-i": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Salada de Alface",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Tomate",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Farofa de Milho",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Linguiça Assada",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Soja Refogada com Legumes",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Laranja",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                },
+                {
+                  "name": "Molho de Tomate",
+                  "category": "",
+                  "sourceType": "Tipo de item não cadastrado"
+                }
+              ],
+              "fetchedAt": "2026-10-27T19:38:50.951Z"
+            }
+          },
+          "fetchedAt": "2026-10-27T19:38:50.951Z",
+          "sourceRestaurantId": "6"
+        },
+        "setorial-ii": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Salada de Acelga com Alface Roxo",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Pepino ao Vinagrete",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Parafuso com brócolis",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Isca de Frango Colorida",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Bife de milho",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                },
+                {
+                  "name": "Molho de Hortelã",
+                  "category": "",
+                  "sourceType": "Tipo de item não cadastrado"
+                }
+              ],
+              "fetchedAt": "2026-10-27T19:38:51.025Z"
+            },
+            "jantar": {
+              "items": [
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "bolinho de milho",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Sopa de inhame",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Bife de Panela",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Doce tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                },
+                {
+                  "name": "Molho Verde",
+                  "category": "molho",
+                  "sourceType": "Tipo de item não cadastrado"
+                }
+              ],
+              "fetchedAt": "2026-10-27T19:38:51.025Z"
+            }
+          },
+          "fetchedAt": "2026-10-27T19:38:51.025Z",
+          "sourceRestaurantId": "1"
+        },
+        "saude": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Berinjela com Orégano",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Farofa com frutas",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Asa de Frango Assada",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Hambúrguer de grão-de-bico",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-27T19:38:51.099Z"
+            },
+            "jantar": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Almeirão",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Chuchu com Milho Verde",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Sopa de batata",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Carne Caipira",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Cuscuz de legumes com coentro",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Fruta",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-27T19:38:51.099Z"
+            }
+          },
+          "fetchedAt": "2026-10-27T19:38:51.099Z",
+          "sourceRestaurantId": "2"
+        },
+        "direito": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Berinjela com Orégano",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Farofa com frutas",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Asa de Frango Assada",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Hambúrguer de grão-de-bico",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-27T19:38:51.099Z"
+            },
+            "jantar": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Almeirão",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Chuchu com Milho Verde",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Sopa de batata",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Carne Caipira",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Cuscuz de legumes com coentro",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Fruta",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-27T19:38:51.099Z"
+            }
+          },
+          "fetchedAt": "2026-10-27T19:38:51.099Z",
+          "sourceRestaurantId": "2"
+        },
+        "ica": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Arroz Integral",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Beterraba Cozida",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Farofa de Cenoura",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Isca de carne de porco acebolada",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Charuto de Repolho",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Melancia",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-27T19:38:51.170Z"
+            },
+            "jantar": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Arroz Integral",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Acelga",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Tomate",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Macarrão ao Alho e Óleo",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Isca de Carne Colorida",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Charuto de Repolho",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce de Amendoim em Tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-27T19:38:51.170Z"
+            }
+          },
+          "fetchedAt": "2026-10-27T19:38:51.170Z",
+          "sourceRestaurantId": "5"
+        }
+      }
+    },
+    "2026-10-29": {
+      "restaurants": {
+        "saude": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Tomate",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Cenoura Vick",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Isca de Carne Colorida",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Quibe de Cenoura",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-27T19:38:51.457Z"
+            },
+            "jantar": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface Crespa",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Beterraba",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Canjiquinha",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Quibe assado com lentilha",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Fruta",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                },
+                {
+                  "name": "Escondidinho de Frango",
+                  "category": "",
+                  "sourceType": "Tipo de item não cadastrado"
+                }
+              ],
+              "fetchedAt": "2026-10-27T19:38:51.457Z"
+            }
+          },
+          "fetchedAt": "2026-10-27T19:38:51.457Z",
+          "sourceRestaurantId": "2"
+        },
+        "direito": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Tomate",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Cenoura Vick",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Isca de Carne Colorida",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Quibe de Cenoura",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-27T19:38:51.457Z"
+            },
+            "jantar": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface Crespa",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Beterraba",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Canjiquinha",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Quibe assado com lentilha",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Fruta",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                },
+                {
+                  "name": "Escondidinho de Frango",
+                  "category": "",
+                  "sourceType": "Tipo de item não cadastrado"
+                }
+              ],
+              "fetchedAt": "2026-10-27T19:38:51.457Z"
+            }
+          },
+          "fetchedAt": "2026-10-27T19:38:51.457Z",
+          "sourceRestaurantId": "2"
+        },
+        "ica": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Arroz Integral",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Couve",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Vinagrete",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Couve Refogada",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Feijoada",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Feijoada de soja",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Laranja",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-27T19:38:51.527Z"
+            },
+            "jantar": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Arroz Integral",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Acelga",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Pepino",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Batata ao Forno",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Strogonoff de Frango",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Soja Refogada com Cenoura",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Banana",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-27T19:38:51.527Z"
+            }
+          },
+          "fetchedAt": "2026-10-27T19:38:51.527Z",
+          "sourceRestaurantId": "5"
+        }
+      }
+    },
+    "2026-10-30": {
+      "restaurants": {
+        "saude": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Almeirão",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Pepino ao Vinagrete",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Purê de Batata",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Isca de pernil",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Ratatule",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Fruta",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-27T19:38:51.649Z"
+            },
+            "jantar": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Acelga",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Batata Baroa",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Sopa de fubá",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Linguiça Toscana Acebolada",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Espinafre com ricota e abobrinha",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-27T19:38:51.649Z"
+            }
+          },
+          "fetchedAt": "2026-10-27T19:38:51.649Z",
+          "sourceRestaurantId": "2"
+        },
+        "direito": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Almeirão",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Pepino ao Vinagrete",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Purê de Batata",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Isca de pernil",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Ratatule",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Fruta",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-27T19:38:51.649Z"
+            },
+            "jantar": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Acelga",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Batata Baroa",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Sopa de fubá",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Linguiça Toscana Acebolada",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Espinafre com ricota e abobrinha",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-27T19:38:51.649Z"
+            }
+          },
+          "fetchedAt": "2026-10-27T19:38:51.649Z",
+          "sourceRestaurantId": "2"
+        }
+      }
+    },
+    "2026-10-31": {
+      "restaurants": {
+        "saude": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Almeirão",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Cenoura Ralada",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Farofa de Repolho",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Linguiça Toscana Acebolada",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Soja Refogada com Legumes",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-27T19:38:51.797Z"
+            }
+          },
+          "fetchedAt": "2026-10-27T19:38:51.797Z",
+          "sourceRestaurantId": "2"
+        },
+        "direito": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Almeirão",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Cenoura Ralada",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Farofa de Repolho",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Linguiça Toscana Acebolada",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Soja Refogada com Legumes",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-27T19:38:51.797Z"
+            }
+          },
+          "fetchedAt": "2026-10-27T19:38:51.797Z",
+          "sourceRestaurantId": "2"
+        },
+        "ica": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Arroz Integral",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Maionese com Repolho",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Alface",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Batata ao Forno",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Frango Gratinado com Creme de Milho",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Bolinho de Soja",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Maçã",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-27T19:38:51.867Z"
+            }
+          },
+          "fetchedAt": "2026-10-27T19:38:51.867Z",
+          "sourceRestaurantId": "5"
+        }
+      }
+    },
+    "2026-10-28": {
+      "restaurants": {
+        "ica": {
+          "meals": {
+            "almoco": {
+              "items": [
+                {
+                  "name": "Refresco",
+                  "category": "bebida",
+                  "sourceType": "(um copo)"
+                },
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Arroz Integral",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Cenoura Ralada",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Purê de Batata",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Virado de Lentilha",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce de Banana em Tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                },
+                {
+                  "name": "Asa de Frango Assada",
+                  "category": "",
+                  "sourceType": "Tipo de item não cadastrado"
+                }
+              ],
+              "fetchedAt": "2026-10-27T19:38:51.325Z"
+            },
+            "jantar": {
+              "items": [
+                {
+                  "name": "Arroz Branco",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 1"
+                },
+                {
+                  "name": "Arroz Integral",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 2"
+                },
+                {
+                  "name": "Feijão Carioca",
+                  "category": "acompanhamento",
+                  "sourceType": "Acompanhamento 3"
+                },
+                {
+                  "name": "Salada de Alface",
+                  "category": "salada",
+                  "sourceType": "Entrada 1"
+                },
+                {
+                  "name": "Salada de Pepino",
+                  "category": "salada",
+                  "sourceType": "Entrada 2"
+                },
+                {
+                  "name": "Abóbora Cozida",
+                  "category": "guarnicao",
+                  "sourceType": "Guarnição"
+                },
+                {
+                  "name": "Bisteca Suína Assada",
+                  "category": "proteina",
+                  "sourceType": "Prato protéico 1"
+                },
+                {
+                  "name": "Virado de Lentilha",
+                  "category": "vegetariana",
+                  "sourceType": "Prato protéico 3"
+                },
+                {
+                  "name": "Doce de Amendoim em Tablete",
+                  "category": "sobremesa",
+                  "sourceType": "Sobremesa 1 (uma porção)"
+                }
+              ],
+              "fetchedAt": "2026-10-27T19:38:51.325Z"
+            }
+          },
+          "fetchedAt": "2026-10-27T19:38:51.325Z",
+          "sourceRestaurantId": "5"
+        }
+      }
+    }
+  },
+  "verifiedCompleteDates": [
+    "2026-10-27",
+    "2026-10-28",
+    "2026-10-29",
+    "2026-10-30",
+    "2026-10-31",
+    "2026-11-01",
+    "2026-11-02"
+  ]
 }

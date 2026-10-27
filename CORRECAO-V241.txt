@@ -1,0 +1,1 @@
+v2.4.1: correcao exclusivamente dos testes E2E para a nova barra lateral com 4 botoes no DOM e 3 abas publicas. Nao muda HTML, CSS ou funcionalidade do site. Sem deploy.

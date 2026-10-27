@@ -2,11 +2,11 @@
 const wd = (cafe, almoco, jantar) => ({cafe, almoco, jantar});
 export const REGULAR_HOURS = Object.freeze({
   'setorial-i': {
-    weekdays: wd(null, ['10:30','14:00'], ['17:10','19:30']),
+    weekdays: wd(['06:40','08:15'], ['10:30','14:00'], null),
     saturday: wd(null, ['11:00','13:00'], null)
   },
   'setorial-ii': {
-    weekdays: wd(['06:45','08:00'], ['10:30','14:00'], null),
+    weekdays: wd(null, ['10:30','14:00'], ['17:10','19:30']),
     saturday: wd(null, null, null)
   },
   saude: {

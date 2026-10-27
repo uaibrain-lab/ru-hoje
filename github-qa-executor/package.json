@@ -1,0 +1,17 @@
+{
+  "name": "bandeco-qa-raffle-executor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Executor isolado de sorteios do ambiente QA bandeco-homologacao.",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check scripts/run-raffles-qa.mjs && node --check scripts/raffle-engine.mjs"
+  },
+  "dependencies": {
+    "@google-cloud/firestore": "9.4.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

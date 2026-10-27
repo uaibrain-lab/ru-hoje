@@ -19,10 +19,34 @@ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const url=`http://127.0.0.1:${server.address().port}/`;
 const p={};for(const x of new Intl.DateTimeFormat('en-US',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date())) p[x.type]=x.value;
 const today=`${p.year}-${p.month}-${p.day}`;
-const data={schemaVersion:1,source:'https://fump.ufmg.br/cardapio-do-dia/',generatedAt:new Date().toISOString(),days:{[today]:{restaurants:{'setorial-i':{fetchedAt:new Date().toISOString(),meals:{
-  almoco:{items:[{name:'Arroz Branco',category:'acompanhamento'},{name:'Feijão Carioca',category:'acompanhamento'},{name:'Frango grelhado',category:'proteina'},{name:'Salada de Alface',category:'salada'}]},
-  jantar:{items:[{name:'Sopa de legumes',category:'guarnicao'},{name:'Arroz integral',category:'acompanhamento'},{name:'Feijão preto',category:'acompanhamento'},{name:'Legumes assados',category:'guarnicao'}]}
-}}}}}};
+const stamp=new Date().toISOString();
+const data={
+  schemaVersion:1,
+  source:'https://fump.ufmg.br/cardapio-do-dia/',
+  generatedAt:stamp,
+  days:{
+    [today]:{
+      restaurants:{
+        'setorial-i':{
+          fetchedAt:stamp,
+          meals:{
+            cafe:{items:[{name:'Café com leite',category:'bebida'},{name:'Pão de queijo',category:'acompanhamento'}]},
+            almoco:{items:[{name:'Arroz Branco',category:'acompanhamento'},{name:'Feijão Carioca',category:'acompanhamento'},{name:'Frango grelhado',category:'proteina'},{name:'Salada de Alface',category:'salada'}]},
+            jantar:{items:[{name:'Sopa indevida',category:'guarnicao'}]}
+          }
+        },
+        'setorial-ii':{
+          fetchedAt:stamp,
+          meals:{
+            cafe:{items:[{name:'Café indevido',category:'bebida'}]},
+            almoco:{items:[{name:'Arroz II',category:'acompanhamento'},{name:'Feijão II',category:'acompanhamento'},{name:'Proteína II',category:'proteina'}]},
+            jantar:{items:[{name:'Sopa II',category:'guarnicao'},{name:'Arroz II noite',category:'acompanhamento'}]}
+          }
+        }
+      }
+    }
+  }
+};
 let browser;
 try {
   browser=await chromium.launch({headless:true,args:['--no-sandbox']});
@@ -36,15 +60,24 @@ try {
   page.on('pageerror',e=>errors.push(e.message));
   page.on('console',message=>{if(message.type()==='error') errors.push(message.text());});
   await page.goto(url,{waitUntil:'networkidle'});
-  assert.equal(await page.locator('dialog').evaluate(e=>e.open),true);
+  assert.equal(await page.locator('#restaurant-dialog').evaluate(e=>e.open),true);
   await page.getByRole('button',{name:'RU Setorial I Campus Pampulha',exact:true}).click();
   await page.getByText('Frango grelhado',{exact:true}).waitFor({timeout:15000});
   assert.ok(interceptedRequests>=1,'Nenhuma leitura simulada do Firestore foi interceptada');
   assert.equal(await page.locator('.date-card').count(),15);
   assert.equal(await page.locator('.meal-card').count(),2);
+  assert.deepEqual(await page.locator('.meal-card h3').allTextContents(),['Almoço','Café da manhã']);
+  assert.equal(await page.locator('.meal-card').filter({hasText:'Sopa indevida'}).count(),0);
   await page.reload({waitUntil:'networkidle'});
   assert.equal(await page.locator('#current-restaurant').innerText(),'RU Setorial I');
   await page.getByText('Frango grelhado',{exact:true}).waitFor({timeout:15000});
+  await page.getByRole('button',{name:'RU Setorial I Campus Pampulha',exact:true}).click();
+  await page.getByRole('button',{name:'RU Setorial II Campus Pampulha',exact:true}).click();
+  await page.getByText('Sopa II',{exact:true}).waitFor({timeout:15000});
+  const clockParts = Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date()).filter(p=>p.type==='hour'||p.type==='minute').map(p=>[p.type,Number(p.value)]));
+  const expectedSetorialIIOrder = (clockParts.hour * 60 + clockParts.minute) >= 870 ? ['Jantar','Almoço'] : ['Almoço','Jantar'];
+  assert.deepEqual(await page.locator('.meal-card h3').allTextContents(),expectedSetorialIIOrder);
+  assert.equal(await page.locator('.meal-card').filter({hasText:'Café indevido'}).count(),0);
   await page.locator('.date-card').last().click();
   await page.getByText('Ainda sem cardápio por aqui').waitFor();
   assert.deepEqual(errors,[],'Erros de console ou JavaScript durante teste ponta a ponta');

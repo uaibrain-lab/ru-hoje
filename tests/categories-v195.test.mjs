@@ -33,7 +33,7 @@ test('v1.9.5: novas coletas seguem o tipoPrato oficial, independente do nome',()
 test('v1.9.5: módulo offline e mudança de cache',()=>{
   const sw=fs.readFileSync(new URL('../public/service-worker.js',import.meta.url),'utf8');
   const app=fs.readFileSync(new URL('../public/assets/app.js',import.meta.url),'utf8');
-  assert.match(sw,/const VERSION = 'bandeco-v19[0-9]-[a-z0-9-]+'/);
+  assert.match(sw,/const VERSION = 'bandeco-v(?:19[0-9]|2[0-9][0-9])-[a-z0-9-]+'/);
   assert.match(sw,/\/assets\/dish-category\.js/);
   assert.match(app,/publishedCategory\(item.category, name, item.sourceType\)/);
 });
