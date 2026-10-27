@@ -394,7 +394,8 @@ dialog{background:var(--card);color:var(--ink);border-color:var(--line)}
   .interno-page{min-height:calc(100dvh - 82px - env(safe-area-inset-bottom,0px));padding-top:0;padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
   /* No celular, o mapa ocupa a área livre; a barra fixa permanece fora do iframe. */
   .interno-page .interno-heading{margin:0 0 6px;padding-top:2px}
-  .interno-frame{height:calc(100dvh - 155px - env(safe-area-inset-bottom,0px));min-height:0;border-radius:18px}
+  .interno-frame{height:calc(100svh - 125px - env(safe-area-inset-bottom,0px));min-height:calc(100svh - 125px - env(safe-area-inset-bottom,0px));border-radius:18px}
+  @supports (height:100dvh){.interno-frame{height:calc(100dvh - 125px - env(safe-area-inset-bottom,0px));min-height:calc(100svh - 125px - env(safe-area-inset-bottom,0px))}}
 }
 .festa-card-v21{transition:transform .16s,box-shadow .16s}
 .festa-card-v21:hover{transform:translateY(-2px)}
