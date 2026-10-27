@@ -1,0 +1,29 @@
+{
+  "roleId": "ocupaQaCardapiosPublisher",
+  "title": "OCUPA QA Cardapios Publisher",
+  "stage": "ALPHA",
+  "scope": "project bandeco-homologacao",
+  "includedPermissions": [
+    "datastore.entities.get",
+    "datastore.entities.update"
+  ],
+  "excludedPermissions": [
+    "datastore.entities.create",
+    "datastore.entities.delete",
+    "datastore.entities.list",
+    "datastore.databases.create",
+    "datastore.databases.delete",
+    "datastore.databases.get",
+    "datastore.schemas.create",
+    "datastore.schemas.delete",
+    "iam.serviceAccounts.getAccessToken",
+    "resourcemanager.projects.setIamPolicy"
+  ],
+  "resourceLimit": "IAM role does not restrict access to publicMenus/current; that restriction is enforced by the fixed application path and write gates.",
+  "validationRequiredBeforeCreation": [
+    "Confirmar que o cliente usado em apply executa somente get e update com precondição lastUpdateTime.",
+    "Confirmar que nenhuma transação é introduzida; caso seja, revisar datastore.databases.get separadamente.",
+    "Testar a role em conta publisher isolada no QA."
+  ],
+  "remoteMutationInP5F1": false
+}

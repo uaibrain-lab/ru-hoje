@@ -1,0 +1,23 @@
+{
+  "providerId": "ocupa-qa-cardapios-publish",
+  "projectId": "bandeco-homologacao",
+  "projectNumber": "342397522942",
+  "poolId": "ocupa-qa-publisher",
+  "issuerUri": "https://token.actions.githubusercontent.com",
+  "attributeMapping": {
+    "google.subject": "assertion.sub",
+    "attribute.repository_id": "assertion.repository_id",
+    "attribute.repository_owner_id": "assertion.repository_owner_id"
+  },
+  "attributeCondition": "assertion.repository_id=='1425884929' && assertion.repository_owner_id=='342577642' && assertion.ref=='refs/heads/main' && assertion.workflow_ref=='uaibrain-lab/ru-hoje/.github/workflows/ocupa-qa-cardapios-publish.yml@refs/heads/main' && assertion.event_name=='workflow_dispatch'",
+  "negativeCases": [
+    "repository_id diferente",
+    "repository_owner_id diferente",
+    "branch diferente",
+    "workflow_ref diferente",
+    "pull_request",
+    "schedule",
+    "token sem atributos esperados"
+  ],
+  "remoteMutationInP5F1": false
+}
