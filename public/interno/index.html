@@ -147,7 +147,7 @@ const isLive=()=>dow()!==0&&(cat==='sabado'?dow()===6:dow()!==6);
 const lines=()=>ALL.filter(l=>l.categoriaDia===cat);
 const byId=id=>ALL.find(l=>l.idRota===id);
 const offs=l=>l._o||(l._o=(()=>{let t=0;const o={};for(const s of l.trajetoDetalhado||[]){t+=s.tempoDoAnteriorMinutos||0;if(!(s.idParada in o))o[s.idParada]=t}return o})());
-const variant=l=>l.nome.replace(/^Linha\s*\d+\s*/,'').trim()||'Percurso padrão';
+const variant=l=>l.sublinha?.trim()||'Percurso padrão';
 const title=l=>'Linha '+String(l.linha).padStart(2,'0');
 const etaTxt=t=>{if(!isLive())return fm(t);const d=t-now();return d<=0?'agora':d<60?d+' min':fm(t)};
 
@@ -172,7 +172,9 @@ const saveFav=()=>{try{localStorage.setItem('bandeco_interno_favoritos_v1',JSON.
 const eta=t=>{const x=etaTxt(t),m=x.match(/^(\d+) min$/);return m?`<b>${m[1]}<i> min</i></b>`:`<b>${x}</b>`};
 
 function stopBody(id){const a=arrivals(id);if(!a.length)return '<p>Nenhuma linha passa aqui neste tipo de dia.</p>'+disclaimer;
-  const i=a.findIndex(x=>x.ts.length);return a.map((x,k)=>arrRow(x,id,k===i)).join('')+disclaimer}
+  const visible=isLive()?a.filter(x=>x.ts.length):a;
+  if(!visible.length)return '<p>Não há mais saídas hoje neste ponto.</p>'+disclaimer;
+  const i=visible.findIndex(x=>x.ts.length);return visible.map((x,k)=>arrRow(x,id,k===i)).join('')+disclaimer}
 function stopView(id){const p=S[id],on=fav.includes(id);
   return `${back}<div class="hd2"><div><h2>${esc(p.nome)}</h2><small>${esc(p.descricao||'')}</small></div><button class="star${on?' fav':''}" data-fav="${id}" aria-label="${on?'Remover dos seus pontos':'Salvar nos seus pontos'}">${ic(STAR,on?'currentColor':'none')}</button></div>${banner()}<h3>Próximos ônibus</h3>${stopBody(id)}`}
 
