@@ -113,6 +113,7 @@ service cloud.firestore {
         && (!('status' in get(/databases/$(database)/documents/menuSyncState/current).data)
           || get(/databases/$(database)/documents/menuSyncState/current).data.status != 'running')
         && (!('nextAllowedAt' in get(/databases/$(database)/documents/menuSyncState/current).data)
+          || get(/databases/$(database)/documents/menuSyncState/current).data.nextAllowedAt == null
           || get(/databases/$(database)/documents/menuSyncState/current).data.nextAllowedAt <= request.time);
       allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['requestedAt','status'])
         && request.resource.data.status == 'pending'
@@ -123,6 +124,7 @@ service cloud.firestore {
         && (!('status' in get(/databases/$(database)/documents/menuSyncState/current).data)
           || get(/databases/$(database)/documents/menuSyncState/current).data.status != 'running')
         && (!('nextAllowedAt' in get(/databases/$(database)/documents/menuSyncState/current).data)
+          || get(/databases/$(database)/documents/menuSyncState/current).data.nextAllowedAt == null
           || get(/databases/$(database)/documents/menuSyncState/current).data.nextAllowedAt <= request.time);
       allow list, delete: if false;
     }
