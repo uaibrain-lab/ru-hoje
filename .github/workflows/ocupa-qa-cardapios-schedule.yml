@@ -1,0 +1,119 @@
+name: OCUPA UFMG - FUMP QA schedule (read-only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: 'Dias para coleta read-only'
+        required: true
+        default: '7'
+        type: string
+  schedule:
+    - cron: '40 5 * * 1-5'
+      timezone: 'America/Sao_Paulo'
+    - cron: '30 9 * * 1-5'
+      timezone: 'America/Sao_Paulo'
+    - cron: '10 16 * * 1-5'
+      timezone: 'America/Sao_Paulo'
+    - cron: '57 9 * * 6'
+      timezone: 'America/Sao_Paulo'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ocupa-qa-cardapios-schedule-simulation
+  cancel-in-progress: false
+
+jobs:
+  coleta-readonly:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      GOOGLE_CLOUD_PROJECT: bandeco-homologacao
+      GCLOUD_PROJECT: bandeco-homologacao
+      OCUPA_QA_SYNC_ENABLED: 'false'
+      OCUPA_QA_PUBLISH_ENABLED: 'false'
+    steps:
+      - name: Validar repositório QA e evento
+        env:
+          REPOSITORY: ${{ github.repository }}
+          REPOSITORY_ID: ${{ github.repository_id }}
+          OWNER_ID: ${{ github.repository_owner_id }}
+          REF: ${{ github.ref }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          test "$REPOSITORY" = 'uaibrain-lab/ru-hoje'
+          test "$REPOSITORY_ID" = '1425884929'
+          test "$OWNER_ID" = '342577642'
+          test "$REF" = 'refs/heads/main'
+          test "$EVENT" = 'workflow_dispatch' -o "$EVENT" = 'schedule'
+          echo "OCUPA_P5G2A_EVENT=$EVENT"
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Instalar dependências sem produção remota
+        working-directory: cardapios-qa
+        run: npm ci --omit=dev --no-audit --no-fund
+      - name: Testes de calendário e segurança
+        working-directory: cardapios-qa
+        run: |
+          node --test tests/ocupa-qa-menu.test.mjs tests/ocupa-qa-publish-security.test.mjs tests/ocupa-qa-schedule.test.mjs
+          echo 'OCUPA_P5G1_TESTES_OK=1'
+      - name: Coleta e dry-run somente leitura
+        working-directory: cardapios-qa
+        env:
+          DAYS: ${{ inputs.days }}
+        run: |
+          case "$DAYS" in 1|2|3|4|5|6|7) ;; *) echo 'DIAS_INVALIDOS'; exit 1;; esac
+          node scripts/ocupa-qa-menu-sync.mjs --mode=dry-run --days="$DAYS" > "$RUNNER_TEMP/ocupa-dry-run.json"
+          node scripts/ocupa-qa-freshness.mjs --file="$RUNNER_TEMP/ocupa-dry-run.json" --dry-run
+          node -e "const fs=require('node:fs');const x=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+'/ocupa-dry-run.json','utf8'));console.log(JSON.stringify({event:process.env.GITHUB_EVENT_NAME,mode:'read-only',status:x.plannedWrites?'OK':'SEM_ALTERACOES',plannedWrites:x.plannedWrites||0,remoteWrites:0,updateTime:x.remoteUpdateTime||null}));"
+          echo 'OCUPA_P5G1_REMOTE_WRITES=0'
+
+  prova-wif-scheduler:
+    if: ${{ github.event_name == 'schedule' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Validar evento schedule
+        env:
+          REPOSITORY: ${{ github.repository }}
+          REPOSITORY_ID: ${{ github.repository_id }}
+          OWNER_ID: ${{ github.repository_owner_id }}
+          REF: ${{ github.ref }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          test "$REPOSITORY" = 'uaibrain-lab/ru-hoje'
+          test "$REPOSITORY_ID" = '1425884929'
+          test "$OWNER_ID" = '342577642'
+          test "$REF" = 'refs/heads/main'
+          test "$EVENT" = 'schedule'
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Provar identidade WIF scheduler sem dados
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: bandeco-homologacao
+          workload_identity_provider: projects/342397522942/locations/global/workloadIdentityPools/ocupa-qa-scheduler/providers/ocupa-qa-cardapios-schedule
+          service_account: ocupa-qa-cardapios-scheduler@bandeco-homologacao.iam.gserviceaccount.com
+          token_format: access_token
+          access_token_lifetime: 300s
+          create_credentials_file: false
+          export_environment_variables: false
+          cleanup_credentials: true
+      - name: Confirmar prova sem operações de dados
+        run: |
+          set -euo pipefail
+          echo 'OCUPA_P5G2A_SCHEDULE_WIF_OK=1'
+          echo 'OCUPA_P5G2A_REMOTE_WRITES=0'
+          echo 'OCUPA_P5G2A_NO_APPLY=1'
