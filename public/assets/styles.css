@@ -396,7 +396,6 @@ dialog{background:var(--card);color:var(--ink);border-color:var(--line)}
   .interno-frame{height:calc(100dvh - 325px - env(safe-area-inset-bottom,0px));min-height:0;border-radius:18px}
 }
 .festa-card-v21{transition:transform .16s,box-shadow .16s}
-.homologation-banner{margin:0 0 18px;padding:7px 10px;border:1px solid #ead9a6;border-radius:10px;background:#fff8df;color:#765a13;font-size:11px;font-weight:750;letter-spacing:.15px;text-align:center}
 .festa-card-v21:hover{transform:translateY(-2px)}
 .festa-action{transition:filter .15s,transform .15s}
 .festa-action:hover{filter:brightness(1.04);transform:translateY(-1px)}
