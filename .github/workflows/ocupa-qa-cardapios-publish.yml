@@ -90,8 +90,8 @@ jobs:
           echo 'OCUPA_QA_PUBLISH_BLOQUEADO=CONFIRMACAO_AUSENTE'
           exit 1
 
-      - name: Autenticar publisher QA via WIF
-        if: ${{ inputs.auth_probe || (inputs.publish && inputs.confirm) }}
+      - name: Autenticar publisher QA via WIF (auth probe)
+        if: ${{ inputs.auth_probe }}
         uses: google-github-actions/auth@v3
         with:
           project_id: bandeco-homologacao
@@ -101,6 +101,19 @@ jobs:
           access_token_lifetime: 300s
           create_credentials_file: false
           export_environment_variables: false
+          cleanup_credentials: true
+
+      - name: Autenticar publisher QA via WIF (publish)
+        if: ${{ !inputs.auth_probe && inputs.publish && inputs.confirm }}
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: bandeco-homologacao
+          workload_identity_provider: projects/342397522942/locations/global/workloadIdentityPools/ocupa-qa-publisher/providers/ocupa-qa-cardapios-publish
+          service_account: ocupa-qa-cardapios-publisher@bandeco-homologacao.iam.gserviceaccount.com
+          token_format: access_token
+          access_token_lifetime: 300s
+          create_credentials_file: true
+          export_environment_variables: true
           cleanup_credentials: true
 
       - name: Confirmar WIF sem dados
