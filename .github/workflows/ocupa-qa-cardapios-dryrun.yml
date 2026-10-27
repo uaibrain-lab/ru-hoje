@@ -1,0 +1,50 @@
+name: OCUPA UFMG - FUMP QA dry-run (sem escrita)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ocupa-ufmg-fump-qa-dryrun
+  cancel-in-progress: false
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    env:
+      GOOGLE_CLOUD_PROJECT: bandeco-homologacao
+    defaults:
+      run:
+        working-directory: cardapios-qa
+    steps:
+      - name: Repositorio e branch autorizados
+        env:
+          REPO: ${{ github.repository }}
+          REPO_ID: ${{ github.repository_id }}
+          OWNER_ID: ${{ github.repository_owner_id }}
+          REF: ${{ github.ref }}
+          EVENT: ${{ github.event_name }}
+        shell: bash
+        working-directory: ${{ github.workspace }}
+        run: |
+          set -euo pipefail
+          test "$REPO" = 'uaibrain-lab/ru-hoje'
+          test "$REPO_ID" = '1425884929'
+          test "$OWNER_ID" = '342577642'
+          test "$REF" = 'refs/heads/main'
+          test "$EVENT" = 'workflow_dispatch'
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: cardapios-qa/package-lock.json
+      - name: Dependencias do sincronizador isolado
+        run: npm ci --omit=dev --no-audit --no-fund
+      - name: Testes do sincronizador
+        run: node --test tests/ocupa-qa-menu.test.mjs
+      - name: Consulta FUMP e Firestore QA publicos (sem escrever)
+        run: node scripts/ocupa-qa-menu-sync.mjs --mode=dry-run --days=7

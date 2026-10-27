@@ -1,0 +1,33 @@
+{
+  "name": "ru-hoje-ufmg",
+  "version": "1.2.0",
+  "private": true,
+  "type": "module",
+  "description": "PWA independente para consulta dos cardápios dos RUs da UFMG.",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "scrape": "node scripts/sync.mjs",
+    "publish": "node scripts/publish.mjs",
+    "serve": "python -m http.server 8080 --directory public",
+    "test:e2e": "node scripts/smoke.mjs",
+    "test:festas": "node scripts/test-festas-local.mjs",
+    "test:festas:visual": "node scripts/test-festas-v244-visual.mjs",
+    "test:festas:visual:v245": "node scripts/test-festas-v245-visual.mjs",
+    "test:festas:security": "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File scripts/Test-Festas-Security-Standalone.ps1 -Suite Full",
+    "test:festas:admin": "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File scripts/Test-Festas-Security-Standalone.ps1 -Suite Admin",
+    "keys:festas": "node scripts/generate-festas-keys.mjs",
+    "test:festas:security:legacy": "firebase emulators:exec --config firebase.emulators.json --project demo-bandeco --only auth,firestore \"node scripts/test-festas-security-emulator.mjs && node scripts/test-festas-security-adversarial.mjs && node scripts/test-festas-deletion-emulator.mjs\"",
+    "test:festas:admin:legacy": "firebase emulators:exec --config firebase.emulators.json --project demo-bandeco --only auth,firestore \"node scripts/test-festas-v253-admin-emulator.mjs && node scripts/test-festas-security-emulator.mjs\""
+  },
+  "dependencies": {
+    "@google-cloud/firestore": "9.4.0",
+    "firebase-admin": "14.5.0",
+    "playwright": "1.56.1"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "firebase": "^11.6.0"
+  }
+}
