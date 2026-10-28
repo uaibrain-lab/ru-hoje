@@ -49,7 +49,24 @@ try {
   else if (mode === 'apply') {
     const claimResult = await claim();
     if (claimResult.kind !== 'claimed') console.log(JSON.stringify({project: PROJECT, mode, outcome: claimResult.kind, remoteWrites: 0}));
-    else try { const output = await runSync(); const now = Timestamp.now(); await finish({status: 'success', lastRequestedAt: claimResult.requestedAt, lastQueryAt: now, lastSuccessAt: now, lastPublishedAt: now, nextAllowedAt: Timestamp.fromMillis(now.toMillis() + COOLDOWN_MS), inProgressAt: null, errorCode: null}, 'complete'); console.log(JSON.stringify({project: PROJECT, mode, outcome: 'processed', syncOutput: output, remoteWrites: 3})); }
+    else try {
+      const output = await runSync();
+      const syncResult = JSON.parse(output);
+      const published = syncResult.writePerformed === 1;
+      const now = Timestamp.now();
+      const patch = {
+        status: published ? 'success' : 'no-change',
+        lastRequestedAt: claimResult.requestedAt,
+        lastQueryAt: now,
+        lastSuccessAt: now,
+        nextAllowedAt: Timestamp.fromMillis(now.toMillis() + COOLDOWN_MS),
+        inProgressAt: null,
+        errorCode: null,
+        ...(published ? {lastPublishedAt: now} : {})
+      };
+      await finish(patch, 'complete');
+      console.log(JSON.stringify({project: PROJECT, mode, outcome: published ? 'processed' : 'no-change', syncOutput: output, remoteWrites: published ? 3 : 2}));
+    }
     catch (error) { const now = Timestamp.now(); await finish({status: 'error', lastQueryAt: now, lastFailureAt: now, nextAllowedAt: Timestamp.fromMillis(now.toMillis() + RETRY_MS), inProgressAt: null, errorCode: safe(error.message)}, 'error'); throw error; }
   } else throw new Error('MODO_INVALIDO');
 } catch (error) { console.error(`HUB_PROD_REQUEST_PROCESSOR_BLOCKED=${safe(error.message)}`); process.exitCode = 1; } finally { await db.terminate(); }
