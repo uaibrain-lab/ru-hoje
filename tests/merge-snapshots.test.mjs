@@ -23,6 +23,15 @@ test('rejeita retrocesso para captura antiga',()=>{
   const next=snap('2026-10-19','setorial-i','almoco',makeMenu('Antigo','2026-10-19T09:00:00Z'));
   assert.equal(mergeSnapshots(old,next,now).days['2026-10-19'].restaurants['setorial-i'].meals.almoco.items[0].name,'Atual');
 });
+test('reutiliza classificação anterior quando a FUMP omite o tipo',()=>{
+  const old=snap('2026-10-19','setorial-i','almoco',makeMenu('Asa de Frango Assada'));
+  old.days['2026-10-19'].restaurants['setorial-i'].meals.almoco.items[0].category='proteina';
+  const next=snap('2026-10-19','setorial-i','almoco',makeMenu('Asa de Frango Assada','2026-10-19T13:00:00Z'));
+  next.days['2026-10-19'].restaurants['setorial-i'].meals.almoco.items[0].category='';
+  next.days['2026-10-19'].restaurants['setorial-i'].meals.almoco.items[0].sourceType='Tipo de item não cadastrado';
+  const merged=mergeSnapshots(old,next,now);
+  assert.equal(merged.days['2026-10-19'].restaurants['setorial-i'].meals.almoco.items[0].category,'proteina');
+});
 test('remove dias além da janela de retenção e valida formato',()=>{
   const old=snap('2026-09-01','setorial-i','almoco',makeMenu('Antigo'));
   const next=snap('2026-10-19','saude','almoco',makeMenu('Novo'));

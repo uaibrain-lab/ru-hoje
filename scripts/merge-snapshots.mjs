@@ -9,6 +9,8 @@
  */
 const RU_IDS = new Set(['setorial-i', 'setorial-ii', 'saude', 'direito', 'ica']);
 const MEAL_IDS = new Set(['almoco', 'jantar', 'cafe']);
+const CATEGORIES = new Set(['acompanhamento', 'bebida', 'guarnicao', 'molho', 'proteina', 'salada', 'sobremesa', 'vegetariana']);
+const normalizeDish = value => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR').trim().replace(/\s+/g, ' ');
 
 function validDate(value) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -32,6 +34,36 @@ function cleanRestaurant(candidate) {
   return out;
 }
 
+function rememberedCategories(previous) {
+  const memory = new Map();
+  const dates = Object.keys(previous?.days || {}).sort((a, b) => b.localeCompare(a));
+  for (const date of dates) {
+    for (const restaurant of Object.values(previous.days[date]?.restaurants || {})) {
+      for (const meal of Object.values(restaurant?.meals || {})) {
+        for (const item of meal?.items || []) {
+          const name = normalizeDish(item?.name);
+          const category = String(item?.category || '').trim();
+          if (name && CATEGORIES.has(category) && !memory.has(name)) memory.set(name, category);
+        }
+      }
+    }
+  }
+  return memory;
+}
+
+function restoreRememberedCategories(candidate, memory) {
+  if (!candidate?.meals || !memory.size) return candidate;
+  const meals = Object.fromEntries(Object.entries(candidate.meals).map(([key, meal]) => [key, {
+    ...meal,
+    items: (meal?.items || []).map(item => {
+      if (!item || String(item.category || '').trim()) return item;
+      const category = memory.get(normalizeDish(item.name));
+      return category ? {...item, category} : item;
+    }),
+  }]));
+  return {...candidate, meals};
+}
+
 export function mergeSnapshots(previous, incoming, now = new Date()) {
   if (incoming?.schemaVersion !== 1 || !validTime(incoming?.generatedAt) ||
       !incoming.days || typeof incoming.days !== 'object' || Array.isArray(incoming.days)) {
@@ -45,6 +77,7 @@ export function mergeSnapshots(previous, incoming, now = new Date()) {
     throw new Error('Lista de datas verificadas inválida');
   }
   const authoritative = new Set(verified);
+  const categoryMemory = rememberedCategories(old);
   const merged = {schemaVersion:1, generatedAt:incoming.generatedAt, source:incoming.source, days:{}};
   const parts = Object.fromEntries(new Intl.DateTimeFormat('en-US',{
     timeZone:'America/Sao_Paulo', year:'numeric', month:'2-digit', day:'2-digit'
@@ -64,7 +97,7 @@ export function mergeSnapshots(previous, incoming, now = new Date()) {
       // não uma falha de rede. Não reincorporar refeições obsoletas do banco.
       for (const [id, candidate] of Object.entries(next)) {
         if (!RU_IDS.has(id)) throw new Error(`RU desconhecido: ${id}`);
-        const clean = cleanRestaurant(candidate);
+        const clean = cleanRestaurant(restoreRememberedCategories(candidate, categoryMemory));
         if (clean) restaurants[id] = clean;
       }
     } else {
@@ -75,7 +108,7 @@ export function mergeSnapshots(previous, incoming, now = new Date()) {
         const meals={};
         for (const key of new Set([...Object.keys(oldRu.meals || {}),...Object.keys(newRu.meals || {})])) {
           if (!MEAL_IDS.has(key)) continue;
-          const candidate=newRu.meals?.[key], oldMeal=oldRu.meals?.[key];
+          const candidate=restoreRememberedCategories({meals:{[key]:newRu.meals?.[key]}}, categoryMemory).meals[key], oldMeal=oldRu.meals?.[key];
           const chosen=(candidate?.items?.length && (!oldMeal?.fetchedAt || !candidate.fetchedAt || Date.parse(candidate.fetchedAt)>=Date.parse(oldMeal.fetchedAt))) ? candidate : oldMeal;
           if (chosen?.items?.length) meals[key]=chosen;
         }
