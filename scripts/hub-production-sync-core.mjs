@@ -45,6 +45,6 @@ export async function collectSnapshot(days = 7) {
     snapshot.days[iso] = day;
   }
   snapshot.generatedAt = new Date().toISOString();
-  if (!snapshot.days[today]?.restaurants?.['setorial-i']?.meals?.almoco?.items?.length || !snapshot.days[today]?.restaurants?.['setorial-ii']?.meals?.almoco?.items?.length) fail('ALMOCOS_ATUAIS_DOS_DOIS_SETORIAIS_AUSENTES');
+  if (!Object.keys(snapshot.days[today]?.restaurants || {}).length) fail('CARDAPIO_ATUAL_AUSENTE');
   return {snapshot, rows};
 }
