@@ -242,8 +242,12 @@ function formatUpdate(iso) {
 }
 function setRefreshMessage(message) {
   state.refreshMessage = message || '';
+}
+function renderLastUpdateLine(iso) {
   const line = $('update-line');
-  if (line) line.textContent = state.refreshMessage;
+  if (!line) return;
+  const formatted = formatUpdate(iso);
+  line.textContent = formatted ? `Última atualização: ${formatted} · Fonte: FUMP` : '';
 }
 function formatRemaining(timestamp) {
   const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
@@ -329,7 +333,7 @@ function renderMenus() {
   if (!ru) {
     const msg = el('div','no-menu');
     msg.append(el('h3','', 'Primeiro, escolha seu RU'), el('p','', 'Salvaremos sua preferência para abrir direto no cardápio das próximas vezes.'));
-    list.append(msg); $('update-line').textContent = state.refreshMessage || ''; return;
+    list.append(msg); renderLastUpdateLine(null); return;
   }
   if (state.lastError && day === today.iso) {
     $('connection-notice').textContent = state.data
@@ -348,7 +352,7 @@ function renderMenus() {
   const hasItems = entries.some(m => Array.isArray(data?.meals?.[m]?.items) && data.meals[m].items.length);
   if (!hasItems) {
     list.append(renderNoMenu(ru,day));
-    $('update-line').textContent = state.refreshMessage || (fallbackUpdate ? `Última coleta: ${formatUpdate(fallbackUpdate)} · Fonte: FUMP` : 'Aguardando primeira sincronização dos cardápios da FUMP.');
+    renderLastUpdateLine(fallbackUpdate);
     return;
   }
   const hasRealMeal = id => !!data?.meals?.[id]?.items?.length;
@@ -365,8 +369,7 @@ function renderMenus() {
     $('connection-notice').textContent = 'A última atualização tem mais de 18 horas. Este cardápio pode estar desatualizado; confirme na FUMP.';
     $('connection-notice').hidden = false;
   }
-  $('update-line').textContent = updatedAt ? `Última consulta: ${formatUpdate(updatedAt)} · Fonte: FUMP` : 'Fonte: FUMP';
-  if (state.refreshMessage) $('update-line').textContent = state.refreshMessage;
+  renderLastUpdateLine(updatedAt);
 }
 function replaceIfNewer(value) {
   if (!isDataValid(value)) return false;
