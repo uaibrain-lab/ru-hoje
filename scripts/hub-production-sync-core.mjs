@@ -45,6 +45,14 @@ export async function collectSnapshot(days = 7) {
     snapshot.days[iso] = day;
   }
   snapshot.generatedAt = new Date().toISOString();
-  if (!Object.keys(snapshot.days[today]?.restaurants || {}).length) fail('CARDAPIO_ATUAL_AUSENTE');
+  // Um dia sem refeições pode ser um feriado ou uma data ainda não publicada
+  // pela FUMP. O bloqueio anterior exigia cardápio especificamente para hoje e
+  // impedia a atualização dos dias seguintes nesses casos. A coleta continua
+  // protegida contra uma resposta totalmente vazia: só publicamos quando ao
+  // menos um dia do período contém dados válidos.
+  const hasAnyMenu = Object.values(snapshot.days).some(day =>
+    Object.keys(day?.restaurants || {}).length > 0
+  );
+  if (!hasAnyMenu) fail('CARDAPIO_PERIODO_AUSENTE');
   return {snapshot, rows};
 }
