@@ -1,0 +1,111 @@
+name: Integrar Hosting LIVE sem deploy
+
+on:
+  push:
+    branches:
+      - integracao/firebase-live-20261109
+    paths:
+      - .github/workflows/integrar-hosting-live.yml
+
+permissions:
+  contents: write
+
+jobs:
+  incorporar:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Restaurar frontend publicado com integridade e mesclar refresh
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib, pathlib, urllib.request, json
+          expected = {
+            'assets/app.js':'827001033cd35dc69924565be1b273a3f64e7409',
+            'assets/dish-category.js':'8d1e9a9b76aa9c8a463eff78890781a9f0962074',
+            'assets/festas.js':'41242652aa362053bc38aee53ce339fd9d69104a',
+            'assets/styles.css':'89924c8842a6a5f7e1a07c8fbb173392641966fc',
+            'index.html':'6c74507db7dedc90e1f1373b8fc240b5621a2c1f',
+            'interno/index.html':'40f71b1b88174cc53a12d8933f19d010d41a7969',
+            'service-worker.js':'f693979365f7ddf3113eef351f50221d9a013309',
+            'data/pratos-ingredientes.json':'f7ac8f9a972776746b7f12ea5ffbc55cae45a7c4'
+          }
+          def gitsha(data):
+              return hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+          def replace(text, before, after, file):
+              if text.count(before)!=1:
+                  raise RuntimeError('REGIAO_NAO_UNICA: '+file)
+              return text.replace(before,after,1)
+          live={}
+          for name, sha in expected.items():
+              url='https://hubufmg.web.app/'+name
+              req=urllib.request.Request(url,headers={'Cache-Control':'no-cache','User-Agent':'HubUFMG-safe-integration/1'})
+              with urllib.request.urlopen(req, timeout=18) as response:
+                  data=response.read()
+              if gitsha(data)!=sha:
+                  raise RuntimeError('HOSTING_DIVERGIU_DO_BACKUP: '+name)
+              live[name]=data
+          github=pathlib.Path('public/assets/app.js').read_text('utf8')
+          app=live['assets/app.js'].decode('utf8')
+          a='function setRefreshMessage(message) {'
+          b='function renderMenus() {'
+          def section(text,where):
+              p=text.find(a); q=text.find(b,p)
+              if p<0 or q<0 or not 2000<q-p<7000:
+                  raise RuntimeError('REFRESH_INVALIDO: '+where)
+              return text[p:q]
+          app=replace(app,section(app,'Hosting'),section(github,'GitHub'),'assets/app.js')
+          app=replace(app,
+              '    await readRefreshState();\n    await requestCommunityRefresh();',
+              '    await readRefreshState(true);\n    await requestCommunityRefresh();',
+              'assets/app.js')
+          app=replace(app,
+              "serviceWorker.register('/service-worker.js?v=hub-20261028-ingredients-ui-r9')",
+              "serviceWorker.register('/service-worker.js?v=hub-20261109-live-merge-refresh-r1')",
+              'assets/app.js')
+          live['assets/app.js']=app.encode()
+          html=live['index.html'].decode('utf8')
+          html=replace(html,
+              '<div class="notice" id="connection-notice" role="status" hidden></div>',
+              '<p class="refresh-feedback" id="refresh-feedback" role="status" aria-live="polite" hidden></p>\n        <div class="notice" id="connection-notice" role="status" hidden></div>',
+              'index.html')
+          live['index.html']=html.encode()
+          css=live['assets/styles.css'].decode('utf8')
+          css+='\n/* Feedback do refresh comunitário; ausente não reserva altura. */\n.refresh-feedback{margin:0 0 10px;color:var(--muted);font-size:12px;line-height:1.45}\n.refresh-feedback[hidden]{display:none}\n'
+          live['assets/styles.css']=css.encode()
+          sw=live['service-worker.js'].decode('utf8')
+          sw=replace(sw,'hub-v260-20261028-update-time-r10','hub-v262-20261109-live-merge-refresh-r1','service-worker.js')
+          live['service-worker.js']=sw.encode()
+          if not all(x in app for x in ['loadIngredientCatalog()', "requestStatus === 'pending'",'Pedido registrado!']):
+              raise RuntimeError('REFRESH_OU_INGREDIENTES_PERDIDOS')
+          if not all(x in sw for x in ['/data/pratos-ingredientes.json', 'hub-v262-20261109']):
+              raise RuntimeError('CACHE_DE_INGREDIENTES_PERDIDO')
+          if not all(x in github for x in ['acceptingRequests !== true','signInAnonymously']) and 'signInAnonymously' in github:
+              raise RuntimeError('BASE_DO_GITHUB_INESPERADA')
+          for name, data in live.items():
+              target=pathlib.Path('public')/name
+              target.parent.mkdir(parents=True,exist_ok=True)
+              target.write_bytes(data)
+          print(json.dumps({'restored_live_files':len(live),'preserved':['ingredientes','festas','interno'],'project':'hubufmg','deploy':False}))
+          PY
+      - name: Verificar sintaxe e regressões críticas
+        run: |
+          node --check public/assets/app.js
+          node --check public/assets/festas.js
+          node --check public/assets/dish-category.js
+          node --check public/service-worker.js
+          node --test tests/hub-refresh-regression.test.mjs
+          test -f public/data/pratos-ingredientes.json
+      - name: Registrar integração somente na branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public
+          if ! git diff --cached --quiet; then
+            git commit -m "merge(frontend): preservar Hosting live e incorporar refresh corrigido"
+            git push origin HEAD:refs/heads/integracao/firebase-live-20261109
+          fi
