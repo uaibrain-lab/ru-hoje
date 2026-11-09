@@ -1,11 +1,13 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
 import {encryptPrivate,drawAtMs} from '../public/assets/festas-core.js';
-import {prepareRaffle,due} from '../scripts/raffle-engine.mjs';
+import {prepareRaffle,due,isScheduledRaffleWindow} from '../scripts/raffle-engine.mjs';
 const event={raffleStatus:'open',published:true,drawAtTimestamp:new Date('2020-01-01T00:00:00.000Z'),winnerCount:2,alternateCount:1};
 test('apuração agendada requer horário válido e festa pública aberta',()=>{
   assert.equal(due(event),true);assert.equal(due({...event,drawAtTimestamp:new Date('2099-01-01T00:00:00.000Z')}),false);
   assert.equal(due({...event,raffleStatus:'drawn'}),false);
+  assert.equal(due({...event,raffleStatus:'closed'}),true);
+  assert.equal(due({...event,raffleStatus:'closed',drawAtTimestamp:new Date('2099-01-01T00:00:00Z')}),false);
   assert.equal(due({...event,archived:true}),false);
 });
 test('drawAtTimestamp é a única autoridade temporal',()=>{
@@ -52,4 +54,16 @@ test('chave errada ou inscrições totalmente corrompidas bloqueiam publicação
   const keys=await webcrypto.subtle.generateKey({name:'RSA-OAEP',modulusLength:2048,publicExponent:new Uint8Array([1,0,1]),hash:'SHA-256'},true,['encrypt','decrypt']);
   const priv=await webcrypto.subtle.exportKey('jwk',keys.privateKey);
   await assert.rejects(()=>prepareRaffle({event,entries:[{uid:'uid-corrompida',encryptedProfile:{wrappedKey:'x'}}],profiles:[],privateKey:priv}),/Nenhuma inscrição/);
+});
+
+test('janela automática: apenas quarta a sexta, 18h10–18h59 de Brasília',()=>{
+ const at=s=>Date.parse(s);
+ assert.equal(isScheduledRaffleWindow(at('2026-11-11T21:09:00Z')),false);
+ assert.equal(isScheduledRaffleWindow(at('2026-11-11T21:10:00Z')),true);
+ assert.equal(isScheduledRaffleWindow(at('2026-11-11T21:59:00Z')),true);
+ assert.equal(isScheduledRaffleWindow(at('2026-11-11T22:00:00Z')),false);
+ assert.equal(isScheduledRaffleWindow(at('2026-11-12T21:10:00Z')),true);
+ assert.equal(isScheduledRaffleWindow(at('2026-11-13T21:10:00Z')),true);
+ assert.equal(isScheduledRaffleWindow(at('2026-11-14T21:10:00Z')),false);
+ assert.equal(isScheduledRaffleWindow(at('2026-11-10T21:10:00Z')),false);
 });
