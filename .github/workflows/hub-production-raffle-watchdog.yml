@@ -1,0 +1,22 @@
+name: Hub UFMG — monitor de sorteios automáticos
+on:
+  schedule:
+    - cron: '4,24,44 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+  issues: write
+
+jobs:
+  monitor:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    env:
+      GH_TOKEN: "${{ github.token }}"
+      HUB_PROD_RAFFLES_ENABLED: "${{ vars.HUB_PROD_RAFFLES_ENABLED || 'false' }}"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verificar cron e acionar recuperação quando necessário
+        run: bash scripts/hub-production-raffle-watchdog.sh
