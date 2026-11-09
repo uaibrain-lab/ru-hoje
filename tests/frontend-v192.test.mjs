@@ -16,10 +16,10 @@ test('logo do CATM virou ícone do topo e do PWA',()=>{
   }
 });
 
-test('botão de tema não usa monitor no automático',()=>{
+test('modo automático publicado atualiza preferência dark/light sem monitor',()=>{
   assert.doesNotMatch(index,/theme-icon-system/);
-  assert.match(app,/const modeLabel = preference === 'auto'/);
-  assert.match(app,/button\.title = `Tema \$\{modeLabel\}`/);
+  assert.match(app,/const active = media\.matches \? 'dark' : 'light'/);
+  assert.match(app,/document\.documentElement\.dataset\.theme = active/);
 });
 
 test('seta de horários usa chevron desenhado em CSS',()=>{

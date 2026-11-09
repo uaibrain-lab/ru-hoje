@@ -1,12 +1,25 @@
 // Núcleo puro, independente de Firebase, testável no Node e offline.
-import {createHash,randomInt,webcrypto} from 'node:crypto';
+import {webcrypto} from 'node:crypto';
 import {decryptPrivate,handle,maskName,drawEligible,drawAtMs} from '../public/assets/festas-core.js';
 
 export function due(event,now=Date.now()){
   const timestamp=drawAtMs(event);
-  return Number.isFinite(timestamp) && timestamp<=now && event.published===true && event.archived!==true && event.raffleStatus==='open'
+  return Number.isFinite(timestamp) && timestamp<=now && event.published===true && event.archived!==true && ['open','closed'].includes(event.raffleStatus)
     && Number.isInteger(event.winnerCount) && event.winnerCount>0;
 }
+
+// Cron de produção: quarta a sexta, a partir de 18h10 e antes das 19h em Brasília.
+// O GitHub Actions não garante disparo no segundo exato. Rejeitar execução
+// agendada atrasada para fora da janela; disparo manual conserva os gates de due().
+export function isScheduledRaffleWindow(now = Date.now()) {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Sao_Paulo', weekday: 'short', hour: '2-digit',
+    minute: '2-digit', hourCycle: 'h23'
+  }).formatToParts(new Date(now)).filter(p => ['weekday','hour','minute'].includes(p.type)).map(p => [p.type,p.value]));
+  return ['Wed','Thu','Fri'].includes(parts.weekday)
+    && Number(parts.hour) === 18 && Number(parts.minute) >= 10;
+}
+
 export function cryptographicRandomAdapter(){
   return {getRandomValues(array){webcrypto.getRandomValues(array);return array;}};
 }

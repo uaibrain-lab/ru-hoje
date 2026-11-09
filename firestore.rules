@@ -100,33 +100,9 @@ service cloud.firestore {
       allow get: if true;
       allow list, create, update, delete: if false;
     }
-    // Pedido único global: o visitante só pode gravar o instante do pedido
-    // usando o relógio do servidor. O cooldown é conferido contra o estado
-    // privado do sincronizador; nenhum cardápio ou hash pode ser enviado.
+    // O usuário não pode solicitar atualização: cardápios exclusivamente agendados.
     match /menuSyncRequests/current {
-      allow get: if true;
-      allow create: if request.resource.data.keys().hasOnly(['requestedAt','status'])
-        && request.resource.data.status == 'pending'
-        && request.resource.data.requestedAt == request.time
-        && exists(/databases/$(database)/documents/menuSyncState/current)
-        && get(/databases/$(database)/documents/menuSyncState/current).data.acceptingRequests == true
-        && (!('status' in get(/databases/$(database)/documents/menuSyncState/current).data)
-          || get(/databases/$(database)/documents/menuSyncState/current).data.status != 'running')
-        && (!('nextAllowedAt' in get(/databases/$(database)/documents/menuSyncState/current).data)
-          || get(/databases/$(database)/documents/menuSyncState/current).data.nextAllowedAt == null
-          || get(/databases/$(database)/documents/menuSyncState/current).data.nextAllowedAt <= request.time);
-      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['requestedAt','status'])
-        && request.resource.data.status == 'pending'
-        && request.resource.data.requestedAt == request.time
-        && resource.data.status != 'pending'
-        && exists(/databases/$(database)/documents/menuSyncState/current)
-        && get(/databases/$(database)/documents/menuSyncState/current).data.acceptingRequests == true
-        && (!('status' in get(/databases/$(database)/documents/menuSyncState/current).data)
-          || get(/databases/$(database)/documents/menuSyncState/current).data.status != 'running')
-        && (!('nextAllowedAt' in get(/databases/$(database)/documents/menuSyncState/current).data)
-          || get(/databases/$(database)/documents/menuSyncState/current).data.nextAllowedAt == null
-          || get(/databases/$(database)/documents/menuSyncState/current).data.nextAllowedAt <= request.time);
-      allow list, delete: if false;
+      allow read, write: if false;
     }
     // Administrador deve ser provisionado via Console ou Admin SDK, nunca via navegador.
     match /eventAdminAccess/{accessId} {

@@ -15,7 +15,7 @@ test('editor usa upload e remove entrada de URL de imagem e comentário redundan
   assert.doesNotMatch(html,/admin-posterUrl|Ou URL HTTPS da imagem|não limita inscrições/);
   const script=read('public/assets/festas.js');
   assert.doesNotMatch(script,/\$\('admin-posterUrl'\)/);
-  assert.match(script,/INGRESSOS 🔥/);
+  assert.match(script,/festaTicketAction\('Ingressos','ticket','festa-ticket-action festa-action-primary'\)/);
 });
 test('Festas mostra descrição dentro do bloco de detalhes antes da imagem e sem propaganda repetida',()=>{
   const code=read('public/assets/festas.js');

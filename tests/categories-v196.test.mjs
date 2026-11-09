@@ -63,7 +63,7 @@ test('v1.9.6: frontend usa sourceType, cache novo e integração offline mantida
   const app=readFileSync(new URL('../public/assets/app.js',import.meta.url),'utf8');
   const sw=readFileSync(new URL('../public/service-worker.js',import.meta.url),'utf8');
   assert.match(app,/publishedCategory\(item.category, name, item.sourceType\)/);
-  assert.match(sw,/const VERSION = 'hub-ufmg-v\d+-[a-z0-9-]+'/);
+  assert.match(sw,/const VERSION = '(?:hub-ufmg|hub)-v\d+-[a-z0-9-]+'/);
   assert.match(sw,/\/assets\/dish-category\.js/);
 });
 

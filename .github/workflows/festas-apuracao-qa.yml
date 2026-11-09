@@ -2,10 +2,6 @@ name: Festas — apuração QA
 
 on:
   workflow_dispatch:
-  schedule:
-    # Repositório privado no plano gratuito: até 744 execuções/mês.
-    # O GitHub não garante pontualidade; executa na primeira janela disponível.
-    - cron: '17 * * * *'
 
 permissions:
   contents: read

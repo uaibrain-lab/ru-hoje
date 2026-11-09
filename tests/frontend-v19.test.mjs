@@ -23,9 +23,10 @@ test('refresco continua exibido e categorias têm ícones',()=>{
   assert.match(app,/const GROUP_ORDER/);
   assert.doesNotMatch(app,/groupDisplayItems/);
 });
-test('temas automático, claro e escuro selecionáveis',()=>{
-  for(const x of ['auto','light','dark']) assert.match(index,new RegExp('data-theme-option="'+x+'"'));
-  assert.match(app,/prefers-color-scheme: dark/);
+test('tema do site publicado acompanha a preferência de cores do sistema',()=>{
+  assert.match(index,/matchMedia\('\(prefers-color-scheme: dark\)'\)/);
+  assert.match(app,/window\.matchMedia\('\(prefers-color-scheme: dark\)'\)/);
+  assert.match(app,/document\.documentElement\.dataset\.theme = active/);
 });
 test('fotos reais locais para cinco RUs, inclusive saúde e direito distintos',()=>{
   for(const id of ['setorial-i','setorial-ii','direito','saude','ica']){

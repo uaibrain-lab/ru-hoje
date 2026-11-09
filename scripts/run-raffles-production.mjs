@@ -1,12 +1,16 @@
 // Executor privado de produção. Desativado até existir evento elegível e autorização operacional.
 import {createHash} from 'node:crypto';
 import fs from 'node:fs';
-import {prepareRaffle,due} from './raffle-engine.mjs';
+import {prepareRaffle,due,isScheduledRaffleWindow} from './raffle-engine.mjs';
 
 const TARGET_PROJECT='hubufmg';
 const TARGET_SERVICE_ACCOUNT='hub-prod-raffles@hubufmg.iam.gserviceaccount.com';
 const commit=process.argv.includes('--commit');
 if(!commit){console.log('SIMULAÇÃO produção: nenhuma gravação.');process.exit(0);}
+if(process.env.GITHUB_ACTIONS === 'true' && process.env.GITHUB_REF_NAME !== 'main')throw Error('BRANCH_NAO_AUTORIZADA');
+if(process.env.GITHUB_EVENT_NAME === 'schedule' && !isScheduledRaffleWindow()){
+  console.log('JANELA_AUTOMATICA_ENCERRADA: nenhum sorteio executado.');process.exit(0);
+}
 if(process.env.HUB_PROD_RAFFLES_ENABLED!=='true')throw Error('GATE: apuração de produção não habilitada.');
 if(process.env.HUB_PROD_PROJECT_ID!==TARGET_PROJECT)throw Error('Projeto de produção ausente ou diferente do allowlist.');
 const privateKey=JSON.parse(process.env.HUB_PROD_PRIVATE_KEY_JWK||'null');
@@ -28,7 +32,7 @@ const db=new Firestore({projectId:TARGET_PROJECT});
 const safeId=id=>createHash('sha256').update(String(id)).digest('hex').slice(0,10);
 let failures=0;
 try{
-  const snap=await db.collection('events').where('raffleStatus','==','open').get();
+  const snap=await db.collection('events').where('raffleStatus','in',['open','closed']).get();
   for(const doc of snap.docs){
     const data=doc.data();if(!due(data))continue;
     try{

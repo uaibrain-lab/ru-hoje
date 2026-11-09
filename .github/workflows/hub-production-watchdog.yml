@@ -1,0 +1,26 @@
+name: Hub UFMG — monitor de atualização automática
+
+on:
+  schedule:
+    - cron: '53 11,15,19,23 * * 1-5'
+    - cron: '53 17,22 * * 6'
+    - cron: '53 21 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+  issues: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    env:
+      GH_TOKEN: "${{ github.token }}"
+      HUB_PROD_SYNC_ENABLED: "${{ vars.HUB_PROD_SYNC_ENABLED || 'false' }}"
+      HUB_PROD_PUBLISH_ENABLED: "${{ vars.HUB_PROD_PUBLISH_ENABLED || 'false' }}"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detectar atrasos e tentar recuperacao
+        run: bash scripts/hub-production-watchdog.sh

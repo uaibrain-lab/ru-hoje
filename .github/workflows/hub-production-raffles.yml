@@ -1,6 +1,9 @@
 name: Hub UFMG — executor de sorteios produção
 
 on:
+  # 18h10 de quarta a sexta em Brasília (UTC-3 = 21h10 UTC). Atrasos do GitHub são possíveis.
+  schedule:
+    - cron: '10 21 * * 3-5'
   workflow_dispatch:
 
 permissions:
@@ -13,8 +16,8 @@ concurrency:
 
 jobs:
   raffle:
-    if: vars.HUB_PROD_RAFFLES_ENABLED == 'true'
-    runs-on: ubuntu-latest
+    if: vars.HUB_PROD_RAFFLES_ENABLED == 'true' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
     timeout-minutes: 12
     env:
       HUB_PROD_PROJECT_ID: hubufmg
