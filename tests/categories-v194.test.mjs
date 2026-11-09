@@ -55,7 +55,7 @@ test('Sem adivinhação: itens desconhecidos permanecem sem categoria',()=>{
 test('Integração: versão do cache e novo módulo offline estão presentes',()=>{
   const sw=fs.readFileSync(new URL('../public/service-worker.js',import.meta.url),'utf8');
   const app=fs.readFileSync(new URL('../public/assets/app.js',import.meta.url),'utf8');
-  assert.match(sw,/const VERSION = 'bandeco-v\d+-/);
+  assert.match(sw,/const VERSION = 'hub-ufmg-v\d+-[a-z0-9-]+'/);
   assert.match(sw,/\/?assets\/dish-category\.js/);
   assert.match(app,/publishedCategory\(item.category, name, item.sourceType\)/);
   assert.match(app,/'Molhos'/);
