@@ -42,3 +42,11 @@ test('recuperação de chave não está ligada a workflow público nem substitui
  assert.match(ignore,/private\//);
  assert.doesNotMatch(load('.github/workflows/hub-production-raffles.yml'),/recovery|recover|artifact/);
 });
+
+test('workflows legados e QA não agendam apuração em horários adicionais',()=>{
+ for(const path of ['.github/workflows/festas-apuracao.yml','.github/workflows/festas-apuracao-qa.yml']){
+   const yaml=load(path);
+   assert.match(yaml,/workflow_dispatch:/);
+   assert.doesNotMatch(yaml,/\bschedule:/);
+ }
+});

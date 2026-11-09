@@ -1,7 +1,5 @@
 name: Bandeco Festas - Apuração (desabilitada por padrão)
 on:
-  schedule:
-    - cron: '*/5 * * * *'
   workflow_dispatch:
 permissions:
   contents: read
