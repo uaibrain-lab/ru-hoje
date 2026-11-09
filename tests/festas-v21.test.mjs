@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 const src=n=>readFileSync(new URL('../'+n,import.meta.url),'utf8');
 test('cartões exibem ingresso e tags, mas não vagas nem suplentes publicamente',()=>{
  const html=src('public/index.html'),script=src('public/assets/festas.js');
- assert.match(script,/INGRESSOS 🔥/);assert.match(script,/normalizeTags\(e\.tags\)/);
+ assert.match(script,/festaTicketAction\('Ingressos','ticket','festa-ticket-action festa-action-primary'\)/);assert.match(script,/normalizeTags\(e\.tags\)/);
  const section=script.slice(script.indexOf('function renderEvents()'),script.indexOf('function setSignupStep'));
  assert.doesNotMatch(section,/e\.winnerCount/);assert.doesNotMatch(section,/e\.alternateCount/);
  assert.match(html,/id="admin-winnerCount"/);assert.doesNotMatch(html,/não limita inscrições/);

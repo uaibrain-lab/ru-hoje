@@ -22,7 +22,7 @@ test('campos de festa não exigem URL de regulamento ou fundamento jurídico',()
 test('cartões, upload otimizado, regras padrão e inscrição ficam separados de PII público',()=>{
   const ui=read('public/assets/festas.js'),html=read('public/index.html'),rules=read('firestore.rules');
   for(const id of ['admin-poster-file','admin-poster-preview','admin-new-tag','admin-add-tag','admin-use-default-rules','admin-save-default-rules','admin-rulesText','admin-tab-events','admin-tab-forms','admin-export-csv','admin-delete-all'])assert.ok(html.includes(`id="${id}"`),id);
-  assert.match(ui,/INGRESSOS 🔥/);
+  assert.match(ui,/festaTicketAction\('Ingressos','ticket','festa-ticket-action festa-action-primary'\)/);
   assert.match(ui,/imageDataUrl:posterToSave/);
   assert.match(ui,/optimizePoster\(file\)/);
   assert.match(ui,/eventSettings','raffleDefaults'/);
