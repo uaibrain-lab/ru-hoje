@@ -18,6 +18,7 @@ jobs:
       - run: npm install --no-audit --no-fund
       - run: node --test tests/hub-refresh-regression.test.mjs
       - run: npx playwright install --with-deps chromium
+      - run: bash -n scripts/hub-production-scheduled-run.sh scripts/hub-production-watchdog.sh scripts/hub-sync-incident.sh
       - run: npm test
       - run: npm run test:e2e
       - run: node --check public/assets/app.js && node --check public/service-worker.js && node --check scripts/sync.mjs && node --check scripts/publish.mjs

@@ -16,7 +16,7 @@ test('nenhum botão manual ou escrita de pedido ao Firestore no frontend', () =>
 
 test('agendamentos alternados usam gates e impedem concorrência', () => {
   const primary = load('.github/workflows/hub-production-cardapios.yml');
-  const fallback = load('.github/workflows/hub-production-fallback.yml');
+  const fallback = load('.github/workflows/hub-production-request-processor.yml');
   for (const w of [primary, fallback]) {
     assert.match(w, /schedule:/);
     assert.match(w, /group: hub-production-menu-writer/);
@@ -28,7 +28,7 @@ test('agendamentos alternados usam gates e impedem concorrência', () => {
   }
   assert.match(primary, /hub-prod-sync@hubufmg\.iam\.gserviceaccount\.com/);
   assert.match(fallback, /hub-prod-refresh@hubufmg\.iam\.gserviceaccount\.com/);
-  assert.equal(exists('.github/workflows/hub-production-request-processor.yml'), false);
+  assert.doesNotMatch(fallback, /hub-production-request-processor\.mjs/);
 });
 
 test('aplicação exige confirmação dupla e retenta até três vezes', () => {

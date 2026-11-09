@@ -5,7 +5,7 @@ repo="${GITHUB_REPOSITORY:?}"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 gh api "repos/$repo/actions/workflows/hub-production-cardapios.yml/runs?per_page=50" > "$tmp/main.json"
-gh api "repos/$repo/actions/workflows/hub-production-fallback.yml/runs?per_page=50" > "$tmp/fallback.json"
+gh api "repos/$repo/actions/workflows/hub-production-request-processor.yml/runs?per_page=50" > "$tmp/fallback.json"
 latest="$(jq -rs '[.[].workflow_runs[] | select(.conclusion == "success") | select(.event == "schedule" or .event == "workflow_dispatch") | .created_at] | max // empty' "$tmp/main.json" "$tmp/fallback.json")"
 now="$(date -u +%s)"
 last=0

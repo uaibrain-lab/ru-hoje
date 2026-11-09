@@ -1,3 +1,4 @@
+# Mantém o caminho original do workflow para preservar condições WIF por workflow_ref.
 name: Hub UFMG — sincronização FUMP redundante
 
 on:
