@@ -50,3 +50,13 @@ test('workflows legados e QA não agendam apuração em horários adicionais',()
    assert.doesNotMatch(yaml,/\bschedule:/);
  }
 });
+
+test('monitor único somente alerta e não despacha sorteios',()=>{
+ const yaml=load('.github/workflows/hub-production-raffle-alert.yml');
+ const sh=load('scripts/hub-production-raffle-alert.sh');
+ assert.match(yaml,/cron: '15 22 \* \* 3-5'/);
+ assert.match(yaml,/issues: write/);
+ assert.match(sh,/conclusion == "success"/);
+ assert.doesNotMatch(sh,/gh workflow run|--commit|PRIVATE_KEY_JWK|workflow_dispatch/);
+ assert.doesNotMatch(yaml,/id-token: write|PRIVATE_KEY_JWK|gh workflow run/);
+});

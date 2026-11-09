@@ -1,0 +1,20 @@
+name: Hub UFMG — alerta de apuração automática
+on:
+  schedule:
+    # 19h15 de quarta a sexta em Brasília; só confere, jamais sorteia.
+    - cron: '15 22 * * 3-5'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+  issues: write
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Conferir execução agendada e abrir alerta, sem disparar sorteio
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/hub-production-raffle-alert.sh
