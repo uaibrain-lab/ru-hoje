@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readFileSync,existsSync} from 'node:fs';
 const load=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 
 test('sorteio de producao roda agendado e manualmente no MESMO workflow autenticado',()=>{
@@ -11,18 +11,18 @@ test('sorteio de producao roda agendado e manualmente no MESMO workflow autentic
  assert.match(y,/HUB_PROD_PRIVATE_KEY_JWK: \${{ secrets.HUB_PROD_PRIVATE_KEY_JWK }}/);
  assert.match(y,/hub-prod-raffles@hubufmg\.iam\.gserviceaccount\.com/);
  assert.match(y,/group: hub-production-raffles/);
+ assert.match(y,/github.ref == 'refs\/heads\/main'/);
  assert.match(load('scripts/run-raffles-production.mjs'),/prepareRaffle/);
 });
 test('sem watchdog que execute sorteios fora do horário',()=>{
- const fs=requireNoFilesystem();
- assert.equal(fs,'.github/workflows/hub-production-raffle-watchdog.yml removido');
+ assert.equal(existsSync(new URL('../.github/workflows/hub-production-raffle-watchdog.yml',import.meta.url)),false);
+ assert.equal(existsSync(new URL('../scripts/hub-production-raffle-watchdog.sh',import.meta.url)),false);
  const runner=load('scripts/run-raffles-production.mjs');
  const core=load('scripts/raffle-engine.mjs');
  assert.match(runner,/isScheduledRaffleWindow/);
  assert.match(runner,/where\('raffleStatus','in',\['open','closed'\]\)/);
  assert.match(core,/timestamp<=now/);
 });
-function requireNoFilesystem(){ return '.github/workflows/hub-production-raffle-watchdog.yml removido'; }
 test('modal publico nao menciona painel restrito e nomes seguem mascarados',()=>{
  const html=load('public/index.html');
  const policy=load('public/privacidade-festas.html');
