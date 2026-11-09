@@ -48,4 +48,4 @@ jobs:
           workload_identity_provider: projects/858219271468/locations/global/workloadIdentityPools/hub-prod-actions/providers/hub-prod-sync
           service_account: hub-prod-sync@hubufmg.iam.gserviceaccount.com
       - run: npm ci --omit=dev --no-audit --no-fund
-      - run: node scripts/hub-production-menu-sync.mjs --mode=${{ github.event.inputs.mode || 'apply' }} --days=7 ${{ github.event.inputs.mode == 'apply' && '--confirm=PUBLICAR_SOMENTE_HUB_UFMG' || '' }}
+      - run: node scripts/hub-production-menu-sync.mjs --mode=${{ github.event.inputs.mode || 'apply' }} --days=7 ${{ (github.event_name == 'schedule' || github.event.inputs.mode == 'apply') && '--confirm=PUBLICAR_SOMENTE_HUB_UFMG' || '' }}
