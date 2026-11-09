@@ -26,7 +26,7 @@ const GROUP_ICONS = Object.freeze({
   'Acompanhamentos':'🍚','Saladas':'🥗','Molhos':'🥣','Sobremesas':'🍮','Bebidas':'🥤','Outros':'🍽️'
 });
 const $ = (id) => document.getElementById(id);
-const state = { selectedRu: null, selectedDate: null, data: null, ingredientCatalog: null, ingredientCatalogPromise: null, lastError: null, fallbackUsed: false, syncing: false, initialOpen: false, refreshMessage: '', refreshDb: null };
+const state = { selectedRu: null, selectedDate: null, data: null, ingredientCatalog: null, ingredientCatalogPromise: null, lastError: null, fallbackUsed: false, syncing: false, initialOpen: false };
 
 function readStore(key) { try { return localStorage.getItem(key); } catch { return null; } }
 function writeStore(key, value) { try { localStorage.setItem(key, value); } catch {} }
@@ -305,98 +305,11 @@ function formatUpdate(iso) {
   if (!iso || !Number.isFinite(Date.parse(iso))) return '';
   return new Intl.DateTimeFormat('pt-BR', { timeZone: TIMEZONE, dateStyle:'short', timeStyle:'short' }).format(new Date(iso));
 }
-function setRefreshMessage(message) {
-  state.refreshMessage = message || '';
-  const feedback = $('refresh-feedback');
-  if (feedback) {
-    feedback.textContent = state.refreshMessage;
-    feedback.hidden = !state.refreshMessage;
-  }
-}
 function renderLastUpdateLine(iso) {
   const line = $('update-line');
   if (!line) return;
   const formatted = formatUpdate(iso);
   line.textContent = formatted ? `Última atualização: ${formatted} · Fonte: FUMP` : '';
-}
-function formatRemaining(timestamp) {
-  const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
-  const minutes = Math.max(1, Math.ceil((date.getTime() - Date.now()) / 60000));
-  return minutes < 60 ? `${minutes} min` : `${Math.ceil(minutes / 60)} h`;
-}
-async function getRefreshDb() {
-  if (state.refreshDb) return state.refreshDb;
-  const config = window.RU_CONFIG || {};
-  if (config.firebaseProjectId !== 'hubufmg' || !config.firebaseWeb?.apiKey) throw new Error('CONFIGURACAO_PRODUCAO_AUSENTE');
-  const appMod = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js');
-  const firestoreMod = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js');
-  const app = appMod.getApps().find(item => item.name === 'hub-refresh-production') || appMod.initializeApp(config.firebaseWeb, 'hub-refresh-production');
-  // O pedido é público e protegido por Security Rules e request.time; não depende de Auth anônimo.
-  state.refreshDb = { db: firestoreMod.getFirestore(app), ...firestoreMod };
-  return state.refreshDb;
-}
-async function readRefreshState(announce = false) {
-  try {
-    const {db, doc, getDoc} = await getRefreshDb();
-    const snap = await getDoc(doc(db, 'menuSyncState', 'current'));
-    if (!snap.exists()) return null;
-    const value = snap.data();
-    const nextAllowedAt = value.nextAllowedAt?.toDate?.() || null;
-    if (announce) {
-      if (value.acceptingRequests !== true) {
-        setRefreshMessage('Atualização comunitária temporariamente indisponível.');
-      } else if (value.status === 'running' || value.status === 'pending') {
-        setRefreshMessage('Consulta à FUMP em andamento.');
-      } else if (nextAllowedAt && nextAllowedAt > new Date()) {
-        setRefreshMessage(`Nova consulta permitida em ${formatRemaining(nextAllowedAt)}.`);
-      } else if (value.status === 'no-change') {
-        setRefreshMessage('Última consulta concluída: não houve alterações na FUMP.');
-      } else if (value.status === 'error') {
-        setRefreshMessage('A última consulta falhou; nova tentativa poderá ser feita.');
-      } else if (value.status === 'success') {
-        setRefreshMessage('Última consulta à FUMP concluída.');
-      }
-    }
-    return value;
-  } catch (error) {
-    console.warn('Estado comunitário indisponível:', error);
-    return null;
-  }
-}
-async function requestCommunityRefresh() {
-  if (!navigator.onLine) {
-    setRefreshMessage('Você está offline. Cache local atualizado; nenhuma solicitação remota foi criada.');
-    return;
-  }
-  try {
-    const {db, doc, getDoc, runTransaction, serverTimestamp} = await getRefreshDb();
-    const stateRef = doc(db, 'menuSyncState', 'current');
-    const requestRef = doc(db, 'menuSyncRequests', 'current');
-    const result = await runTransaction(db, async tx => {
-      const stateSnap = await tx.get(stateRef);
-      const requestSnap = await tx.get(requestRef);
-      const syncState = stateSnap.exists() ? stateSnap.data() : {};
-      const nextAllowedAt = syncState.nextAllowedAt?.toDate?.() || null;
-      if (syncState.acceptingRequests !== true) return {kind: 'disabled'};
-      const requestStatus = requestSnap.exists() ? requestSnap.data()?.status : null;
-      if (syncState.status === 'running' || requestStatus === 'pending' || requestStatus === 'running') return {kind: 'pending'};
-      if (nextAllowedAt && nextAllowedAt > new Date()) return {kind: 'cooldown', nextAllowedAt};
-      const payload = {requestedAt: serverTimestamp(), status: 'pending'};
-      if (requestSnap.exists()) tx.update(requestRef, payload);
-      else tx.set(requestRef, payload);
-      return {kind: 'requested'};
-    });
-    if (result.kind === 'disabled') setRefreshMessage('Atualização comunitária temporariamente indisponível.');
-    else if (result.kind === 'cooldown') setRefreshMessage(`A FUMP já foi consultada recentemente. Nova consulta em ${formatRemaining(result.nextAllowedAt)}.`);
-    else if (result.kind === 'pending') setRefreshMessage('Já existe uma consulta solicitada ou em andamento. Consulte novamente daqui a alguns minutos.');
-    else setRefreshMessage('Pedido registrado! A próxima execução do GitHub consultará a FUMP; não é imediato.');
-  } catch (error) {
-    console.warn('Solicitação comunitária não registrada:', error);
-    const code = String(error?.code || '');
-    if (code === 'permission-denied') setRefreshMessage('O servidor recusou o pedido. Nenhuma atualização foi solicitada.');
-    else if (code === 'unavailable' || code === 'deadline-exceeded') setRefreshMessage('Sem conexão com o serviço de atualização. Tente novamente.');
-    else setRefreshMessage('Não foi possível solicitar atualização. Tente novamente mais tarde.');
-  }
 }
 function renderMenus() {
   const today = sPauloParts();
@@ -474,8 +387,6 @@ async function fetchMenus() {
   state.syncing = true;
   state.lastError = null;
   state.fallbackUsed = false;
-  $('refresh-button').classList.add('is-loading');
-  $('refresh-button').disabled = true;
   try {
     const config = window.RU_CONFIG || {};
     let data;
@@ -513,8 +424,6 @@ async function fetchMenus() {
     state.lastError = error;
   } finally {
     state.syncing = false;
-    $('refresh-button').classList.remove('is-loading');
-    $('refresh-button').disabled = false;
     renderMenus();
   }
 }
@@ -541,13 +450,6 @@ function boot() {
   renderRestaurant(); renderDates({scroll:true}); renderMenus();
   loadIngredientCatalog().then(() => renderMenus());
   $('today-button').addEventListener('click',()=> {state.selectedDate=sPauloParts().iso;renderDates({scroll:true});renderMenus();});
-  $('refresh-button').addEventListener('click', async () => {
-    state.refreshMessage = '';
-    setRefreshMessage('Verificando cardápios');
-    await fetchMenus();
-    await readRefreshState(true);
-    await requestCommunityRefresh();
-  });
   window.addEventListener('online',fetchMenus);
   window.addEventListener('offline',renderMenus);
   document.addEventListener('visibilitychange',()=> { if(!document.hidden){maybeTick();fetchMenus();} });
@@ -565,8 +467,7 @@ function boot() {
   }
   setInterval(maybeTick,60_000); maybeTick();
   fetchMenus();
-  readRefreshState();
   if (!state.selectedRu) {requestAnimationFrame(() => openDialog());}
-  if ('serviceWorker' in navigator && window.isSecureContext) window.addEventListener('load',()=>navigator.serviceWorker.register('/service-worker.js?v=hub-20261109-live-merge-refresh-r1').catch(()=>{}));
+  if ('serviceWorker' in navigator && window.isSecureContext) window.addEventListener('load',()=>navigator.serviceWorker.register('/service-worker.js?v=hub-20261109-scheduled-only-r1').catch(()=>{}));
 }
 boot();
