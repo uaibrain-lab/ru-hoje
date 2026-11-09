@@ -407,3 +407,7 @@ dialog{background:var(--card);color:var(--ink);border-color:var(--line)}
 .festa-poster-status[data-error="true"]{color:#a24646}
 #admin-save-dialog[hidden]{display:none}
 .festa-save-result{inset:0;position:absolute;z-index:1000;transform:none;width:auto;height:auto;max-height:none;border:0;border-radius:20px;background:color-mix(in srgb,var(--card) 96%,transparent);color:var(--ink);box-shadow:none;display:grid;place-items:center;padding:18px}.festa-save-result>.festa-dialog-inner{width:min(100%,470px);box-sizing:border-box;border:1px solid var(--line);border-radius:23px;box-shadow:0 22px 80px rgba(24,17,51,.28);background:var(--card);max-height:none}.festa-save-result[hidden]{display:none}
+
+/* Feedback do refresh comunitário; ausente não reserva altura. */
+.refresh-feedback{margin:0 0 10px;color:var(--muted);font-size:12px;line-height:1.45}
+.refresh-feedback[hidden]{display:none}

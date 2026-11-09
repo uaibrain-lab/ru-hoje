@@ -12,6 +12,7 @@ const mode = args.get('--mode') || 'dry-run';
 const safe = value => String(value || 'ERRO').replace(/[^A-Z0-9_-]/gi, '_').slice(0, 100);
 assertProductionEnvironment();
 if (mode === 'apply' && process.env.HUB_PROD_SYNC_ENABLED !== 'true') throw new Error('PROCESSADOR_PRODUCAO_DESATIVADO');
+if (mode === 'apply' && process.env.HUB_PROD_PUBLISH_ENABLED !== 'true') throw new Error('PUBLICACAO_PRODUCAO_DESATIVADA');
 const db = new Firestore({projectId: PROJECT, databaseId: '(default)'});
 const stateRef = db.doc('menuSyncState/current');
 const requestRef = db.doc('menuSyncRequests/current');
@@ -26,7 +27,8 @@ async function claim() {
     const now = Date.now(), runningAt = state.inProgressAt?.toMillis?.() || 0;
     const stale = state.status === 'running' && now - runningAt >= CLAIM_TIMEOUT_MS;
     if (state.status === 'running' && !stale) return {kind: 'running'};
-    if (!['pending', 'running'].includes(request.status)) return {kind: 'not-pending'};
+    // Retry do pedido anterior após falha, sem exigir novo clique do usuário.
+    if (!['pending', 'running', 'error'].includes(request.status)) return {kind: 'not-pending'};
     const next = state.nextAllowedAt?.toMillis?.() || 0;
     if (next > now) return {kind: 'cooldown'};
     const today = dayKey(new Date()), count = state.queryDay === today ? Number(state.queryCount || 0) : 0;
@@ -38,7 +40,7 @@ async function claim() {
   });
 }
 function runSync() { return new Promise((resolve, reject) => {
-  const child = spawn(process.execPath, ['scripts/hub-production-menu-sync.mjs', '--mode=apply', '--days=7', '--confirm=PUBLICAR_SOMENTE_HUB_UFMG'], {env: {...process.env, GCLOUD_PROJECT: PROJECT, GOOGLE_CLOUD_PROJECT: PROJECT, HUB_PROD_SYNC_ENABLED: 'true', HUB_PROD_PUBLISH_ENABLED: 'true'}, stdio: ['ignore', 'pipe', 'pipe']});
+  const child = spawn(process.execPath, ['scripts/hub-production-menu-sync.mjs', '--mode=apply', '--days=7', '--confirm=PUBLICAR_SOMENTE_HUB_UFMG'], {env: {...process.env, GCLOUD_PROJECT: PROJECT, GOOGLE_CLOUD_PROJECT: PROJECT}, stdio: ['ignore', 'pipe', 'pipe']});
   let out = '', err = ''; const timer = setTimeout(() => child.kill('SIGTERM'), 10 * 60 * 1000);
   child.stdout.on('data', chunk => { out += chunk; }); child.stderr.on('data', chunk => { err += chunk; });
   child.on('error', reject); child.on('close', exitCode => { clearTimeout(timer); if (exitCode) reject(new Error(`SYNC_FALHOU_${safe(err || out)}`)); else resolve(out.trim()); });

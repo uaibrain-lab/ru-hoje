@@ -242,6 +242,11 @@ function formatUpdate(iso) {
 }
 function setRefreshMessage(message) {
   state.refreshMessage = message || '';
+  const feedback = $('refresh-feedback');
+  if (feedback) {
+    feedback.textContent = state.refreshMessage;
+    feedback.hidden = !state.refreshMessage;
+  }
 }
 function renderLastUpdateLine(iso) {
   const line = $('update-line');
@@ -259,31 +264,33 @@ async function getRefreshDb() {
   const config = window.RU_CONFIG || {};
   if (config.firebaseProjectId !== 'hubufmg' || !config.firebaseWeb?.apiKey) throw new Error('CONFIGURACAO_PRODUCAO_AUSENTE');
   const appMod = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js');
-  const authMod = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js');
   const firestoreMod = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js');
   const app = appMod.getApps().find(item => item.name === 'hub-refresh-production') || appMod.initializeApp(config.firebaseWeb, 'hub-refresh-production');
-  const auth = authMod.getAuth(app);
-  if (!auth.currentUser) await authMod.signInAnonymously(auth);
-  state.refreshDb = { db: firestoreMod.getFirestore(app), auth, ...firestoreMod };
+  // O pedido é público e protegido por Security Rules e request.time; não depende de Auth anônimo.
+  state.refreshDb = { db: firestoreMod.getFirestore(app), ...firestoreMod };
   return state.refreshDb;
 }
-async function readRefreshState() {
+async function readRefreshState(announce = false) {
   try {
     const {db, doc, getDoc} = await getRefreshDb();
     const snap = await getDoc(doc(db, 'menuSyncState', 'current'));
     if (!snap.exists()) return null;
     const value = snap.data();
     const nextAllowedAt = value.nextAllowedAt?.toDate?.() || null;
-    if (value.status === 'success') {
-      setRefreshMessage('Cardápios atualizados');
-    } else if (value.status === 'no-change') {
-      setRefreshMessage('Nenhuma alteração encontrada');
-    } else if (value.status === 'error') {
-      setRefreshMessage('Tente novamente mais tarde');
-    } else if (value.status === 'running' || value.status === 'pending') {
-      setRefreshMessage('Verificando cardápios');
-    } else if (nextAllowedAt && nextAllowedAt > new Date()) {
-      setRefreshMessage(`Tente novamente mais tarde · próxima consulta em ${formatRemaining(nextAllowedAt)}`);
+    if (announce) {
+      if (value.acceptingRequests !== true) {
+        setRefreshMessage('Atualização comunitária temporariamente indisponível.');
+      } else if (value.status === 'running' || value.status === 'pending') {
+        setRefreshMessage('Consulta à FUMP em andamento.');
+      } else if (nextAllowedAt && nextAllowedAt > new Date()) {
+        setRefreshMessage(`Nova consulta permitida em ${formatRemaining(nextAllowedAt)}.`);
+      } else if (value.status === 'no-change') {
+        setRefreshMessage('Última consulta concluída: não houve alterações na FUMP.');
+      } else if (value.status === 'error') {
+        setRefreshMessage('A última consulta falhou; nova tentativa poderá ser feita.');
+      } else if (value.status === 'success') {
+        setRefreshMessage('Última consulta à FUMP concluída.');
+      }
     }
     return value;
   } catch (error) {
@@ -305,20 +312,25 @@ async function requestCommunityRefresh() {
       const requestSnap = await tx.get(requestRef);
       const syncState = stateSnap.exists() ? stateSnap.data() : {};
       const nextAllowedAt = syncState.nextAllowedAt?.toDate?.() || null;
-      const currentStatus = syncState.status || requestSnap.data()?.status;
-      if (currentStatus === 'running' || currentStatus === 'pending') return {kind: 'pending'};
+      if (syncState.acceptingRequests !== true) return {kind: 'disabled'};
+      const requestStatus = requestSnap.exists() ? requestSnap.data()?.status : null;
+      if (syncState.status === 'running' || requestStatus === 'pending' || requestStatus === 'running') return {kind: 'pending'};
       if (nextAllowedAt && nextAllowedAt > new Date()) return {kind: 'cooldown', nextAllowedAt};
       const payload = {requestedAt: serverTimestamp(), status: 'pending'};
       if (requestSnap.exists()) tx.update(requestRef, payload);
       else tx.set(requestRef, payload);
       return {kind: 'requested'};
     });
-    if (result.kind === 'cooldown') setRefreshMessage(`Tente novamente mais tarde · próxima consulta em ${formatRemaining(result.nextAllowedAt)}`);
-    else if (result.kind === 'pending') setRefreshMessage('Verificando cardápios');
-    else setRefreshMessage('Atualização solicitada');
+    if (result.kind === 'disabled') setRefreshMessage('Atualização comunitária temporariamente indisponível.');
+    else if (result.kind === 'cooldown') setRefreshMessage(`A FUMP já foi consultada recentemente. Nova consulta em ${formatRemaining(result.nextAllowedAt)}.`);
+    else if (result.kind === 'pending') setRefreshMessage('Já existe uma consulta solicitada ou em andamento. Consulte novamente daqui a alguns minutos.');
+    else setRefreshMessage('Pedido registrado! A próxima execução do GitHub consultará a FUMP; não é imediato.');
   } catch (error) {
     console.warn('Solicitação comunitária não registrada:', error);
-    setRefreshMessage('Tente novamente mais tarde');
+    const code = String(error?.code || '');
+    if (code === 'permission-denied') setRefreshMessage('O servidor recusou o pedido. Nenhuma atualização foi solicitada.');
+    else if (code === 'unavailable' || code === 'deadline-exceeded') setRefreshMessage('Sem conexão com o serviço de atualização. Tente novamente.');
+    else setRefreshMessage('Não foi possível solicitar atualização. Tente novamente mais tarde.');
   }
 }
 function renderMenus() {
@@ -500,7 +512,7 @@ function boot() {
     state.refreshMessage = '';
     setRefreshMessage('Verificando cardápios');
     await fetchMenus();
-    await readRefreshState();
+    await readRefreshState(true);
     await requestCommunityRefresh();
   });
   window.addEventListener('online',fetchMenus);
