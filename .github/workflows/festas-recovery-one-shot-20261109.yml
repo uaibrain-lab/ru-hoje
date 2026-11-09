@@ -1,0 +1,35 @@
+name: TEMPORARIO — recuperar chave Festas SOMENTE criptografada
+
+on:
+  push:
+    branches:
+      - integracao/firebase-live-20261109
+    paths:
+      - .github/workflows/festas-recovery-one-shot-20261109.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: one-shot-festas-key-recovery-20261109
+  cancel-in-progress: false
+
+jobs:
+  seal:
+    if: github.repository == 'uaibrain-lab/ru-hoje' && github.ref == 'refs/heads/integracao/firebase-live-20261109'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cifrar chave original para destinatário RSA fixado
+        env:
+          HUB_PROD_PRIVATE_KEY_JWK: ${{ secrets.HUB_PROD_PRIVATE_KEY_JWK }}
+        run: node scripts/festas-recovery-seal-actions.mjs
+      - name: Transferir SOMENTE envelope criptografado
+        uses: actions/upload-artifact@v4
+        with:
+          name: festas-chave-recuperacao-CIFRADA
+          path: out-festas-recovery-encrypted/festas-chave-recuperacao.enc.json
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
