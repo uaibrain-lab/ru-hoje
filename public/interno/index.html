@@ -65,7 +65,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 #body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:7px 13px calc(16px + env(safe-area-inset-bottom,0px));scrollbar-width:thin}
 #sheet.peek #body{visibility:hidden;pointer-events:none;overflow:hidden}
 @media(max-width:360px){.sheet-head{gap:5px;padding-left:10px;padding-right:7px}.sheet-identity strong{font-size:14px}.quick-tabs button{padding:7px 8px;font-size:12px}.sheet-toggle{width:32px;height:32px}}
-@media(min-width:760px){#sheet,#sheet.peek,#sheet.detail:not(.peek){left:14px;top:76px;bottom:14px;right:auto;width:min(346px,calc(100vw - 80px));height:auto;max-height:none;border:1px solid var(--line);border-radius:19px}#grab{display:none}#body,#sheet.peek #body{visibility:visible;pointer-events:auto;overflow-y:auto;padding-top:9px}.sheet-toggle{display:none}.sheet-head{padding-top:12px}}
+@media(min-width:760px){#sheet,#sheet.peek,#sheet.detail:not(.peek){left:14px;top:76px;bottom:14px;right:auto;width:min(346px,calc(100vw - 80px));height:auto;max-height:none;border:1px solid var(--line);border-radius:19px}#grab{display:none}#body,#sheet.peek #body{visibility:visible;pointer-events:auto;overflow-y:auto;padding-top:9px}.sheet-head .sheet-toggle{display:none}.sheet-head{padding-top:12px}}
 @media(prefers-reduced-motion:reduce){#sheet,.sheet-toggle svg{transition:none}}
 /* Fallback quando o Leaflet externo estiver indisponível: horários permanecem navegáveis. */
 body.no-map #map{display:none}
@@ -78,11 +78,27 @@ h1{font-size:24px;margin:0}h2{font-size:21px;margin:0;line-height:1.2}h3{font-si
 small{color:var(--mut);font-size:13px;line-height:1.3}
 .note{color:var(--mut);font-size:13px;margin:12px 0 0}
 i{font-style:normal;font-size:14px;font-weight:400}
-.back{display:flex;align-items:center;gap:4px;border:0;background:none;padding:2px 0 10px;font-weight:700;color:var(--mut)}
+.back{display:flex;align-items:center;justify-content:center;gap:4px;border:0;background:none;padding:0;width:36px;height:36px;border-radius:10px;font-weight:700;color:var(--mut)}
+.back:hover,.back:focus-visible{background:var(--bg2);color:var(--ink)}
+.back--icon .ic{width:20px;height:20px}
+.point-detail-head{display:grid;grid-template-columns:44px minmax(0,1fr) 44px 44px;align-items:center;gap:4px;min-height:44px;margin:0 0 6px}
+.point-detail-head h2{min-width:0;margin:0;font-size:clamp(16px,4.8vw,19px);line-height:1.25;display:block;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.point-detail-head .back,.point-detail-head .star,.point-detail-toggle{width:44px;height:44px}
+.point-detail-toggle{display:grid;place-items:center;border:1px solid var(--line);border-radius:50%;background:var(--bg2)}
+.point-name{position:relative;min-width:0;display:flex;align-items:center;gap:6px}
+.point-name h2{flex:1}
+.point-info{flex:none;width:25px;height:25px;padding:0;border:1px solid var(--line);border-radius:50%;display:grid;place-items:center;background:var(--bg2);color:var(--mut)}
+.point-info:hover,.point-info:focus-visible,.point-info[aria-expanded="true"]{color:var(--ink);border-color:var(--ink)}
+.point-info .ic{width:15px;height:15px}
+.point-info-popover{position:absolute;z-index:2;top:calc(100% + 7px);left:0;right:0;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg2);color:var(--mut);font-size:12px;line-height:1.4;box-shadow:0 6px 18px rgba(16,24,40,.16)}
+.point-info-popover p{margin:0}
+#sheet.detail .sheet-identity,#sheet.detail .quick-tabs{display:none}
+#sheet.detail .sheet-head{display:none}
+.point-detail-head+h3{margin-top:0}
 .row,.next{display:flex;gap:12px;align-items:center;width:100%;text-align:left;border:0;margin:0 0 8px}
-.row{background:var(--bg2);border-radius:12px;padding:8px 10px;border-left:4px solid var(--c,transparent);min-height:54px}
-.next{background:var(--c);color:#fff;border-radius:20px;padding:14px;margin-bottom:12px}
-.next small{color:#ffffffe0}.next .num{background:#ffffff38!important;width:56px;height:56px;font-size:30px}.next .eta b{font-size:36px;line-height:1}.next .eta i{color:#fff}
+.row{background:var(--bg2);border-radius:12px;padding:8px 10px;border-left:4px solid var(--c,transparent);min-height:48px}
+.next{background:var(--c);color:#fff;border-radius:16px;padding:10px 12px;margin-bottom:8px}
+.next small{color:#ffffffe0}.next .num{background:#ffffff38!important;width:44px;height:44px;font-size:24px}.next .eta b{font-size:26px;line-height:1}.next .eta i{color:#fff}
 .num{flex:none;width:44px;height:44px;border-radius:12px;color:#fff;display:grid;place-items:center;font-weight:700;font-size:22px}
 .pin{flex:none;width:14px;height:14px;border-radius:50%;border:3px solid var(--ink);margin:0 15px}
 .info{flex:1;min-width:0}.info b{display:block}
@@ -148,6 +164,37 @@ const lines=()=>ALL.filter(l=>l.categoriaDia===cat);
 const byId=id=>ALL.find(l=>l.idRota===id);
 const offs=l=>l._o||(l._o=(()=>{let t=0;const o={};for(const s of l.trajetoDetalhado||[]){t+=s.tempoDoAnteriorMinutos||0;if(!(s.idParada in o))o[s.idParada]=t}return o})());
 const variant=l=>l.sublinha?.trim()||'Percurso padrão';
+const STOP_DISPLAY_NAMES=Object.freeze({
+  P03:'CAD II - FALE - ECI - FAFICH (Ida)',
+  P05:'Praça de Serviços - Biblioteca Central - Reitoria (Ida)',
+  P07:'Unidade Adm. II (Ida)',
+  P08:'Av. Abrahão Caram (Rest. Farroupilha) (Ida)',
+  P09:'CEU (Ida)',
+  P10:'Vet. - CEU (Ida)',
+  P11:'CTE (Ida)',
+  P12:'Av. Carlos Luz (McDonald\'s) (Ida)',
+  P15:'Vet. - Estação Ecológica',
+  P17:'RU Setorial II (Volta)',
+  P18:'Física / Eng. Elétrica (Volta)',
+  P20:'CPH - Túnel de Vento (Volta)',
+  P21:'CNEN / CDTN - 9502 (Volta)',
+  P22:'CAD 3 - Química / COLTEC (Volta)',
+  P25:'RU Setorial I (Rampa)',
+  P26:'FAE (Centro Pedagógico)',
+  P27:'EMEI Alaíde Lisboa (Volta)',
+  P30:'CAD II - FALE - ECI - FAFICH (Volta)',
+  P32:'FAE (Centro Pedagógico)',
+  P33:'RU Setorial I (Rampa)',
+  P38:'Vet. - Estação Ecológica',
+  P31:'EMEI Alaíde Lisboa (Ida)',
+  P41:'Av. Carlos Luz (McDonald\'s) (Volta)',
+  P43:'Av. Abrahão Caram (Rest. Farroupilha) (Volta)',
+  P44:'Unidade Adm. II',
+  P46:'Rua Prof. E. Guimarães (Reitoria) (Volta)',
+  P47:'RU Setorial I (Escada)',
+  P48:'RU Setorial I (Portaria Área Militar)'
+});
+const stopName=p=>STOP_DISPLAY_NAMES[p.idParada]||p.nome;
 const title=l=>'Linha '+String(l.linha).padStart(2,'0');
 const etaTxt=t=>{if(!isLive())return fm(t);const d=t-now();return d<=0?'agora':d<60?d+' min':fm(t)};
 
@@ -166,7 +213,7 @@ const catBar=()=>`<div class="chips">${CATS.map(c=>`<button data-cat="${c[0]}" c
 const disclaimer='<p class="note">Previsão estimada pela grade de horários e pelo tempo entre pontos. Não usa GPS, então atrasos e trânsito não entram.</p>';
 const ic=(p,f)=>`<svg class="ic" viewBox="0 0 24 24" fill="${f||'none'}" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const STAR='<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>';
-const back=`<button class="back" data-back>${ic('<path d="M15 18l-6-6 6-6"/>')}Voltar</button>`;
+const back=`<button class="back back--icon" data-back aria-label="Voltar para pontos" title="Voltar para pontos">${ic('<path d="M15 18l-6-6 6-6"/>')}</button>`;
 let fav=[];try{fav=JSON.parse(localStorage.getItem('bandeco_interno_favoritos_v1')||'[]')}catch(e){}
 const saveFav=()=>{try{localStorage.setItem('bandeco_interno_favoritos_v1',JSON.stringify(fav))}catch(e){}};
 const eta=t=>{const x=etaTxt(t),m=x.match(/^(\d+) min$/);return m?`<b>${m[1]}<i> min</i></b>`:`<b>${x}</b>`};
@@ -175,40 +222,42 @@ function stopBody(id){const a=arrivals(id);if(!a.length)return '<p>Nenhuma linha
   const visible=isLive()?a.filter(x=>x.ts.length):a;
   if(!visible.length)return '<p>Não há mais saídas hoje neste ponto.</p>'+disclaimer;
   const i=visible.findIndex(x=>x.ts.length);return visible.map((x,k)=>arrRow(x,id,k===i)).join('')+disclaimer}
-function stopView(id){const p=S[id],on=fav.includes(id);
-  return `${back}<div class="hd2"><div><h2>${esc(p.nome)}</h2><small>${esc(p.descricao||'')}</small></div><button class="star${on?' fav':''}" data-fav="${id}" aria-label="${on?'Remover dos seus pontos':'Salvar nos seus pontos'}">${ic(STAR,on?'currentColor':'none')}</button></div>${banner()}<h3>Próximos ônibus</h3>${stopBody(id)}`}
+function stopView(id){const p=S[id],on=fav.includes(id),desc=String(p.descricao||'').trim();
+  const info=desc?`<span class="point-name"><h2>${esc(stopName(p))}</h2><button type="button" class="point-info" data-info aria-expanded="false" aria-label="Informações sobre este ponto" title="Informações sobre este ponto">${ic('<circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/>')}</button><span class="point-info-popover" data-info-content role="tooltip" hidden><p>${esc(desc)}</p></span></span>`:`<h2>${esc(stopName(p))}</h2>`;
+  return `<div class="point-detail-head">${back}${info}<button class="star${on?' fav':''}" data-fav="${id}" aria-label="${on?'Remover dos seus pontos':'Salvar nos seus pontos'}">${ic(STAR,on?'currentColor':'none')}</button><button type="button" class="point-detail-toggle" data-sheet-toggle aria-label="Recolher painel" aria-expanded="true" aria-controls="body"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div><h3>Próximos ônibus</h3>${stopBody(id)}${banner()}`}
 
 function lineView(){const l=byId(view.id),o=offs(l),n=now(),live=isLive();
   const hs=l.horarios.slice().sort((a,b)=>hm(a)-hm(b)),ni=live?hs.findIndex(h=>hm(h)>=n):-1,base=hm(hs[ni>=0?ni:0]);
   const nx=live?(ni>=0?(hm(hs[ni])-n<60?`Próxima saída em ${hm(hs[ni])-n} min (${hs[ni]})`:`Próxima saída às ${hs[ni]}`):'Sem mais saídas hoje'):'';
   const grid=hs.map((h,i)=>`<span class="t${live&&hm(h)<n?' past':''}${i===ni?' next':''}">${h}</span>`).join('');
   const cap=live&&ni>=0?'Hora estimada em cada ponto, próxima viagem':'Hora estimada em cada ponto, primeira viagem';
-  const seen=new Set(),sl=(l.trajetoDetalhado||[]).filter(s=>!seen.has(s.idParada)&&seen.add(s.idParada)).map(s=>`<button class="stp${s.idParada===view.focus?' foc':''}" data-stop="${s.idParada}"><span class="dot"></span><span class="nm">${esc(S[s.idParada].nome)}</span><span class="tm">${fm(base+o[s.idParada])}</span></button>`).join('');
+  const seen=new Set(),sl=(l.trajetoDetalhado||[]).filter(s=>!seen.has(s.idParada)&&seen.add(s.idParada)).map(s=>`<button class="stp${s.idParada===view.focus?' foc':''}" data-stop="${s.idParada}"><span class="dot"></span><span class="nm">${esc(stopName(S[s.idParada]))}</span><span class="tm">${fm(base+o[s.idParada])}</span></button>`).join('');
   return `${back}<div class="band" style="--c:${l.corHex}"><span class="num">${l.linha}</span><div><h2>${title(l)}</h2><small>${esc(variant(l))}${nx?'<br>'+nx:''}</small></div></div>${banner()}
-  <h3>Saídas de ${esc(S[l.itinerarioParadasIds[0]].nome)}</h3><div class="grid" style="--c:${l.corHex}">${grid}</div>
+  <h3>Saídas de ${esc(stopName(S[l.itinerarioParadasIds[0]]))}</h3><div class="grid" style="--c:${l.corHex}">${grid}</div>
   <h3>${cap}</h3><div class="tl" style="--c:${l.corHex}">${sl}</div>${disclaimer}`}
 
 function nearView(){
   if(near.s==='loading')return `${back}<h2>Buscando sua localização…</h2><small>Permita o acesso quando o navegador pedir.</small>`;
   if(near.s==='err')return `${back}<h2>Não achei sua localização</h2><p>${esc(near.m)}</p><button class="btn" data-home>Buscar ponto pelo nome</button>`;
   const [t,...rest]=near.list,far=t.d>3000?'<p class="note">Você parece estar longe do campus. Mostrando o ponto mais próximo mesmo assim.</p>':'';
-  return `${back}<small>Ponto mais perto de você</small><h2>${esc(t.p.nome)}</h2><small>${fmD(t.d)} de você, cerca de ${walk(t.d)} min a pé</small>${far}${banner()}<h3>Próximos ônibus aqui</h3>${stopBody(t.p.idParada)}
-  <h3>Outros pontos perto</h3>${rest.map(x=>`<button class="row" data-stop="${x.p.idParada}"><span class="pin"></span><span class="info"><b>${esc(x.p.nome)}</b><small>${fmD(x.d)} · ${walk(x.d)} min a pé</small></span></button>`).join('')}`}
+  return `${back}<small>Ponto mais perto de você</small><h2>${esc(stopName(t.p))}</h2><small>${fmD(t.d)} de você, cerca de ${walk(t.d)} min a pé</small>${far}${banner()}<h3>Próximos ônibus aqui</h3>${stopBody(t.p.idParada)}
+  <h3>Outros pontos perto</h3>${rest.map(x=>`<button class="row" data-stop="${x.p.idParada}"><span class="pin"></span><span class="info"><b>${esc(stopName(x.p))}</b><small>${fmD(x.d)} · ${walk(x.d)} min a pé</small></span></button>`).join('')}`}
 
 function stopsList(){const k=norm(q.trim());
   return D.paradas.filter(p=>norm(p.nome).includes(k)).sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(p=>{
     const c=lines().filter(l=>offs(l)[p.idParada]!==undefined).length;
-    return `<button class="row" data-stop="${p.idParada}"><span class="pin"></span><span class="info"><b>${esc(p.nome)}</b><small>${c?c+(c>1?' linhas':' linha'):'Sem linhas neste tipo de dia'}</small></span></button>`}).join('')||'<p>Nenhum ponto com esse nome.</p>'}
+    return `<button class="row" data-stop="${p.idParada}"><span class="pin"></span><span class="info"><b>${esc(stopName(p))}</b><small>${c?c+(c>1?' linhas':' linha'):'Sem linhas neste tipo de dia'}</small></span></button>`}).join('')||'<p>Nenhum ponto com esse nome.</p>'}
 function linesList(){const n=now(),live=isLive();
   return lines().map(l=>{const h=l.horarios.map(hm).sort((a,b)=>a-b),nx=live?h.find(x=>x>=n):h[0];
     return `<button class="row" style="--c:${l.corHex}" data-line="${l.idRota}"><span class="num" style="background:${l.corHex}">${l.linha}</span><span class="info"><b>${title(l)}</b><small>${esc(variant(l))}</small></span><span class="eta"><b>${nx===undefined?'—':fm(nx)}</b><small>${nx===undefined?'sem saídas':'próxima saída'}</small></span></button>`}).join('')}
 function favRows(){if(!fav.some(id=>S[id]))return '';return '<h3>Seus pontos</h3>'+fav.filter(id=>S[id]).map(id=>{const f=arrivals(id).find(x=>x.ts.length);
-  return `<button class="row" data-stop="${id}" style="--c:${f?f.l.corHex:'var(--line)'}"><span class="info"><b>${esc(S[id].nome)}</b><small>${f?title(f.l)+' · '+esc(variant(f.l)):'Sem saídas agora'}</small></span>${f?`<span class="eta">${eta(f.ts[0])}</span>`:''}</button>`}).join('')}
+  return `<button class="row" data-stop="${id}" style="--c:${f?f.l.corHex:'var(--line)'}"><span class="info"><b>${esc(stopName(S[id]))}</b><small>${f?title(f.l)+' · '+esc(variant(f.l)):'Sem saídas agora'}</small></span>${f?`<span class="eta">${eta(f.ts[0])}</span>`:''}</button>`}).join('')}
 function home(){return `${tab==='pontos'?`<label class="srch">${ic('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>')}<input id="q" type="search" placeholder="Buscar ponto pelo nome" value="${esc(q)}"></label>${favRows()}<div id="list">${stopsList()}</div>`:linesList()}${catBar()}${banner()}`}
 
 function render(){
   const fallback=!window.L?'<p class="note" role="status">Mapa indisponível nesta conexão. Você ainda pode pesquisar pontos e consultar horários; para exibir o mapa, conecte-se à internet.</p>':'';
   el.innerHTML=fallback+(view.t==='home'?home():view.t==='stop'?stopView(view.id):view.t==='line'?lineView():nearView());
+  el.scrollTop=0;
 }
 
 // O painel inicia recolhido no celular e usa estados intermediário/expandido sem recriar o mapa.
@@ -220,8 +269,7 @@ function syncSheet(){
   sh.classList.toggle('detail',view.t!=='home');
   const expanded=state!=='peek';
   el.setAttribute('aria-hidden',String(!expanded));
-  for(const id of ['grab','sheet-toggle']){
-    const b=document.getElementById(id);
+  for(const b of [document.getElementById('grab'),document.getElementById('sheet-toggle'),...document.querySelectorAll('[data-sheet-toggle]')].filter(Boolean)){
     b.setAttribute('aria-expanded',String(expanded));
     b.setAttribute('aria-label',state==='peek'?'Expandir painel':state==='mid'?'Expandir detalhes':'Recolher painel');
   }
@@ -233,7 +281,7 @@ function syncSheet(){
 }
 function setSheetState(next){
   if(document.body.classList.contains('no-map')||innerWidth>=760)next='full';
-  if(next==='peek' && el.contains(document.activeElement))document.getElementById('sheet-toggle').focus();
+  if(next==='peek' && el.contains(document.activeElement))(document.querySelector('[data-sheet-toggle]')||document.getElementById('sheet-toggle'))?.focus();
   sheetState=next;syncSheet();
 }
 function setExpanded(want){setSheetState(want?'mid':'peek')}
@@ -253,7 +301,7 @@ if(window.L){
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors · dados: internorotas/ufmg (MIT)'}).addTo(map);
   route=L.layerGroup().addTo(map);sel=L.layerGroup().addTo(map);usr=L.layerGroup().addTo(map);
   D.paradas.forEach(p=>{const o=p.categoria!=='Parada Regular';
-    L.circleMarker(p.coordenadas,{radius:o?11:8,color:dk?'#fff':'#101828',weight:3,fillColor:o?(dk?'#fff':'#101828'):(dk?'#14181f':'#fff'),fillOpacity:1}).addTo(map).bindTooltip(p.nome).on('click',()=>go({t:'stop',id:p.idParada}))});
+    L.circleMarker(p.coordenadas,{radius:o?11:8,color:dk?'#fff':'#101828',weight:3,fillColor:o?(dk?'#fff':'#101828'):(dk?'#14181f':'#fff'),fillOpacity:1}).addTo(map).bindTooltip(stopName(p)).on('click',()=>go({t:'stop',id:p.idParada}))});
   // O iframe pode ficar oculto ao alternar abas; recalcular somente quando seu
   // contêiner mudar de tamanho, sem recriar o mapa nem alterar o zoom.
   let invalidateRaf=0;
@@ -300,11 +348,13 @@ function locate(){go({t:'near'});near={s:'loading'};render();
   {enableHighAccuracy:true,timeout:10000,maximumAge:30000})}
 
 el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
-  if(d.stop)go({t:'stop',id:d.stop});
+  if(d.sheetToggle!==undefined){setSheetState(sh.classList.contains('peek')?'mid':sh.classList.contains('full')?'peek':'full');}
+  else if(d.stop)go({t:'stop',id:d.stop});
   else if(d.line)go({t:'line',id:d.line,focus:d.focus});
   else if(d.tab){pickQuickTab(d.tab)}
   else if(d.cat){cat=d.cat;render()}
   else if(d.fav){fav=fav.includes(d.fav)?fav.filter(x=>x!==d.fav):[...fav,d.fav];saveFav();render()}
+  else if(d.info!==undefined){const content=b.parentElement.querySelector('[data-info-content]'),open=content?.hidden===true;if(content){content.hidden=!open;b.setAttribute('aria-expanded',String(open));}}
   else if(d.back!==undefined){view=hist.pop()||{t:'home'};apply()}
   else if(d.home!==undefined){hist=[];view={t:'home'};tab='pontos';apply()}});
 el.addEventListener('input',e=>{if(e.target.id==='q'){q=e.target.value;document.getElementById('list').innerHTML=stopsList()}});
@@ -319,6 +369,14 @@ head.addEventListener('touchstart',e=>{if(e.touches.length===1)gestureStart=e.to
 head.addEventListener('touchend',e=>{
   if(gestureStart===null||!e.changedTouches.length)return;
   const delta=e.changedTouches[0].clientY-gestureStart;gestureStart=null;
+  if(delta< -35)setExpanded(true);
+  else if(delta>35)setExpanded(false);
+},{passive:true});
+let detailGesture=false;
+el.addEventListener('touchstart',e=>{detailGesture=e.touches.length===1&&!!e.target.closest('.point-detail-head');if(detailGesture)gestureStart=e.touches[0].clientY},{passive:true});
+el.addEventListener('touchend',e=>{
+  if(!detailGesture||gestureStart===null||!e.changedTouches.length){detailGesture=false;return;}
+  const delta=e.changedTouches[0].clientY-gestureStart;gestureStart=null;detailGesture=false;
   if(delta< -35)setExpanded(true);
   else if(delta>35)setExpanded(false);
 },{passive:true});

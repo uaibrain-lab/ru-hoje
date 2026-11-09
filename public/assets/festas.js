@@ -20,8 +20,35 @@ function openModal(id){const d=$(id);if(d&&!d.open)d.showModal();}
 function closeModal(id){const d=$(id);if(!d)return;if(d.tagName==='DIALOG'){if(d.open)d.close();}else d.hidden=true;}
 function showSaveResult(success,title,message,retry){const titleEl=$('admin-save-title'),messageEl=$('admin-save-message'),retryEl=$('admin-save-retry'),okEl=$('admin-save-ok'),dialog=$('admin-save-dialog');if(!titleEl)return;titleEl.textContent=title;messageEl.textContent=message;retryEl.hidden=!retry;retryEl.textContent=success?'Tentar novamente':'Confirmar';retryEl.onclick=()=>{closeModal('admin-save-dialog');retry?.();};okEl.onclick=()=>closeModal('admin-save-dialog');dialog.hidden=false;queueMicrotask(()=>retry?retryEl.focus():okEl.focus());}
 function button(label,cls,action){const b=make('button',cls,label);b.type='button';b.addEventListener('click',action);return b;}
+function festaActionIcon(kind){
+  const paths={
+    ticket:'<path d="M3 7.5C5 7.5 5.5 6 5.5 4.5h13v3c-2.3 0-2.3 4 0 4v3H5.5c0-1.7-.5-3-2.5-3v-4Z"></path><path d="M12 5v8" stroke-dasharray="2 3"></path>',
+    gift:'<rect x="3" y="8" width="18" height="13" rx="2"></rect><path d="M12 8v13M3 12h18M12 8H8.5a2.5 2.5 0 1 1 2.5-2.5C11 7 12 8 12 8Zm0 0h3.5A2.5 2.5 0 1 0 13 5.5C13 7 12 8 12 8Z"></path>'
+  };
+  const span=make('span','festa-action-icon');span.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${paths[kind]||''}</svg>`;return span;
+}
+function festaActionChevron(){const span=make('span','festa-action-chevron');span.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 5 7 7-7 7"></path></svg>';return span;}
+function festaAction(label,kind,cls,action){const b=button('',`festa-action ${cls}`,action);b.append(festaActionIcon(kind),make('span','festa-action-label',label),festaActionChevron());return b;}
+function festaTicketAction(label,kind,cls){const a=make('a',`festa-action ${cls}`);a.append(festaActionIcon(kind),make('span','festa-action-label',label),festaActionChevron());return a;}
 function visibilityIcon(visible){return `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path><circle cx="12" cy="12" r="2.8"></circle>${visible?'':'<path d="m4 4 16 16"></path>'}</svg>`;}
 function trashIcon(){return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16"></path><path d="M9 7V4h6v3"></path><path d="m7 7 1 13h8l1-13"></path><path d="M10 11v5M14 11v5"></path></svg>';}
+function festaMetaIcon(kind){
+  const paths={
+    date:'<rect x="3" y="4" width="18" height="17" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"></path>',
+    time:'<circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path>',
+    place:'<path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle>'
+  };
+  const span=make('span','festa-meta-icon');span.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${paths[kind]||''}</svg>`;return span;
+}
+function festaMetaItem(kind,value,extraClass=''){
+  if(!value)return null;const item=make('span',`festa-meta-item${extraClass?' '+extraClass:''}`);item.append(festaMetaIcon(kind),make('span','',value));return item;
+}
+function festaMeta(startsAt,place){
+  const meta=make('div','festa-meta');const [ymd,hm]=String(startsAt||'').split('T');const parts=(ymd||'').split('-');
+  const date=parts.length===3&&parts.every(Boolean)?`${parts[2]}/${parts[1]}`:'';const time=hm||'';
+  const dateTime=make('div','festa-meta-row');const dateItem=festaMetaItem('date',date);const timeItem=festaMetaItem('time',time);if(dateItem)dateTime.append(dateItem);if(dateItem&&timeItem){const separator=make('span','festa-meta-separator');separator.setAttribute('aria-hidden','true');dateTime.append(separator);}if(timeItem)dateTime.append(timeItem);if(dateTime.childElementCount)meta.append(dateTime);
+  const placeItem=festaMetaItem('place',place,'festa-meta-location');if(placeItem)meta.append(placeItem);return meta;
+}
 function localizedDate(raw){if(!raw)return '';const [ymd,hm]=String(raw).split('T');const [y,m,d]=(ymd||'').split('-');return `${d||'--'}/${m||'--'} · ${hm||'--:--'}`;}
 function plural(count,singular,pluralForm){return `${count} ${count===1?singular:pluralForm}`;}
 function switchTab(tab){
@@ -29,6 +56,8 @@ function switchTab(tab){
   if(!Object.hasOwn(pages,tab))return;
   const changed=!Object.entries(pages).some(([name,id])=>name===tab && !$(id).hidden);
   document.querySelector('.site-wrap')?.classList.toggle('interno-active',tab==='interno');
+  const footer=document.querySelector('.footer');
+  if(footer)footer.hidden=tab==='interno';
   for(const [name,id] of Object.entries(pages)){
     $(id).hidden=name!==tab;
     const button=$('tab-'+name);button.setAttribute('aria-current',name===tab?'page':'false');button.classList.toggle('is-active',name===tab);
@@ -103,37 +132,46 @@ async function optimizePoster(file){
 function renderEvents(){const root=$('festas-list');root.replaceChildren();
   if(!state.events.length){root.append(make('p','festas-empty','Nenhuma festa publicada no momento.'));return;}
   for(const e of state.events){
-    const card=make('article','festa-card festa-card-v21');
-    const top=make('div','festa-card-body');
-    const heading=make('div','festa-card-heading');const names=make('div');names.append(make('h3','',clean(e.name)),make('p','festa-organizer',clean(e.organizer)));
-    heading.append(names);
-    const tags=make('div','festa-tags');normalizeTags(e.tags).forEach(t=>tags.append(make('span','festa-tag-chip',tagLabel(t))));heading.append(tags);top.append(heading);
-    top.append(make('p','festa-details',`${localizedDate(e.startsAt)} · ${clean(e.place)}`));
-    if(e.description)top.append(make('p','festa-desc festa-card-desc',clean(e.description,700)));
-    const actions=make('div','festa-actions');
+    const card=make('article','festa-card festa-card--compact');
+    const hasPoster=(DEMO && e.posterDataUrl) || e.hasUploadedPoster || httpsUrl(e.posterUrl);
+    const main=make('div',hasPoster?'festa-card-main festa-card-main--with-poster':'festa-card-main festa-card-main--no-poster');
+    const content=make('div','festa-card-content');
+    content.append(make('h3','festa-card-title',clean(e.name)),make('p','festa-card-organizer',clean(e.organizer)));
+    content.append(festaMeta(e.startsAt,clean(e.place)));
+    if(e.description)content.append(make('p','festa-card-description festa-card-desc',clean(e.description,700)));
+    const rawTags=normalizeTags(e.tags);const tags=make('div','festa-card-tags');
+    rawTags.slice(0,4).forEach(t=>tags.append(make('span','festa-tag-chip',tagLabel(t))));
+    if(rawTags.length>4){
+      const more=button(`+${rawTags.length-4}`,'festa-tag-more',()=>{const expanded=more.dataset.expanded==='true';more.dataset.expanded=String(!expanded);more.textContent=expanded?`+${rawTags.length-4}`:'Menos';tags.querySelectorAll('[data-extra-tag]').forEach(el=>{el.hidden=expanded;});});
+      more.type='button';more.setAttribute('aria-expanded','false');
+      rawTags.slice(4).forEach(t=>{const chip=make('span','festa-tag-chip');chip.dataset.extraTag='true';chip.hidden=true;chip.textContent=tagLabel(t);tags.append(chip);});
+      more.addEventListener('click',()=>more.setAttribute('aria-expanded',String(more.dataset.expanded==='true')));tags.append(more);
+    }
+    if(rawTags.length)content.append(tags);
+    const actions=make('div','festa-card-actions--inline');const status=make('p','festa-card-status');
     const ticket=httpsUrl(e.ticketUrl);
-    if(ticket){const a=make('a','festa-action festa-ticket','INGRESSOS 🔥');a.href=ticket;a.target='_blank';a.rel='noopener noreferrer sponsored';actions.append(a);}
+    if(ticket){const a=festaTicketAction('Ingressos','ticket','festa-ticket-action festa-action-primary');a.href=ticket;a.target='_blank';a.rel='noopener noreferrer sponsored';actions.append(a);}
     const drawMs=DEMO?Date.parse(`${e.drawAt||''}:00-03:00`):drawAtMs(e);
     if(e.raffleStatus==='open' && Number.isFinite(drawMs) && Date.now()<drawMs){
-      actions.append(button('Sorteio','festa-action festa-action-primary',()=>openSignup(e)));
-      actions.append(make('span','festa-count',plural(DEMO?state.demoEntries.get(e.id)?.size||0:Number(e.participantCount)||0,'inscrito','inscritos')));
-    }else if(e.raffleStatus==='drawn')actions.append(button('Resultados!','festa-action festa-action-primary',()=>showResult(e)));
-    else if(e.raffleStatus==='open')actions.append(make('span','festa-count',Number.isFinite(drawMs)&&Date.now()>=drawMs?'Inscrições encerradas · aguardando apuração':'Inscrições abertas'));
-    else if(e.raffleStatus==='closed')actions.append(make('span','festa-count','Inscrições encerradas'));
-    top.append(actions);card.append(top);
-    if((DEMO && e.posterDataUrl) || e.hasUploadedPoster || httpsUrl(e.posterUrl)){
-      const img=make('img','festa-art');img.alt=`Arte de ${clean(e.name)}`;img.loading='lazy';img.referrerPolicy='no-referrer';
+      actions.append(festaAction('Sorteio','gift','festa-raffle-action festa-action-secondary',()=>openSignup(e)));
+      status.textContent='';
+    }else if(e.raffleStatus==='drawn')actions.append(festaAction('Resultados','gift','festa-result-action festa-action-secondary',()=>showResult(e)));
+    else if(e.raffleStatus==='open')status.textContent=Number.isFinite(drawMs)&&Date.now()>=drawMs?'Inscrições encerradas · aguardando apuração':'Inscrições abertas';
+    else if(e.raffleStatus==='closed')status.textContent='Inscrições encerradas';
+    main.append(content);
+    if(actions.childElementCount)main.append(actions);
+    if(status.textContent)main.append(status);
+    if(hasPoster){
+      const trigger=make('button','festa-poster-trigger');trigger.type='button';trigger.setAttribute('aria-label',`Abrir cartaz completo de ${clean(e.name)}`);
+      const img=make('img','festa-art');img.alt=`Cartaz de ${clean(e.name)}`;img.loading='lazy';img.referrerPolicy='no-referrer';
       const inline=safePosterDataUrl(DEMO?e.posterDataUrl:'');
-      if(inline)img.src=inline;
-      else if(httpsUrl(e.posterUrl))img.src=httpsUrl(e.posterUrl);
-      else img.hidden=true;
-      img.tabIndex=0;img.setAttribute('role','button');img.setAttribute('aria-label','Abrir cartaz completo');
+      if(inline)img.src=inline;else if(httpsUrl(e.posterUrl))img.src=httpsUrl(e.posterUrl);else img.hidden=true;
+      trigger.append(img);
       const openPoster=()=>{const full=$('poster-full');full.src=img.currentSrc||img.src;full.alt=img.alt;$('poster-title').textContent=`Cartaz completo · ${clean(e.name)}`;openModal('poster-dialog');};
-      img.addEventListener('click',openPoster);img.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();openPoster();}});
-      const posterStatus=make('small','festa-poster-status');posterStatus.hidden=true;card.append(img,posterStatus);
+      trigger.addEventListener('click',openPoster);main.prepend(trigger);
       if(!DEMO && e.hasUploadedPoster)void paintPoster(e,img);
     }
-    root.append(card);
+    card.append(main);root.append(card);
   }
 }
 function setSignupStep(step){for(const name of ['rules','handle'])$('signup-step-'+name).hidden=name!==step;$('signup-form').hidden=step!=='profile';}

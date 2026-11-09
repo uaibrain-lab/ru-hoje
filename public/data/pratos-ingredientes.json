@@ -1,0 +1,1407 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "document": "Ingredientes - ICA.pdf",
+    "title": "Ingredientes - ICA",
+    "scope": "Receitas e ingredientes listados no documento fornecido",
+    "note": "A lista é informativa e não substitui avisos oficiais de alergênicos ou alterações de receita."
+  },
+  "count": 126,
+  "dishes": [
+    {
+      "name": "Abobora c/ Quiabo",
+      "ingredients": [
+        "Abóbora",
+        "Quiabo",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 5
+    },
+    {
+      "name": "Almôndegas Assadas",
+      "ingredients": [
+        "Coxão duro / chã de fora",
+        "Paleta suína",
+        "Alho",
+        "Coentro",
+        "Cebola",
+        "Pimentão verde",
+        "Tomate",
+        "Sal refinado",
+        "Extrato de tomate",
+        "Óleo de soja"
+      ],
+      "sourcePage": 5
+    },
+    {
+      "name": "Angu ao Sugo",
+      "ingredients": [
+        "Alho",
+        "Colorau (urucum em semente)",
+        "Cebola",
+        "Pimentão verde",
+        "Molho de tomate",
+        "Fubá",
+        "Ketchup"
+      ],
+      "sourcePage": 5
+    },
+    {
+      "name": "Angu com Quiabo",
+      "ingredients": [
+        "Alho",
+        "Cebola",
+        "Pimentão verde",
+        "Quiabo",
+        "Molho de tomate",
+        "Fubá",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 5
+    },
+    {
+      "name": "Arroz à Grega",
+      "ingredients": [
+        "Alho",
+        "Cebola",
+        "Cenoura",
+        "Pimentão verde",
+        "Vagem",
+        "Espiga de milho verde",
+        "Arroz agulhinha",
+        "Sal refinado",
+        "Ervilha em conserva",
+        "Óleo de soja"
+      ],
+      "sourcePage": 5
+    },
+    {
+      "name": "Arroz Branco",
+      "ingredients": [
+        "Alho",
+        "Arroz agulhinha",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 6
+    },
+    {
+      "name": "Arroz com Alho",
+      "ingredients": [
+        "Alho",
+        "Cebola",
+        "Arroz agulhinha",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 6
+    },
+    {
+      "name": "Arroz com Brócolis",
+      "ingredients": [
+        "Alho",
+        "Brócolis",
+        "Cebola",
+        "Arroz agulhinha",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 6
+    },
+    {
+      "name": "Arroz Integral",
+      "ingredients": [
+        "Alho",
+        "Cebola",
+        "Arroz integral",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 6
+    },
+    {
+      "name": "Asa de Frango Assada",
+      "ingredients": [
+        "Asa de frango",
+        "Alho",
+        "Cebola",
+        "Colorau em pó",
+        "Sal refinado",
+        "Vinagre branco",
+        "Óleo de soja"
+      ],
+      "sourcePage": 6
+    },
+    {
+      "name": "Assado de Grão de Bico",
+      "ingredients": [
+        "Leite em pó integral",
+        "Queijo muçarela",
+        "Margarina cremosa com sal",
+        "Alho",
+        "Cebolinha verde",
+        "Cenoura",
+        "Batata bolinha",
+        "Grão-de-bico",
+        "Noz-moscada",
+        "Sal refinado"
+      ],
+      "sourcePage": 7
+    },
+    {
+      "name": "Assado de Lentilha",
+      "ingredients": [
+        "Leite em pó integral",
+        "Queijo muçarela",
+        "Margarina cremosa com sal",
+        "Alho",
+        "Cebolinha verde",
+        "Cebola",
+        "Cenoura",
+        "Batata bolinha",
+        "Lentilha",
+        "Sal refinado"
+      ],
+      "sourcePage": 7
+    },
+    {
+      "name": "Banana Nanica",
+      "ingredients": [
+        "Banana nanica"
+      ],
+      "sourcePage": 7
+    },
+    {
+      "name": "Batata ao Forno",
+      "ingredients": [
+        "Queijo muçarela",
+        "Margarina cremosa com sal",
+        "Alho",
+        "Batata bolinha",
+        "Açafrão em pó",
+        "Orégano desidratado",
+        "Sal refinado"
+      ],
+      "sourcePage": 7
+    },
+    {
+      "name": "Batata Chips",
+      "ingredients": [
+        "Batata inglesa",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 8
+    },
+    {
+      "name": "Bisteca Suína Grelhada",
+      "ingredients": [
+        "Bisteca suína",
+        "Alho",
+        "Cebola",
+        "Sal refinado"
+      ],
+      "sourcePage": 8
+    },
+    {
+      "name": "Bolinho de Arroz",
+      "ingredients": [
+        "Queijo muçarela",
+        "Margarina cremosa com sal",
+        "Alho",
+        "Cebolinha verde",
+        "Arroz agulhinha",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 8
+    },
+    {
+      "name": "Bolinho de Grão de Bico",
+      "ingredients": [
+        "Queijo muçarela",
+        "Alho",
+        "Cebola",
+        "Grão-de-bico",
+        "Farinha de rosca",
+        "Farinha de trigo",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 8
+    },
+    {
+      "name": "Bolinho de Soja",
+      "ingredients": [
+        "Cebola",
+        "Cenoura",
+        "Ovo de galinha",
+        "Soja texturizada",
+        "Farinha de rosca",
+        "Farinha de trigo"
+      ],
+      "sourcePage": 8
+    },
+    {
+      "name": "Canjiquinha",
+      "ingredients": [
+        "Bacon inteiro",
+        "Alho",
+        "Cebolinha verde",
+        "Cebola",
+        "Tomate",
+        "Canjiquinha",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 8
+    },
+    {
+      "name": "Carne Assada",
+      "ingredients": [
+        "Coxão duro / chã de fora",
+        "Alho",
+        "Cheiro-verde",
+        "Cebola",
+        "Sal refinado",
+        "Molho inglês",
+        "Óleo de soja"
+      ],
+      "sourcePage": 9
+    },
+    {
+      "name": "Carne Cozida c/ Mandioca",
+      "ingredients": [
+        "Coxão duro / chã de fora",
+        "Alho",
+        "Colorau (urucum em semente)",
+        "Aipim / mandioca",
+        "Cebola",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 9
+    },
+    {
+      "name": "Carne Cozida com Legumes",
+      "ingredients": [
+        "Acém",
+        "Alho",
+        "Cheiro-verde",
+        "Coentro",
+        "Cebola",
+        "Cenoura",
+        "Pimentão verde",
+        "Molho de tomate",
+        "Batata bolinha",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 9
+    },
+    {
+      "name": "Carne Cozida",
+      "ingredients": [
+        "Coxão duro / chã de fora",
+        "Alho",
+        "Cebola",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 9
+    },
+    {
+      "name": "Carne de Sol Acebolada",
+      "ingredients": [
+        "Coxão duro / chã de fora",
+        "Cebola",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 10
+    },
+    {
+      "name": "Carne Moída",
+      "ingredients": [
+        "Coxão duro / chã de fora",
+        "Alho",
+        "Azeitona verde in natura (crua)",
+        "Cebolinha verde",
+        "Colorau (urucum em semente)",
+        "Cebola",
+        "Pimentão verde",
+        "Tomate",
+        "Espiga de milho verde",
+        "Ketchup",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 10
+    },
+    {
+      "name": "Carne Suína à Brasê",
+      "ingredients": [
+        "Copa lombo",
+        "Alho",
+        "Cebola",
+        "Sal refinado",
+        "Corante",
+        "Óleo de soja"
+      ],
+      "sourcePage": 10
+    },
+    {
+      "name": "Carne Suína Assada",
+      "ingredients": [
+        "Copa lombo",
+        "Cebola",
+        "Limão",
+        "Sal refinado"
+      ],
+      "sourcePage": 10
+    },
+    {
+      "name": "Cassoulet Vegetariano",
+      "ingredients": [
+        "Coentro",
+        "Abobrinha",
+        "Cebola",
+        "Cenoura",
+        "Tomate",
+        "Feijão branco"
+      ],
+      "sourcePage": 10
+    },
+    {
+      "name": "Chuchu Gratinado",
+      "ingredients": [
+        "Leite in natura pasteurizado",
+        "Queijo parmesão",
+        "Cebola",
+        "Chuchu",
+        "Farinha de trigo",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 11
+    },
+    {
+      "name": "Couve Refogada com Bacon",
+      "ingredients": [
+        "Bacon inteiro",
+        "Couve"
+      ],
+      "sourcePage": 11
+    },
+    {
+      "name": "Couve Refogada",
+      "ingredients": [
+        "Alho",
+        "Couve",
+        "Cebola",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 11
+    },
+    {
+      "name": "Couve-flor Gratinada",
+      "ingredients": [
+        "Queijo muçarela",
+        "Margarina cremosa com sal",
+        "Couve-flor",
+        "Sal refinado"
+      ],
+      "sourcePage": 11
+    },
+    {
+      "name": "Coxa de Frango ao Molho de Tomate",
+      "ingredients": [
+        "Coxa de frango",
+        "Alho",
+        "Salsa",
+        "Cebola",
+        "Tomate",
+        "Sal refinado",
+        "Extrato de tomate",
+        "Óleo de soja"
+      ],
+      "sourcePage": 11
+    },
+    {
+      "name": "Coxa de Frango Assada",
+      "ingredients": [
+        "Coxa de frango",
+        "Alho",
+        "Cebola",
+        "Colorau em pó",
+        "Sal refinado",
+        "Molho inglês",
+        "Óleo de soja"
+      ],
+      "sourcePage": 11
+    },
+    {
+      "name": "Cozido Misto",
+      "ingredients": [
+        "Acém",
+        "Paleta suína",
+        "Linguiça toscana",
+        "Alho",
+        "Colorau (urucum em semente)",
+        "Cebola",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 12
+    },
+    {
+      "name": "Doce de Amendoim em Tablete",
+      "ingredients": [
+        "Doce de amendoim em tablete"
+      ],
+      "sourcePage": 12
+    },
+    {
+      "name": "Doce de Banana em Tablete",
+      "ingredients": [
+        "Doce de banana em tablete"
+      ],
+      "sourcePage": 12
+    },
+    {
+      "name": "Doce de Cocada Branca Tablete",
+      "ingredients": [
+        "Cocada"
+      ],
+      "sourcePage": 12
+    },
+    {
+      "name": "Doce de geleia em tablete",
+      "ingredients": [
+        "Doce de goma em tablete"
+      ],
+      "sourcePage": 12
+    },
+    {
+      "name": "Doce de Paçoca",
+      "ingredients": [
+        "Paçoca de amendoim"
+      ],
+      "sourcePage": 12
+    },
+    {
+      "name": "Doce de pé de moleque em tablete",
+      "ingredients": [
+        "Pé de moleque cristalizado"
+      ],
+      "sourcePage": 12
+    },
+    {
+      "name": "Escondidinho de Carne Seca",
+      "ingredients": [
+        "Acém",
+        "Leite em pó integral",
+        "Margarina cremosa com sal",
+        "Cheiro-verde",
+        "Coentro",
+        "Aipim / mandioca",
+        "Cebola",
+        "Pimentão verde",
+        "Molho de tomate",
+        "Colorau em pó",
+        "Sal refinado"
+      ],
+      "sourcePage": 12
+    },
+    {
+      "name": "Escondidinho de soja",
+      "ingredients": [
+        "Leite em pó integral",
+        "Margarina cremosa com sal",
+        "Cebolinha verde",
+        "Cebola",
+        "Tomate",
+        "Batata bolinha",
+        "Soja texturizada",
+        "Sal refinado"
+      ],
+      "sourcePage": 13
+    },
+    {
+      "name": "Farofa de Carne",
+      "ingredients": [
+        "Lagarto",
+        "Alho",
+        "Cebolinha verde",
+        "Cebola",
+        "Farinha de mandioca",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 13
+    },
+    {
+      "name": "Farofa de Cenoura",
+      "ingredients": [
+        "Cebolinha verde",
+        "Cebola",
+        "Cenoura",
+        "Farinha de mandioca",
+        "Óleo de soja"
+      ],
+      "sourcePage": 13
+    },
+    {
+      "name": "Farofa de Couve",
+      "ingredients": [
+        "Bacon inteiro",
+        "Cebolinha verde",
+        "Couve",
+        "Cebola",
+        "Ovo de galinha",
+        "Farinha de mandioca",
+        "Óleo de soja"
+      ],
+      "sourcePage": 13
+    },
+    {
+      "name": "Farofa de Milho",
+      "ingredients": [
+        "Bacon inteiro",
+        "Margarina cremosa com sal",
+        "Alho",
+        "Cebolinha verde",
+        "Cebola",
+        "Batata palha congelada",
+        "Espiga de milho verde",
+        "Farinha de mandioca",
+        "Uva-passa preta"
+      ],
+      "sourcePage": 13
+    },
+    {
+      "name": "Feijão Carioca",
+      "ingredients": [
+        "Alho",
+        "Cebola",
+        "Feijão carioca",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 14
+    },
+    {
+      "name": "Feijão com Linguiça",
+      "ingredients": [
+        "Linguiça toscana",
+        "Alho",
+        "Feijão carioca",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 14
+    },
+    {
+      "name": "Feijoada",
+      "ingredients": [
+        "Coxão duro / chã de fora",
+        "Copa lombo",
+        "Costela suína",
+        "Orelha suína",
+        "Pé suíno",
+        "Bacon inteiro",
+        "Toucinho iscas",
+        "Linguiça calabresa",
+        "Linguiça toscana",
+        "Alho",
+        "Cebolinha verde",
+        "Cebola",
+        "Feijão preto",
+        "Louro desidratado",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 14
+    },
+    {
+      "name": "Frango ao Molho de Tomate",
+      "ingredients": [
+        "Coxa de frango",
+        "Alho",
+        "Salsa",
+        "Cebola",
+        "Tomate",
+        "Sal refinado",
+        "Extrato de tomate",
+        "Óleo de soja"
+      ],
+      "sourcePage": 14
+    },
+    {
+      "name": "Frango gratinado com creme de milho",
+      "ingredients": [
+        "Sassami",
+        "Queijo muçarela",
+        "Leite longa vida integral",
+        "Cebola",
+        "Farinha de trigo",
+        "Milho verde em conserva"
+      ],
+      "sourcePage": 15
+    },
+    {
+      "name": "Frango Xadrez",
+      "ingredients": [
+        "Sassami",
+        "Alho",
+        "Cebola",
+        "Pimentão amarelo",
+        "Pimentão verde",
+        "Pimentão vermelho",
+        "Tomate",
+        "Sal refinado",
+        "Molho inglês",
+        "Óleo de soja"
+      ],
+      "sourcePage": 15
+    },
+    {
+      "name": "Isca de Carne Colorida",
+      "ingredients": [
+        "Miolo de paleta (bife)",
+        "Alho",
+        "Cebolinha verde",
+        "Cebola",
+        "Pimentão verde",
+        "Tomate",
+        "Sal refinado",
+        "Molho inglês",
+        "Óleo de soja"
+      ],
+      "sourcePage": 15
+    },
+    {
+      "name": "Isca de Frango à Milanesa",
+      "ingredients": [
+        "Sassami",
+        "Alho",
+        "Farinha de rosca",
+        "Fubá",
+        "Sal refinado",
+        "Corante",
+        "Óleo de soja"
+      ],
+      "sourcePage": 15
+    },
+    {
+      "name": "Isca de Frango à Parmegiana",
+      "ingredients": [
+        "Sassami",
+        "Queijo muçarela",
+        "Alho",
+        "Tomate",
+        "Orégano desidratado",
+        "Extrato de tomate"
+      ],
+      "sourcePage": 16
+    },
+    {
+      "name": "Laranja",
+      "ingredients": [
+        "Laranja"
+      ],
+      "sourcePage": 16
+    },
+    {
+      "name": "Lasanha de Frango",
+      "ingredients": [
+        "Sassami",
+        "Queijo muçarela",
+        "Leite longa vida integral",
+        "Alho",
+        "Tomate",
+        "Farinha de trigo",
+        "Macarrão para lasanha",
+        "Ketchup",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 16
+    },
+    {
+      "name": "Lasanha de Soja",
+      "ingredients": [
+        "Queijo muçarela",
+        "Leite longa vida integral",
+        "Amido de milho",
+        "Soja texturizada",
+        "Macarrão para lasanha"
+      ],
+      "sourcePage": 16
+    },
+    {
+      "name": "Legumes ao alho e óleo",
+      "ingredients": [
+        "Margarina cremosa com sal",
+        "Alho",
+        "Batata inglesa",
+        "Cebola",
+        "Cenoura",
+        "Chuchu",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 16
+    },
+    {
+      "name": "Lentilha Refogada c/ Legumes",
+      "ingredients": [
+        "Batata inglesa",
+        "Cenoura",
+        "Tomate",
+        "Lentilha",
+        "Sal refinado"
+      ],
+      "sourcePage": 17
+    },
+    {
+      "name": "Maçã",
+      "ingredients": [
+        "Maçã nacional"
+      ],
+      "sourcePage": 17
+    },
+    {
+      "name": "Macarrão à Carbonara",
+      "ingredients": [
+        "Bacon inteiro",
+        "Ovo de galinha",
+        "Macarrão parafuso"
+      ],
+      "sourcePage": 17
+    },
+    {
+      "name": "Macarrão ao Alho e Óleo",
+      "ingredients": [
+        "Alho",
+        "Cheiro-verde",
+        "Macarrão espaguete",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 17
+    },
+    {
+      "name": "Macarronada",
+      "ingredients": [
+        "Alho",
+        "Cebola",
+        "Tomate",
+        "Macarrão parafuso integral",
+        "Sal refinado",
+        "Extrato de tomate",
+        "Corante",
+        "Óleo de soja"
+      ],
+      "sourcePage": 17
+    },
+    {
+      "name": "Mamão",
+      "ingredients": [
+        "Mamão formosa"
+      ],
+      "sourcePage": 17
+    },
+    {
+      "name": "Mandioca Ensopada",
+      "ingredients": [
+        "Alho",
+        "Cebolinha verde",
+        "Colorau (urucum em semente)",
+        "Aipim / mandioca",
+        "Cebola",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 17
+    },
+    {
+      "name": "Melancia",
+      "ingredients": [
+        "Melancia"
+      ],
+      "sourcePage": 18
+    },
+    {
+      "name": "Molho Agridoce com Mostarda",
+      "ingredients": [
+        "Cenoura",
+        "Mostarda (condimento)",
+        "Vinagre branco",
+        "Açúcar cristal"
+      ],
+      "sourcePage": 18
+    },
+    {
+      "name": "Molho de alho",
+      "ingredients": [
+        "Alho",
+        "Cebola",
+        "Vinagre branco",
+        "Óleo de soja"
+      ],
+      "sourcePage": 18
+    },
+    {
+      "name": "Molho de Hortelã",
+      "ingredients": [
+        "Hortelã",
+        "Cebola",
+        "Vinagre branco",
+        "Óleo de soja"
+      ],
+      "sourcePage": 18
+    },
+    {
+      "name": "Molho de Tomate",
+      "ingredients": [
+        "Cebola",
+        "Tomate",
+        "Sal refinado",
+        "Extrato de tomate",
+        "Óleo de soja"
+      ],
+      "sourcePage": 18
+    },
+    {
+      "name": "Molho inglês",
+      "ingredients": [
+        "Cebolinha verde",
+        "Cebola",
+        "Vinagre branco",
+        "Molho inglês",
+        "Azeite composto de soja e oliva"
+      ],
+      "sourcePage": 18
+    },
+    {
+      "name": "Molho Verde",
+      "ingredients": [
+        "Cebolinha verde",
+        "Salsa",
+        "Limão",
+        "Pimenta-do-reino preta em pó"
+      ],
+      "sourcePage": 18
+    },
+    {
+      "name": "Molho Vinagrete",
+      "ingredients": [
+        "Cebola",
+        "Pimentão verde",
+        "Tomate",
+        "Vinagre branco"
+      ],
+      "sourcePage": 18
+    },
+    {
+      "name": "Moranga à Mineira",
+      "ingredients": [
+        "Bacon inteiro",
+        "Alho",
+        "Cebolinha verde",
+        "Abóbora moranga",
+        "Cebola",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 19
+    },
+    {
+      "name": "Moranga c/ Quiabo",
+      "ingredients": [
+        "Alho",
+        "Colorau (urucum em semente)",
+        "Abóbora moranga",
+        "Cebola",
+        "Quiabo",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 19
+    },
+    {
+      "name": "Ovo Cozido",
+      "ingredients": [
+        "Ovo de galinha"
+      ],
+      "sourcePage": 19
+    },
+    {
+      "name": "Purê de Abóbora",
+      "ingredients": [
+        "Leite in natura pasteurizado",
+        "Margarina cremosa com sal",
+        "Salsa",
+        "Abóbora",
+        "Cebola",
+        "Sal refinado"
+      ],
+      "sourcePage": 19
+    },
+    {
+      "name": "Purê de Batata",
+      "ingredients": [
+        "Margarina cremosa com sal",
+        "Leite longa vida integral",
+        "Alho",
+        "Cebola",
+        "Batata bolinha",
+        "Sal refinado"
+      ],
+      "sourcePage": 19
+    },
+    {
+      "name": "Quibe de Soja",
+      "ingredients": [
+        "Queijo muçarela",
+        "Alho",
+        "Cebola",
+        "Ovo de galinha",
+        "Soja texturizada",
+        "Trigo para quibe"
+      ],
+      "sourcePage": 19
+    },
+    {
+      "name": "Refresco",
+      "ingredients": [
+        "Suco em pó"
+      ],
+      "sourcePage": 20
+    },
+    {
+      "name": "Rocambole de Carne",
+      "ingredients": [
+        "Coxão mole / chã de dentro",
+        "Paleta suína",
+        "Linguiça calabresa",
+        "Alho",
+        "Cebola",
+        "Molho de tomate",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 20
+    },
+    {
+      "name": "Salada de Acelga com Abacaxi",
+      "ingredients": [
+        "Acelga",
+        "Abacaxi"
+      ],
+      "sourcePage": 20
+    },
+    {
+      "name": "Salada de Acelga com Alface Roxa",
+      "ingredients": [
+        "Acelga",
+        "Alface roxa"
+      ],
+      "sourcePage": 20
+    },
+    {
+      "name": "Salada de acelga com couve",
+      "ingredients": [
+        "Acelga",
+        "Couve"
+      ],
+      "sourcePage": 20
+    },
+    {
+      "name": "Salada de Acelga com Rúcula",
+      "ingredients": [
+        "Acelga",
+        "Rúcula"
+      ],
+      "sourcePage": 20
+    },
+    {
+      "name": "Salada de Acelga",
+      "ingredients": [
+        "Acelga"
+      ],
+      "sourcePage": 20
+    },
+    {
+      "name": "Salada de Alface",
+      "ingredients": [
+        "Alface crespa"
+      ],
+      "sourcePage": 20
+    },
+    {
+      "name": "Salada de Alface com Agrião",
+      "ingredients": [
+        "Agrião",
+        "Alface crespa"
+      ],
+      "sourcePage": 20
+    },
+    {
+      "name": "Salada de Alface com Alface Roxa",
+      "ingredients": [
+        "Alface crespa",
+        "Alface roxa"
+      ],
+      "sourcePage": 20
+    },
+    {
+      "name": "Salada de alface com couve",
+      "ingredients": [
+        "Alface crespa",
+        "Couve"
+      ],
+      "sourcePage": 21
+    },
+    {
+      "name": "Salada de Alface com Rúcula",
+      "ingredients": [
+        "Alface crespa",
+        "Rúcula"
+      ],
+      "sourcePage": 21
+    },
+    {
+      "name": "Salada de Alface Crespa",
+      "ingredients": [
+        "Alface crespa"
+      ],
+      "sourcePage": 21
+    },
+    {
+      "name": "Salada de Batata Doce",
+      "ingredients": [
+        "Batata-doce branca"
+      ],
+      "sourcePage": 21
+    },
+    {
+      "name": "Salada de Beterraba Cozida",
+      "ingredients": [
+        "Beterraba"
+      ],
+      "sourcePage": 21
+    },
+    {
+      "name": "Salada de Beterraba Ralada",
+      "ingredients": [
+        "Beterraba"
+      ],
+      "sourcePage": 21
+    },
+    {
+      "name": "Salada de Cenoura com Brócolis",
+      "ingredients": [
+        "Brócolis",
+        "Cenoura"
+      ],
+      "sourcePage": 21
+    },
+    {
+      "name": "Salada de Cenoura Cozida",
+      "ingredients": [
+        "Cenoura"
+      ],
+      "sourcePage": 21
+    },
+    {
+      "name": "Salada de Cenoura Ralada",
+      "ingredients": [
+        "Cenoura"
+      ],
+      "sourcePage": 21
+    },
+    {
+      "name": "Salada de Chuchu",
+      "ingredients": [
+        "Chuchu"
+      ],
+      "sourcePage": 21
+    },
+    {
+      "name": "Salada de Chuchu com Milho",
+      "ingredients": [
+        "Cebolinha verde",
+        "Cebola",
+        "Chuchu",
+        "Milho verde em conserva"
+      ],
+      "sourcePage": 21
+    },
+    {
+      "name": "Salada de Couve",
+      "ingredients": [
+        "Couve"
+      ],
+      "sourcePage": 21
+    },
+    {
+      "name": "Salada de Maionese com Legumes",
+      "ingredients": [
+        "Batata inglesa",
+        "Cenoura",
+        "Chuchu",
+        "Maçã nacional",
+        "Maionese"
+      ],
+      "sourcePage": 21
+    },
+    {
+      "name": "Salada de Maionese com Repolho",
+      "ingredients": [
+        "Repolho",
+        "Abacaxi",
+        "Maionese",
+        "Uva-passa preta"
+      ],
+      "sourcePage": 22
+    },
+    {
+      "name": "Salada de Pepino ao Vinagrete",
+      "ingredients": [
+        "Cebola",
+        "Pepino",
+        "Pimentão verde",
+        "Tomate"
+      ],
+      "sourcePage": 22
+    },
+    {
+      "name": "Salada de Pepino com Couve-flor",
+      "ingredients": [
+        "Couve-flor",
+        "Pepino"
+      ],
+      "sourcePage": 22
+    },
+    {
+      "name": "Salada de Repolho com Alface",
+      "ingredients": [
+        "Alface crespa",
+        "Repolho"
+      ],
+      "sourcePage": 22
+    },
+    {
+      "name": "Salada de Rúcula",
+      "ingredients": [
+        "Rúcula"
+      ],
+      "sourcePage": 22
+    },
+    {
+      "name": "Salada de Tomate",
+      "ingredients": [
+        "Molho de tomate"
+      ],
+      "sourcePage": 22
+    },
+    {
+      "name": "Salada de Tomate com Cebola",
+      "ingredients": [
+        "Cebola",
+        "Tomate",
+        "Sal refinado",
+        "Vinagre branco"
+      ],
+      "sourcePage": 22
+    },
+    {
+      "name": "Salada Diferente",
+      "ingredients": [
+        "Brócolis",
+        "Repolho",
+        "Cenoura",
+        "Pimentão verde",
+        "Vagem"
+      ],
+      "sourcePage": 22
+    },
+    {
+      "name": "Salada Fantasia",
+      "ingredients": [
+        "Agrião",
+        "Cenoura",
+        "Batata palha"
+      ],
+      "sourcePage": 22
+    },
+    {
+      "name": "Salada Provençal",
+      "ingredients": [
+        "Cebolinha verde",
+        "Salsa",
+        "Abobrinha",
+        "Tomate"
+      ],
+      "sourcePage": 22
+    },
+    {
+      "name": "Salada Síria",
+      "ingredients": [
+        "Hortelã",
+        "Repolho",
+        "Cebola",
+        "Cenoura",
+        "Pepino",
+        "Tomate",
+        "Trigo para quibe"
+      ],
+      "sourcePage": 23
+    },
+    {
+      "name": "Salada Tropical",
+      "ingredients": [
+        "Couve",
+        "Repolho",
+        "Repolho roxo",
+        "Cenoura",
+        "Abacaxi",
+        "Maçã nacional"
+      ],
+      "sourcePage": 23
+    },
+    {
+      "name": "Salpicão de Cenoura",
+      "ingredients": [
+        "Sassami",
+        "Cebola",
+        "Cenoura",
+        "Espiga de milho verde",
+        "Maionese",
+        "Sal refinado",
+        "Batata palha",
+        "Milho verde em conserva"
+      ],
+      "sourcePage": 23
+    },
+    {
+      "name": "Soja Refogada com Legumes",
+      "ingredients": [
+        "Margarina cremosa com sal",
+        "Alho",
+        "Cebolinha verde",
+        "Cebola",
+        "Cenoura",
+        "Tomate",
+        "Soja texturizada",
+        "Sal refinado"
+      ],
+      "sourcePage": 23
+    },
+    {
+      "name": "Strogonoff de Carne",
+      "ingredients": [
+        "Miolo de paleta (bife)",
+        "Leite em pó integral",
+        "Alho",
+        "Mostarda (hortaliça)",
+        "Cebola",
+        "Espiga de milho verde",
+        "Ketchup",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 24
+    },
+    {
+      "name": "Strogonoff de Frango",
+      "ingredients": [
+        "Sassami",
+        "Leite em pó integral",
+        "Margarina cremosa com sal",
+        "Alho",
+        "Cebolinha verde",
+        "Coentro",
+        "Cebola",
+        "Amido de milho",
+        "Colorau em pó",
+        "Sal refinado",
+        "Molho inglês",
+        "Milho verde em conserva",
+        "Óleo de soja"
+      ],
+      "sourcePage": 24
+    },
+    {
+      "name": "Strogonoff de Soja",
+      "ingredients": [
+        "Leite em pó integral",
+        "Margarina cremosa com sal",
+        "Alho",
+        "Mostarda (hortaliça)",
+        "Espiga de milho verde",
+        "Amido de milho",
+        "Soja texturizada",
+        "Ketchup",
+        "Sal refinado"
+      ],
+      "sourcePage": 24
+    },
+    {
+      "name": "Tabule",
+      "ingredients": [
+        "Hortelã",
+        "Cebola",
+        "Pepino",
+        "Tomate",
+        "Trigo para quibe"
+      ],
+      "sourcePage": 24
+    },
+    {
+      "name": "Tangerina",
+      "ingredients": [
+        "Mexerica ponkan"
+      ],
+      "sourcePage": 25
+    },
+    {
+      "name": "Tutu à Mineira",
+      "ingredients": [
+        "Bacon inteiro",
+        "Linguiça toscana",
+        "Alho",
+        "Cebolinha verde",
+        "Cebola",
+        "Ovo de galinha",
+        "Feijão carioca",
+        "Farinha de mandioca",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 25
+    },
+    {
+      "name": "Virado de Vagem",
+      "ingredients": [
+        "Bacon inteiro",
+        "Margarina cremosa com sal",
+        "Alho",
+        "Cebola",
+        "Cenoura",
+        "Vagem",
+        "Ovo de galinha",
+        "Sal refinado",
+        "Óleo de soja"
+      ],
+      "sourcePage": 25
+    }
+  ],
+  "catalogUpdatedAt": "2026-10-28",
+  "catalogNote": "Ingredientes revisados ortograficamente para exibição, com unidades de compra e resíduos de formatação removidos quando não agregavam informação ao usuário. A composição é informativa e não substitui avisos oficiais de alergênicos."
+}

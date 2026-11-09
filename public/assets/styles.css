@@ -60,6 +60,73 @@
 .hours-details>summary::after{content:'';width:9px;height:9px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translateY(-1px);transform-origin:center;transition:transform .18s ease,opacity .18s ease;opacity:.9;flex:none}
 .hours-details>summary:hover::after{opacity:1}
 .hours-details[open]>summary::after{transform:rotate(-135deg) translateY(-1px)}
+
+/* Horários: o botão permanece na coluna direita da linha de status; o
+   conteúdo expandido entra abaixo sem deslocar o controle. */
+.restaurant-section .hours-wrap{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  column-gap:10px;
+  row-gap:0;
+}
+.restaurant-section .hours-details{display:contents}
+.restaurant-section .hours-details>summary{
+  grid-column:2;
+  grid-row:1;
+  justify-self:end;
+}
+.restaurant-section .hours-details[open]>#hours-list{
+  grid-column:1/-1;
+  grid-row:2;
+  width:100%;
+  margin-top:6px;
+  padding:10px;
+  background:var(--card);
+  border:1px solid var(--line);
+  border-bottom:0;
+  border-radius:12px 12px 0 0;
+}
+.restaurant-section .hours-details[open]>.hours-caveat{
+  grid-column:1/-1;
+  grid-row:3;
+  width:100%;
+  margin:0;
+  padding:0 10px 10px;
+  background:var(--card);
+  border:1px solid var(--line);
+  border-top:0;
+  border-radius:0 0 12px 12px;
+}
+
+/* Correção definitiva: no celular, a navegação ocupa toda a largura e encosta
+   na base da viewport, inclusive quando regras móveis anteriores existem. */
+@media (max-width:850px){
+  .site-wrap > #bandeco-navigation.bandeco-tabs{
+    position:fixed!important;
+    left:0!important;
+    right:0!important;
+    bottom:0!important;
+    top:auto!important;
+    width:100%!important;
+    max-width:none!important;
+    margin:0!important;
+    border-left:0!important;
+    border-right:0!important;
+    border-bottom:0!important;
+    border-radius:0!important;
+    padding:4px 12px max(4px,env(safe-area-inset-bottom,0px))!important;
+  }
+}
+
+/* No celular, a navegação fica ancorada nas bordas da viewport. */
+@media(max-width:850px){
+  .bandeco-tabs{
+    left:0;right:0;bottom:0;width:100%;max-width:none;margin:0;
+    border-left:0;border-right:0;border-bottom:0;border-radius:0;
+    padding:7px 12px max(7px,env(safe-area-inset-bottom,0px));
+  }
+}
 .hours-details[open]{width:100%;border-radius:12px;background:#fff;padding:0 10px 10px;border:1px solid var(--line)}
 .hours-list{display:grid;gap:8px;padding-top:5px}
 .hours-row{display:grid;grid-template-columns:66px minmax(0,1fr);gap:8px;color:#5d566a;font-size:11px;line-height:1.5}
@@ -85,6 +152,43 @@
   .footer{padding-top:14px;margin-top:22px}
 }
 @media(max-width:350px){.hours-wrap{gap:2px}.hours-status{font-size:10.7px}}
+
+/* Cardápio compacto — mantém todas as informações e reduz somente a altura estrutural. */
+.restaurant-picker{min-height:74px;padding:10px 13px;gap:11px;border-radius:15px}
+.picker-icon{width:50px;height:50px;border-radius:13px}
+.picker-photo{width:50px;height:50px;object-fit:cover;border-radius:inherit}
+.picker-copy{gap:2px}
+.picker-copy strong{font-size:16px}
+.picker-copy small{font-size:12px}
+.restaurant-section .hours-wrap{margin:5px 1px 0;gap:4px 10px}
+.restaurant-section .hours-status{flex:1 1 190px;min-height:30px}
+.restaurant-section .hours-details{flex:0 0 auto}
+.restaurant-section .hours-details>summary{min-height:40px;padding:4px 4px}
+.date-section{margin-top:14px}
+.date-section .section-heading h2{font-size:17px;letter-spacing:-.35px}
+.date-strip{gap:7px;padding:7px 1px 7px}
+.date-card{flex-basis:62px;min-width:62px;min-height:74px;padding:7px 4px 6px;gap:3px;border-radius:13px}
+.date-card .weekday{font-size:10px}
+.date-card .daynum{font-size:23px}
+.date-card .daylabel{font-size:10px}
+.menu-section{margin-top:14px}
+.menu-heading-row{margin-bottom:9px}
+@media(max-width:650px){
+  .site-wrap{padding-top:14px}
+  .topbar{margin-bottom:13px}
+  .restaurant-picker{min-height:72px;padding:10px 12px}
+  .picker-icon,.picker-photo{width:48px;height:48px}
+  .date-section{margin-top:13px}
+  .date-strip{margin:0 -16px;padding:7px 16px}
+  .date-card{flex-basis:60px;min-width:60px;min-height:72px;padding:6px 4px}
+  .menu-section{margin-top:13px}
+}
+@media(max-width:350px){
+  .restaurant-picker{min-height:70px}
+  .picker-icon,.picker-photo{width:46px;height:46px}
+  .picker-copy strong{font-size:15px}
+  .date-card{flex-basis:57px;min-width:57px}
+}
 
 /* v1.8 — identidade, acessibilidade e temas claro/escuro. */
 :root {
@@ -217,8 +321,8 @@ dialog{background:var(--card);color:var(--ink);border-color:var(--line)}
 .festa-ad{color:var(--hint-color);font-size:10px;letter-spacing:.3px;font-weight:700}
 .festa-card h3{margin:0;font-size:18px;color:var(--ink)}
 .festa-details,.festa-desc,.festa-count{color:var(--muted);font-size:12px;line-height:1.45;margin:0}
-.festa-actions{margin-top:4px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
-.festa-action{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);background:var(--surface-subtle);color:var(--ink);font-size:12px;font-weight:700;border-radius:10px;padding:10px 12px;cursor:pointer;text-decoration:none;min-height:40px}
+.festa-actions{width:100%;margin-top:4px;display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:9px;align-items:stretch}
+.festa-action{display:inline-flex;align-items:center;justify-content:center;min-width:0;border:1px solid var(--line);background:var(--surface-subtle);color:var(--ink);font-size:12px;font-weight:700;border-radius:10px;padding:10px 8px;cursor:pointer;text-decoration:none;min-height:40px;text-align:center;overflow-wrap:anywhere}
 .festa-action-primary{background:var(--purpleSoft);border-color:var(--purple);color:var(--purpleDark)}
 .festa-tag{font-size:12px;color:var(--muted)}
 .festas-empty{background:var(--card);border:1px dashed var(--line);padding:25px 16px;border-radius:16px;font-size:14px;color:var(--muted);text-align:center}
@@ -282,6 +386,8 @@ dialog{background:var(--card);color:var(--ink);border-color:var(--line)}
 .festa-dialog #signup-result[data-error="true"]{color:#aa3949}
 @media(max-width:520px){.festa-card-heading{flex-direction:column;gap:8px}.festa-tags{max-width:none;justify-content:flex-start}.festa-card-v21 .festa-art{max-height:380px}}
 
+/* Festas — agenda compacta: cartaz à esquerda e ações dentro da coluna de conteúdo. */
+.festas-heading h2{margin:4px 0 16px}
 /* v2.2 — tags editáveis e upload com prévia */
 .festa-custom-tag{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
 .festa-custom-tag input{flex:1;min-width:135px}
@@ -289,7 +395,6 @@ dialog{background:var(--card);color:var(--ink);border-color:var(--line)}
 .festa-tag-picker .festa-check:has(input:checked){border-color:var(--purple)!important;background:var(--purpleSoft)!important}
 .festa-admin-art-preview{display:block;max-width:100%;max-height:260px;object-fit:contain;border:1px solid var(--line)}
 .festa-admin-art-preview[hidden]{display:none}
-
 
 /* v2.3 — navegação responsiva Cardápio / Festas / Sobre */
 .bandeco-tabs{
@@ -394,8 +499,12 @@ dialog{background:var(--card);color:var(--ink);border-color:var(--line)}
   .interno-page .interno-heading{margin:0 0 6px;padding-top:2px}
   /* O mapa ocupa a área efetivamente disponível; a barra fixa é reservada uma única vez. */
   .site-wrap.interno-active{height:100dvh;min-height:100dvh;display:grid;grid-template-rows:auto minmax(0,1fr);align-content:stretch;overflow:hidden;padding:17px 17px calc(88px + env(safe-area-inset-bottom,0px))}
-  .site-wrap.interno-active #interno-page{min-height:0;height:100%;display:grid;grid-template-rows:auto minmax(0,1fr);overflow:hidden;padding:0}
-  .site-wrap.interno-active .interno-frame{height:auto;min-height:0;width:100%;border-radius:18px}
+  .site-wrap.interno-active #interno-page{min-height:0;height:100%;display:grid;grid-template-rows:minmax(0,1fr);overflow:hidden;padding:0}
+  .site-wrap.interno-active .interno-frame{height:100%;min-height:0;width:100%;border-radius:18px}
+  /* A navegação fixa já ocupa a base da viewport; o rodapé não deve criar uma
+     linha extra nem reservar espaço enquanto o mapa está em tela cheia. */
+  .site-wrap.interno-active .footer{display:none}
+  .site-wrap:has(#interno-page:not([hidden])) .footer{display:none}
 }
 .festa-card-v21{transition:transform .16s,box-shadow .16s}
 .festa-card-v21:hover{transform:translateY(-2px)}
@@ -407,6 +516,285 @@ dialog{background:var(--card);color:var(--ink);border-color:var(--line)}
 .festa-poster-status[data-error="true"]{color:#a24646}
 #admin-save-dialog[hidden]{display:none}
 .festa-save-result{inset:0;position:absolute;z-index:1000;transform:none;width:auto;height:auto;max-height:none;border:0;border-radius:20px;background:color-mix(in srgb,var(--card) 96%,transparent);color:var(--ink);box-shadow:none;display:grid;place-items:center;padding:18px}.festa-save-result>.festa-dialog-inner{width:min(100%,470px);box-sizing:border-box;border:1px solid var(--line);border-radius:23px;box-shadow:0 22px 80px rgba(24,17,51,.28);background:var(--card);max-height:none}.festa-save-result[hidden]{display:none}
+
+/* A faixa de datas nunca ultrapassa o contêiner visível no celular. */
+.date-strip{width:100%;max-width:100%;min-width:0;overflow-x:auto;overflow-y:hidden;border-right:0;box-shadow:inset -18px 0 16px -16px var(--bg)}
+@media(max-width:650px){.date-strip{margin-left:0;margin-right:0;padding-left:0;padding-right:0;scroll-padding-inline:0}}
+
+/* O iframe deve preencher a linha flexível do painel, sem altura percentual ambígua. */
+@media(max-width:850px){.site-wrap.interno-active .interno-frame{height:auto;min-height:0;align-self:stretch}}
+
+/* Indicador de horários compacto: o detalhamento continua abrindo ao tocar na seta. */
+.hours-details{width:24px;flex:0 0 24px}
+.hours-details>summary{width:24px;min-height:28px;padding:4px 2px;justify-content:center;gap:0}
+.hours-details>summary::after{width:6px;height:6px;border-width:1.5px;opacity:.58;transform:rotate(45deg) translateY(-1px)}
+.hours-details[open]>summary::after{transform:rotate(-135deg) translateY(-1px)}
+
+/* FESTAS RC7 — CARDS PEQUENOS, DUAS COLUNAS EM DESKTOP; COMPOSIÇÃO HORIZONTAL INALTERADA.
+   Nenhum breakpoint altera posição/ordem de cartaz, dados ou CTAs.
+   O card usa container query units para redução integral e proporcional. */
+:root { --festas-card-max-width: 460px; }
+.festas-page .festas-list {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  align-items: start;
+  gap: 16px;
+  max-width: 936px;
+  width: 100%;
+  min-width: 0;
+  margin-inline: auto;
+}
+/* A grade vira uma coluna quando duas festas ficariam apertadas.
+   NUNCA muda a composição interna: cartaz + informações/ações continuam lado a lado. */
+@media (max-width: 1149px) {
+  .festas-page .festas-list {
+    grid-template-columns: minmax(0,1fr);
+    max-width: var(--festas-card-max-width);
+    gap: 14px;
+  }
+}
+/* Não se aplica às outras abas. Preserva sidebar e comportamento do menu. */
+@media (min-width:851px) {
+  .site-wrap:has(#festas-page:not([hidden])) {
+    width: min(960px, calc(100vw - 292px));
+    max-width: 960px;
+    margin-left: max(250px, calc((100vw - 1150px)/2 + 236px));
+    margin-right: 20px;
+  }
+  .site-wrap:has(.bandeco-tabs.is-collapsed):has(#festas-page:not([hidden])) {
+    width: min(960px, calc(100vw - 146px));
+    max-width: 960px;
+    margin-left: max(115px, calc((100vw - 950px)/2 + 105px));
+    margin-right: 20px;
+  }
+}
+@media (max-width:850px) {
+  .site-wrap:has(#festas-page:not([hidden])) {width:100%;max-width:none;padding-left:12px;padding-right:12px}
+}
+.festas-page .festa-card--compact {
+  --fc-bg:#1c1b29;
+  --fc-line:#44405c;
+  --fc-ink:#fbfaff;
+  --fc-muted:#b7b2ce;
+  --fc-accent:#b993ff;
+  box-sizing:border-box;
+  width:100%;max-width:460px;min-width:0;
+  display:block;
+  padding:3.08%;
+  border:solid #44405c;
+  border-width:max(.5px,.17vw);
+  border-radius:3.0cqw;
+  background:radial-gradient(ellipse 90% 120% at 75% 48%,#242130 0%,#1b1928 65%,#201e2c 100%);
+  color:var(--fc-ink);
+  overflow:visible;
+  font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+  container-type:inline-size;
+  isolation:isolate;
+  box-shadow:0 10px 34px rgba(11,7,27,.12);
+}
+.festas-page .festa-card--compact *,
+.festas-page .festa-card--compact *::before,
+.festas-page .festa-card--compact *::after {box-sizing:border-box}
+.festas-page .festa-card--compact .festa-card-main {
+  width:100%;min-width:0;
+  display:grid;
+  grid-template-columns:minmax(0,29.7%) minmax(0,1fr);
+  grid-template-rows:minmax(0,1fr) auto;
+  grid-template-areas:'poster info' 'poster actions';
+  column-gap:3.75%;row-gap:1.1cqw;
+  aspect-ratio:840 / 355;
+  align-items:start;
+}
+.festas-page .festa-card--compact .festa-card-main--no-poster {
+  grid-template-columns:minmax(0,1fr);
+  grid-template-areas:'info' 'actions';
+  aspect-ratio:auto;
+  min-height:30cqw;
+}
+.festas-page .festa-card--compact .festa-poster-trigger {
+  grid-area:poster;
+  display:block;align-self:stretch;
+  width:100%;height:100%;min-width:0;min-height:0;
+  padding:0;margin:0;border:0;line-height:0;
+  overflow:hidden;cursor:zoom-in;
+  border-radius:2.1cqw;
+  background:#12111c;
+  box-shadow:0 0 0 1px rgba(214,192,249,.08);
+}
+.festas-page .festa-card--compact .festa-poster-trigger .festa-art {
+  display:block;width:100%;height:100%;max-width:none;max-height:none;
+  aspect-ratio:auto;object-fit:cover;object-position:center;
+  border:0;border-radius:inherit;background:#12111c;
+}
+.festas-page .festa-card--compact .festa-card-content {
+  grid-area:info;min-width:0;
+  display:flex;flex-direction:column;align-items:stretch;
+  overflow:hidden;
+}
+.festas-page .festa-card--compact .festa-card-title {
+  margin:0;padding:0;
+  font-size:5.05cqw;
+  font-weight:770;line-height:1.08;letter-spacing:-.045em;
+  color:var(--fc-ink);text-transform:none;
+  overflow-wrap:anywhere;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+  overflow:hidden;
+}
+.festas-page .festa-card--compact .festa-card-organizer {
+  margin:1.35cqw 0 0;
+  font-size:2.82cqw;font-weight:420;line-height:1.25;
+  letter-spacing:-.012em;color:var(--fc-muted);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.festas-page .festa-card--compact .festa-meta {
+  display:flex;flex-direction:column;gap:2.2cqw;
+  margin-top:4.0cqw;min-width:0;
+  font-size:2.84cqw;font-weight:640;line-height:1.18;
+  color:var(--fc-ink);font-variant-numeric:tabular-nums;
+}
+.festas-page .festa-card--compact .festa-meta-row {
+  display:flex;align-items:center;flex-wrap:nowrap;
+  gap:1.25cqw;min-width:0;
+}
+.festas-page .festa-card--compact .festa-meta-item {
+  display:inline-flex;align-items:center;gap:1.45cqw;
+  min-width:0;white-space:nowrap;
+  font-weight:640;color:var(--fc-ink);
+  padding:0;border:0;
+}
+.festas-page .festa-card--compact .festa-meta-icon {
+  flex:0 0 3.5cqw;
+  display:grid;place-items:center;
+  width:3.5cqw;height:3.5cqw;
+  color:var(--fc-accent);
+}
+.festas-page .festa-card--compact .festa-meta-icon svg {
+  display:block;width:100%;height:100%;stroke-width:1.75;
+}
+.festas-page .festa-card--compact .festa-meta-separator {
+  display:block;flex:0 0 auto;
+  width:.18cqw;height:2.85cqw;margin:0 .45cqw;
+  border-radius:9px;background:var(--fc-accent);
+}
+.festas-page .festa-card--compact .festa-meta-location {
+  display:flex;align-items:center;gap:1.55cqw;
+  margin:0;font-size:2.9cqw;font-weight:430;line-height:1.2;
+  min-width:0;color:var(--fc-ink);
+}
+.festas-page .festa-card--compact .festa-meta-location>span:last-child {
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.festas-page .festa-card--compact .festa-card-tags {
+  display:flex;align-items:center;flex-wrap:nowrap;
+  min-width:0;gap:.65cqw;
+  overflow:hidden;
+  margin-top:2.9cqw;
+}
+.festas-page .festa-card--compact .festa-tag-chip,
+.festas-page .festa-card--compact .festa-tag-more {
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:.96cqw 1.62cqw;
+  margin:0;min-width:0;max-width:100%;
+  border:1px solid rgba(193,159,246,.1);border-radius:999px;
+  background:linear-gradient(120deg,#362949,#30243f);
+  color:#dbc4ff;
+  font-size:2.53cqw;font-weight:660;line-height:1.16;
+  white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;
+}
+.festas-page .festa-card--compact .festa-tag-more {cursor:pointer}
+.festas-page .festa-card--compact .festa-tag-chip[hidden],
+.festas-page .festa-card--compact .festa-art[hidden] {display:none!important}
+.festas-page .festa-card--compact .festa-card-description {
+  display:none; /* descrição permanece no dado; referência não a exibe no card */
+}
+.festas-page .festa-card--compact .festa-card-actions--inline {
+  grid-area:actions;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:1.75cqw;align-self:end;align-items:stretch;
+  width:100%;min-width:0;margin:0;
+  transform:translateY(.6cqw);
+}
+.festas-page .festa-card--compact .festa-card-actions--inline:has(>:only-child) {
+  grid-template-columns:minmax(0,1fr);
+}
+.festas-page .festa-card--compact .festa-card-actions--inline .festa-action {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+  align-items:center;justify-items:center;
+  gap:.6cqw;width:100%;min-width:0;
+  min-height:0;height:9.45cqw;
+  padding:0 1.1cqw;
+  border:max(.5px,.19cqw) solid #4d4865;
+  border-radius:2.15cqw;
+  background:#1d1c2a;color:#fbfaff;
+  font:inherit;line-height:1.1;text-decoration:none;
+  white-space:nowrap;cursor:pointer;
+  box-shadow:none;transition:filter .16s ease,transform .16s ease;
+}
+.festas-page .festa-card--compact .festa-card-actions--inline .festa-action-primary {
+  border-color:#aa70fc;
+  background:linear-gradient(116deg,#7132d6,#7a37e5 53%,#6730d1);
+  box-shadow:inset 0 1px 0 rgba(255,241,255,.2);
+}
+.festas-page .festa-card--compact .festa-card-actions--inline .festa-action-label {
+  display:block;min-width:0;
+  font-size:2.65cqw;font-weight:740;line-height:1.1;
+  letter-spacing:-.02em;white-space:nowrap;text-align:center;
+}
+.festas-page .festa-card--compact .festa-action-primary .festa-action-label {text-transform:uppercase}
+.festas-page .festa-card--compact .festa-action-secondary .festa-action-label {font-weight:670}
+.festas-page .festa-card--compact .festa-action-icon,
+.festas-page .festa-card--compact .festa-action-chevron {
+  display:inline-flex;justify-content:center;align-items:center;
+  width:3.65cqw;height:3.65cqw;
+}
+.festas-page .festa-card--compact .festa-action-icon {justify-self:end}
+.festas-page .festa-card--compact .festa-action-chevron {
+  justify-self:end;width:2.25cqw;height:2.25cqw;
+}
+.festas-page .festa-card--compact .festa-action-icon svg,
+.festas-page .festa-card--compact .festa-action-chevron svg {
+  width:100%;height:100%;display:block;
+}
+.festas-page .festa-card--compact .festa-action-primary .festa-action-icon {transform:rotate(-25deg)}
+.festas-page .festa-card--compact .festa-action-secondary .festa-action-icon {color:#d7ccf0}
+.festas-page .festa-card--compact .festa-card-actions--inline .festa-action:hover {filter:brightness(1.1)}
+.festas-page .festa-card--compact .festa-card-actions--inline .festa-action:active {filter:brightness(.95)}
+.festas-page .festa-card--compact .festa-card-status {
+  grid-column:2;grid-row:1;align-self:end;
+  margin:0;color:var(--fc-muted);
+  font-size:1.6cqw;line-height:1.2;
+}
+.festas-page .festa-card--compact .festa-card-status:empty,
+.festas-page .festa-card--compact .festa-card-actions--inline:empty {display:none}
+.festas-page .festa-card--compact .festa-poster-trigger:focus-visible,
+.festas-page .festa-card--compact .festa-tag-more:focus-visible,
+.festas-page .festa-card--compact .festa-action:focus-visible {
+  outline:2px solid #e7d6ff;outline-offset:2px;
+}
+@media (prefers-reduced-motion:reduce) {
+  .festas-page .festa-card--compact .festa-action {transition:none}
+}
+
+/* Ingredientes: expansão inline por prato, carregada do catálogo público local. */
+/* O item precisa empilhar o botão e a expansão; o flex herdado de .dish-list li
+   fazia o botão encolher e colocava os ingredientes ao lado do prato. */
+.dish-row{display:grid!important;grid-template-columns:5px minmax(0,1fr);column-gap:10px;min-width:0;padding-left:0;align-items:start}
+.dish-row:before{position:static;grid-column:1;grid-row:1;width:5px;height:5px;margin:calc((1.5em - 5px)/2) 0 0;align-self:start;transform:translateY(2px)}
+.dish-row:has(>.dish-trigger):before{margin-top:calc((32px - 5px)/2);transform:none}
+.dish-row>.dish-title,.dish-row>.dish-trigger{grid-column:2;grid-row:1;min-width:0}
+.dish-trigger{appearance:none;border:0;background:transparent;color:inherit;text-align:left;font:inherit;display:block;flex:1 1 auto;width:100%;min-width:0;min-height:32px;padding:0;cursor:pointer;line-height:1.5}
+.dish-trigger>.dish-title{display:inline;min-width:0;flex:none}
+.dish-trigger:hover .dish-title{text-decoration:underline;text-decoration-color:var(--purple);text-underline-offset:3px}
+.dish-trigger:focus-visible{outline:2px solid var(--purple);outline-offset:3px;border-radius:4px}
+.dish-title{min-width:0;flex:1}
+.dish-chevron{display:inline-flex;align-items:center;justify-content:center;color:var(--purple);font-size:12px;font-weight:700;line-height:1;flex:none;width:14px;height:1em;margin-left:4px;vertical-align:middle;text-align:center;transform:translateY(-3px)}
+.dish-trigger[aria-expanded="true"] .dish-chevron{transform:none}
+.dish-expansion{grid-column:2;grid-row:2;min-width:0;width:100%;margin:7px 0 3px;border-left:2px solid var(--purple);padding:8px 10px 9px 12px;background:var(--surface-subtle);border-radius:0 9px 9px 0}
+.dish-expansion .miniheading{font-size:10px;letter-spacing:.65px;font-weight:800;color:var(--purpleDark);text-transform:uppercase;margin:0 0 4px}
+.dish-expansion p{font-size:12.5px;color:var(--muted);line-height:1.55;margin:0;overflow-wrap:anywhere}
 
 /* Feedback do refresh comunitário; ausente não reserva altura. */
 .refresh-feedback{margin:0 0 10px;color:var(--muted);font-size:12px;line-height:1.45}

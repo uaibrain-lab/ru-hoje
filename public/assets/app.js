@@ -7,6 +7,7 @@ const STORAGE_RU = 'ruhoje:restaurant:v1';
 const STORAGE_PREFERS_CAFE = 'ruhoje:prefers-cafe:v1';
 const STORAGE_DATA = 'ruhoje:menus:v1';
 const TIMEZONE = 'America/Sao_Paulo';
+const INGREDIENT_CATALOG_URL = '/data/pratos-ingredientes.json';
 const RU_LIST = [
   { id: 'setorial-i', photo: '/assets/restaurantes/setorial-i.webp', name: 'RU Setorial I', region: 'Campus Pampulha', meals: ['cafe', 'almoco'], saturday:true },
   { id: 'setorial-ii', photo: '/assets/restaurantes/setorial-ii.webp', name: 'RU Setorial II', region: 'Campus Pampulha', meals: ['almoco', 'jantar'] },
@@ -25,7 +26,7 @@ const GROUP_ICONS = Object.freeze({
   'Acompanhamentos':'🍚','Saladas':'🥗','Molhos':'🥣','Sobremesas':'🍮','Bebidas':'🥤','Outros':'🍽️'
 });
 const $ = (id) => document.getElementById(id);
-const state = { selectedRu: null, selectedDate: null, data: null, lastError: null, fallbackUsed: false, syncing: false, initialOpen: false, refreshMessage: '', refreshDb: null };
+const state = { selectedRu: null, selectedDate: null, data: null, ingredientCatalog: null, ingredientCatalogPromise: null, lastError: null, fallbackUsed: false, syncing: false, initialOpen: false, refreshMessage: '', refreshDb: null };
 
 function readStore(key) { try { return localStorage.getItem(key); } catch { return null; } }
 function writeStore(key, value) { try { localStorage.setItem(key, value); } catch {} }
@@ -49,6 +50,42 @@ function menuFor(date, ruId) { return state.data?.days?.[date]?.restaurants?.[ru
 function el(tag, className, text) { const e = document.createElement(tag); if (className) e.className = className; if (text !== undefined) e.textContent = text; return e; }
 function iconSVG(paths) { return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`; }
 function selectedRu() { return RU_LIST.find(ru => ru.id === state.selectedRu); }
+function ingredientKey(value) {
+  return String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('pt-BR').trim().replace(/[\u2010-\u2015-]/g, ' ').replace(/\s+/g, ' ');
+}
+async function loadIngredientCatalog() {
+  if (state.ingredientCatalog) return state.ingredientCatalog;
+  if (state.ingredientCatalogPromise) return state.ingredientCatalogPromise;
+  state.ingredientCatalogPromise = getJSON(INGREDIENT_CATALOG_URL).then(payload => {
+    const map = new Map();
+    if (payload?.schemaVersion === 1 && Array.isArray(payload.dishes)) {
+      for (const dish of payload.dishes) {
+        const ingredients = Array.isArray(dish?.ingredients)
+          ? dish.ingredients.map(item => stripDangerous(item)).filter(Boolean)
+          : [];
+        if (dish?.name && ingredients.length) map.set(ingredientKey(dish.name), ingredients);
+      }
+    }
+    state.ingredientCatalog = map;
+    return map;
+  }).catch(error => {
+    console.warn('Catálogo de ingredientes indisponível:', error);
+    state.ingredientCatalog = new Map();
+    return state.ingredientCatalog;
+  });
+  return state.ingredientCatalogPromise;
+}
+function ingredientsForDish(name) {
+  return state.ingredientCatalog?.get(ingredientKey(name)) || [];
+}
+function formatIngredientLabel(value) {
+  const text = String(value || '').trim().toLocaleLowerCase('pt-BR');
+  return text ? text.charAt(0).toLocaleUpperCase('pt-BR') + text.slice(1) : text;
+}
+function formatIngredients(ingredients) {
+  return ingredients.map(formatIngredientLabel).filter(Boolean).join(' · ');
+}
 
 // Guardar as duas referências: o SVG de fallback é retirado fisicamente do DOM
 // quando há foto, impedindo que o grid o desenhe em uma segunda linha.
@@ -166,8 +203,10 @@ function renderDates({ scroll = false } = {}) {
   });
   else dateStrip.scrollLeft = oldScrollLeft;
 }
-function categoryName(raw) {
-  const t = String(raw || '').toLocaleLowerCase('pt-BR');
+function categoryName(raw, name = '') {
+  // A FUMP pode enviar itens sem tipo oficial. Nesses casos, usar o nome
+  // apenas como fallback evita que molhos conhecidos caiam em “Outros”.
+  const t = String(raw || name || '').toLocaleLowerCase('pt-BR');
   if (/(veget|prote[ií]co\s*3|op[çc][aã]o\s*veg)/.test(t)) return 'Opção vegetariana';
   if (/(protei|prato principal|carne|principal)/.test(t)) return 'Pratos principais';
   if (/(guarni|acompanhamento quente)/.test(t)) return 'Guarnições';
@@ -189,7 +228,6 @@ function renderMealCard(mealId, payload, isFeatured, ru) {
   title.append(el('h3', '', info.title), el('div','meal-subtitle',mealId === 'cafe' ? 'Para estudantes com benefício elegível' : ru.region));
   titleWrap.append(ic,title);
   head.append(titleWrap);
-  if (isFeatured) head.append(el('span','featured-badge','Em destaque'));
   card.append(head);
   const items = Array.isArray(payload?.items) ? payload.items.filter(x => x && (x.name || typeof x === 'string')).slice(0, 36) : [];
   if (!items.length) {
@@ -200,7 +238,7 @@ function renderMealCard(mealId, payload, isFeatured, ru) {
   for (const item of items) {
     const name = stripDangerous(typeof item === 'string' ? item : item.name);
     if (!name || name.length < 2) continue;
-    const category = categoryName(typeof item === 'string' ? publishedCategory('', name) : publishedCategory(item.category, name, item.sourceType));
+    const category = categoryName(typeof item === 'string' ? publishedCategory('', name) : publishedCategory(item.category, name, item.sourceType), name);
     if (!groups.has(category)) groups.set(category, []);
     if (!groups.get(category).includes(name)) groups.get(category).push(name);
   }
@@ -215,7 +253,34 @@ function renderMealCard(mealId, payload, isFeatured, ru) {
     heading.append(symbol,document.createTextNode(groupName === 'Outros' ? 'No cardápio' : groupName));
     group.append(heading);
     const list = el('ul','dish-list');
-    for (const name of dishes) list.append(el('li','',name));
+    for (const name of dishes) {
+      const ingredients = ingredientsForDish(name);
+      const row = el('li','dish-row');
+      if (!ingredients.length) {
+        row.append(el('span','dish-title',name));
+        list.append(row);
+        continue;
+      }
+      const trigger = el('button','dish-trigger');
+      trigger.type = 'button';
+      trigger.setAttribute('aria-expanded', 'false');
+      trigger.setAttribute('aria-label', `Ver ingredientes de ${name}`);
+      const titleNode = el('span','dish-title',name);
+      const chevron = el('span','dish-chevron','⌄');
+      chevron.setAttribute('aria-hidden','true');
+      trigger.append(titleNode, chevron);
+      const expansion = el('div','dish-expansion');
+      expansion.hidden = true;
+      expansion.append(el('h5','miniheading','Ingredientes'), el('p','',formatIngredients(ingredients)));
+      trigger.addEventListener('click', () => {
+        const willOpen = expansion.hidden;
+        expansion.hidden = !willOpen;
+        trigger.setAttribute('aria-expanded', String(willOpen));
+        chevron.textContent = willOpen ? '⌃' : '⌄';
+      });
+      row.append(trigger, expansion);
+      list.append(row);
+    }
     group.append(list); contents.append(group);
   }
   card.append(contents);
@@ -441,6 +506,7 @@ async function fetchMenus() {
       data = await getJSON('/data/cardapios.json');
     }
     if (!isDataValid(data)) throw new Error('Dados fora do formato esperado');
+    await loadIngredientCatalog();
     replaceIfNewer(data);
   } catch (error) {
     console.warn('Falha ao carregar cardápio:', error);
@@ -453,49 +519,15 @@ async function fetchMenus() {
   }
 }
 function initTheme() {
-  const key = 'bandeco:theme:v1';
-  const button = $('theme-toggle');
-  const menu = $('theme-menu');
   const media = window.matchMedia('(prefers-color-scheme: dark)');
-  const read = () => {
-    try { return localStorage.getItem(key); } catch { return null; }
-  };
-  let preference = ['light','dark'].includes(read()) ? read() : 'auto';
   const apply = () => {
-    const active = preference === 'auto' ? (media.matches ? 'dark' : 'light') : preference;
+    const active = media.matches ? 'dark' : 'light';
     document.documentElement.dataset.theme = active;
-    document.documentElement.dataset.themePreference = preference;
-    const effectiveLabel = active === 'dark' ? 'escuro' : 'claro';
-    const modeLabel = preference === 'auto' ? `automático (${effectiveLabel} agora)` : effectiveLabel;
-    button.setAttribute('aria-label', `Tema ${modeLabel}. Escolher aparência`);
-    button.title = `Tema ${modeLabel}`;
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content',active === 'dark' ? '#12121b' : '#f7f7fc');
-    for (const option of menu.querySelectorAll('[data-theme-option]')) {
-      option.setAttribute('aria-pressed',String(option.dataset.themeOption === preference));
-    }
   };
-  const closeMenu = () => { menu.hidden = true; button.setAttribute('aria-expanded','false'); };
-  button.addEventListener('click',() => {
-    menu.hidden = !menu.hidden;
-    button.setAttribute('aria-expanded',String(!menu.hidden));
-    if(!menu.hidden) menu.querySelector(`[data-theme-option="${preference}"]`)?.focus();
-  });
-  menu.addEventListener('click',(event)=>{
-    const option=event.target.closest('[data-theme-option]');
-    if(!option)return;
-    preference=option.dataset.themeOption;
-    try { if(preference === 'auto')localStorage.removeItem(key);else localStorage.setItem(key,preference); } catch {}
-    apply();closeMenu();button.focus();
-  });
-  document.addEventListener('pointerdown',(event)=>{
-    if(!menu.hidden && !event.target.closest('.theme-control'))closeMenu();
-  });
-  document.addEventListener('keydown',(event)=>{
-    if(event.key==='Escape' && !menu.hidden){closeMenu();button.focus();}
-  });
-  const onChange=()=>{if(preference==='auto')apply();};
-  if(media.addEventListener)media.addEventListener('change',onChange);
-  else if(media.addListener)media.addListener(onChange);
+  const onChange = () => apply();
+  if(media.addEventListener) media.addEventListener('change',onChange);
+  else if(media.addListener) media.addListener(onChange);
   apply();
 }
 
@@ -507,6 +539,7 @@ function boot() {
   try { const cached = JSON.parse(readStore(STORAGE_DATA) || 'null'); if (isDataValid(cached)) state.data = cached; } catch {}
   initDialog();
   renderRestaurant(); renderDates({scroll:true}); renderMenus();
+  loadIngredientCatalog().then(() => renderMenus());
   $('today-button').addEventListener('click',()=> {state.selectedDate=sPauloParts().iso;renderDates({scroll:true});renderMenus();});
   $('refresh-button').addEventListener('click', async () => {
     state.refreshMessage = '';
@@ -534,6 +567,6 @@ function boot() {
   fetchMenus();
   readRefreshState();
   if (!state.selectedRu) {requestAnimationFrame(() => openDialog());}
-  if ('serviceWorker' in navigator && window.isSecureContext) window.addEventListener('load',()=>navigator.serviceWorker.register('/service-worker.js').catch(()=>{}));
+  if ('serviceWorker' in navigator && window.isSecureContext) window.addEventListener('load',()=>navigator.serviceWorker.register('/service-worker.js?v=hub-20261109-live-merge-refresh-r1').catch(()=>{}));
 }
 boot();
