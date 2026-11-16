@@ -123,7 +123,7 @@ function constantTimeEqual_(a, b) {
 }
 
 function validRelayDate_(value) {
-  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(value)) return false;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const date = new Date(value + 'T12:00:00Z');
   return Number.isFinite(date.getTime()) && date.toISOString().slice(0,10) === value;
 }
@@ -136,9 +136,9 @@ function addRelayDays_(iso, days) {
 
 function parseRelayDate_(value) {
   const text = String(value);
-  const iso = text.match(/^(\\d{4}-\\d{2}-\\d{2})(?:T|\\s|$)/);
+  const iso = text.match(/^(\d{4}-\d{2}-\d{2})(?:T|\s|$)/);
   if (iso) return iso[1];
-  const br = text.match(/^(\\d{2})\\/(\\d{2})\\/(\\d{4})(?:\\s|$)/);
+  const br = text.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s|$)/);
   if (br) return br[3] + '-' + br[2] + '-' + br[1];
   return null;
 }
