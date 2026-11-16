@@ -43,6 +43,87 @@ export function menuUrl(sourceId, iso) {
   return url.href;
 }
 export async function getJson(url, {fetchFn = fetch, timeoutMs = 14000} = {}) {
+  const relayUrl = process.env.FUMP_RELAY_URL || '';
+  const relayToken = process.env.FUMP_RELAY_TOKEN || '';
+  if (relayUrl || relayToken) {
+    if (!relayUrl || !relayToken) fail('FUMP_RELAY_CONFIG_INCOMPLETE');
+    return getJsonViaRelay(url, {fetchFn, timeoutMs, relayUrl, relayToken});
+  }
+
+  // Direct fallback remains available for local tests and environments allowed by FUMP.
+  const controller = new AbortController();
+  const timer=setTimeout(()=>controller.abort(),timeoutMs);
+  try {
+    const response=await fetchFn(url, {
+      signal:controller.signal,
+      headers:{Accept:'application/json'},
+      redirect:'error',
+    });
+    if (!response.ok) fail(`HTTP ${response.status} em ${new URL(url).pathname}`);
+    const ct=response.headers.get('content-type') || '';
+    if (ct && !/json/i.test(ct)) fail(`Resposta inesperada: Content-Type ${ct}`);
+    const raw=await response.text();
+    if (raw.length > 2_000_000) fail('Resposta excede limite de segurança (2 MB)');
+    try {return JSON.parse(raw);} catch {fail('Resposta não é JSON válido');}
+  } finally {clearTimeout(timer);}
+}
+
+export function buildFumpRelayRequest(url) {
+  const parsed = new URL(url);
+  if (parsed.protocol !== 'https:' || parsed.hostname !== 'fump.ufmg.br' || parsed.port !== '3003') {
+    fail('FUMP_RELAY_TARGET_NOT_ALLOWED');
+  }
+  if (parsed.pathname === '/cardapios/restaurantes') return {resource:'restaurants'};
+  if (parsed.pathname !== '/cardapios/cardapio') fail('FUMP_RELAY_PATH_NOT_ALLOWED');
+
+  const id = parsed.searchParams.get('id');
+  const start = parsed.searchParams.get('dataInicio');
+  const end = parsed.searchParams.get('dataFim');
+  if (!RU_SOURCES.some(x => x.sourceId === id)) fail('FUMP_RELAY_RU_NOT_ALLOWED');
+  assertIsoDate(start);
+  assertIsoDate(end);
+  if (start !== end) fail('FUMP_RELAY_DATE_RANGE_NOT_ALLOWED');
+  return {resource:'menu',id,date:start};
+}
+
+export async function getJsonViaRelay(url, {
+  fetchFn = fetch,
+  timeoutMs = 30000,
+  relayUrl,
+  relayToken,
+} = {}) {
+  let endpoint;
+  try { endpoint = new URL(relayUrl); } catch { fail('FUMP_RELAY_URL_INVALID'); }
+  if (endpoint.protocol !== 'https:' || endpoint.hostname !== 'script.google.com' ||
+      !endpoint.pathname.startsWith('/macros/s/') || !endpoint.pathname.endsWith('/exec')) {
+    fail('FUMP_RELAY_URL_NOT_ALLOWED');
+  }
+  if (typeof relayToken !== 'string' || !/^[a-f0-9]{64}$/i.test(relayToken)) fail('FUMP_RELAY_TOKEN_INVALID');
+
+  const request = buildFumpRelayRequest(url);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetchFn(endpoint.href, {
+      method:'POST',
+      signal:controller.signal,
+      redirect:'follow',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({...request,token:relayToken}),
+    });
+    if (!response.ok) fail(`FUMP_RELAY_HTTP_${response.status}`);
+    const text = await response.text();
+    if (text.length > 2_000_000) fail('FUMP_RELAY_RESPONSE_TOO_LARGE');
+    let envelope;
+    try { envelope = JSON.parse(text); } catch { fail('FUMP_RELAY_INVALID_JSON'); }
+    if (!envelope?.ok || envelope?.version !== 1 || !Object.hasOwn(envelope,'data')) {
+      fail(`FUMP_RELAY_${String(envelope?.code || 'INVALID_ENVELOPE').replace(/[^A-Z0-9_-]/gi,'_').slice(0,48)}`);
+    }
+    return envelope.data;
+  } finally {
+    clearTimeout(timer);
+  }
+}
   // A chamada usa TLS verificado. Não desabilitar verificação de certificado.
   const controller = new AbortController();
   const timer=setTimeout(()=>controller.abort(),timeoutMs);
