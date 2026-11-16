@@ -45,6 +45,8 @@ jobs:
         run: npm test
       - name: Coletar JSON diretamente da API oficial da FUMP
         env:
+      FUMP_RELAY_URL: "${{ vars.FUMP_RELAY_URL || '' }}"
+      FUMP_RELAY_TOKEN: "${{ secrets.FUMP_RELAY_TOKEN || '' }}"
           DAYS: ${{ github.event.inputs.days || '7' }}
         run: node scripts/sync-api.mjs --days "$DAYS"
       - name: Auditar respostas brutas e candidato
