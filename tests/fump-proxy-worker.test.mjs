@@ -105,7 +105,25 @@ test('timeout e bloqueio de IP do proxy preservam erro e não geram pratos',asyn
     now,fetchFn:async()=>{throw new TypeError('network error');}
   });
   assert.equal(response.status,503);
-  assert.deepEqual(await response.json(),{error:'UPSTREAM_CONNECT_FAILED'});
+  const body=await response.json();
+  assert.equal(body.error,'UPSTREAM_CONNECT_FAILED');
+  assert.equal(body.diagnostic.name,'TypeError');
+  assert.match(body.diagnostic.message,/network error/);
+});
+
+test('diagnostico de rede preserva codigo TLS e oculta URLs e linhas sensiveis',async()=>{
+  const response=await handleRequest(makeRequest(),{
+    now,fetchFn:async()=>{
+      const error=new Error('TLS handshake failed https://fump.ufmg.br:3003/secret?token=private\\ntrace');
+      error.cause={code:'UNABLE_TO_VERIFY_LEAF_SIGNATURE'};
+      throw error;
+    }
+  });
+  assert.equal(response.status,503);
+  const body=await response.json();
+  assert.equal(body.diagnostic.code,'UNABLE_TO_VERIFY_LEAF_SIGNATURE');
+  assert.ok(!JSON.stringify(body).includes('token=private'));
+  assert.ok(!JSON.stringify(body).includes('/secret'));
 });
 
 test('rejeita JSON de outro RU, schema desconhecido e data divergente',async()=>{
