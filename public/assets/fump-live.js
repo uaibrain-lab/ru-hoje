@@ -111,7 +111,7 @@ export async function readLiveMenu(ruId, iso, {
 
 /** Evita cache antigo de outra data ou fonte ser mostrado como cardápio atual. */
 export function isValidLiveEntry(value, iso, ruId) {
-  return !!(value && value.iso===iso && value.ruId===ruId
+  return !!(value && value.iso===iso
     && value.sourceRestaurantId===sourceForRu(ruId)
     && typeof value.fetchedAt==='string' && Number.isFinite(Date.parse(value.fetchedAt))
     && Date.parse(value.fetchedAt)<=Date.now()+600000
