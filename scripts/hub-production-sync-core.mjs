@@ -73,13 +73,17 @@ export async function collectSnapshot(days = 7, {
   // A lista de restaurantes é apenas uma verificação auxiliar. A origem (ID)
   // de cada endpoint já é fixa e conhecida. Se /restaurantes estiver fora do ar,
   // nunca bloquear /cardapios/cardapio dos quatro RUs por isso.
+  let restaurantList = null;
   try {
-    checkRestaurantList(await safeGet(`${API_BASE}/cardapios/restaurantes`, {getJsonFn, maxAttempts, baseDelayMs}));
+    restaurantList = await safeGet(`${API_BASE}/cardapios/restaurantes`, {getJsonFn, maxAttempts, baseDelayMs});
   } catch (error) {
     const detail = diagnosticCode(error);
     console.warn(`FUMP_RESTAURANTES_UNAVAILABLE=${detail}; tentando endpoints individuais`);
     rows.push({iso: today, sourceId: null, stage:'restaurant-list', status:'FETCH_ERROR', error: detail});
   }
+  // Se a lista respondeu mas diverge dos IDs oficiais, não interpretar
+  // semântica alterada como uma indisponibilidade transitória.
+  if (restaurantList !== null) checkRestaurantList(restaurantList);
 
   for (let offset = 0; offset < days; offset += 1) {
     const iso = addDate(today, offset);
