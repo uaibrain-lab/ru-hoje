@@ -106,7 +106,7 @@ function hydratePrefetchMeta() {
     const raw = JSON.parse(readStore(STORAGE_PREFETCH) || 'null');
     if (!raw || typeof raw!=='object' || !raw.checks || typeof raw.checks!=='object') return;
     for (const [key,value] of Object.entries(raw.checks).slice(-72)) {
-      if (/^\\d{4}-\\d{2}-\\d{2}\\|[1256]$/.test(key) &&
+      if (key.length===12 && key[10]==='|' && validISO(key.slice(0,10)) && ['1','2','5','6'].includes(key.slice(11)) &&
           typeof value?.status === 'string' && Number.isFinite(value.at)) {
         state.prefetchChecks.set(key,{at:value.at,status:value.status});
       }
@@ -643,6 +643,6 @@ function boot() {
   fetchMenus();
   refreshLive();
   if (!state.selectedRu) {requestAnimationFrame(() => openDialog());}
-  if ('serviceWorker' in navigator && window.isSecureContext) window.addEventListener('load',()=>navigator.serviceWorker.register('/service-worker.js?v=hub-20261109-scheduled-only-r1').catch(()=>{}));
+  if ('serviceWorker' in navigator && window.isSecureContext) window.addEventListener('load',()=>navigator.serviceWorker.register('/service-worker.js?v=hub-20261116-prefetch-r2').catch(()=>{}));
 }
 boot();
