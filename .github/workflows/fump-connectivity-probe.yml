@@ -12,12 +12,8 @@ permissions:
 
 jobs:
   probe:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-24.04, windows-2022, macos-14]
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 3
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,6 +21,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Testar FUMP por HTTPS 443 e API 3003 (somente leitura)
-        shell: bash
+          cache: npm
+      - name: Instalar dependências
+        run: npm ci --no-audit --no-fund
+      - name: Instalar Chromium
+        run: npx playwright install chromium
+      - name: Testar FUMP por Node e Chromium (somente leitura)
         run: node scripts/fump-connectivity-probe.mjs
