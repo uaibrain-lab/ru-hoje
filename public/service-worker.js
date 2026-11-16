@@ -86,7 +86,7 @@ self.addEventListener('fetch', event => {
     try {
       // 'no-store' passa por cima inclusive do cache HTTP do navegador.
       // A resposta ainda é mantida no CacheStorage para funcionar offline.
-      const response=await fetch(networkFirst ? new Request(request,{cache:'no-store'}) : request);
+      const response=networkFirst ? await fetch(request,{cache:'no-store'}) : await fetch(request);
       if(response.ok){
         const clone=response.clone();
         event.waitUntil(caches.open(VERSION)
