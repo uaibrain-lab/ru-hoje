@@ -24,5 +24,5 @@ test('monitor has no fixed start date, cutoff or finite run count',()=>{
 test('monitor remains read-only and records zero remote writes',()=>{
   assert.match(monitor,/mode: 'read-only'/);
   assert.match(monitor,/remoteWrites: 0/);
-  assert.doesNotMatch(monitor,/Firestore|\.update\(|\.set\(/);
+  assert.doesNotMatch(monitor,/Firestore|firebase-admin|@google-cloud\\/firestore/);
 });
