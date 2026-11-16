@@ -129,6 +129,66 @@ try {
     'Clique em data já prefetched não deve duplicar requisição recente');
   assert.deepEqual(errors,[],'Erros de console ou JavaScript durante teste ponta a ponta');
 
+
+  // Regressão realista: o cardápio de hoje tem HTTP 503, mas as próximas
+  // datas já estão publicadas. O visitante NÃO clica em nenhuma data futura.
+  // Um erro pontual no D+2 também não pode impedir que o D+3 seja coletado.
+  const passive=await browser.newPage({viewport:{width:390,height:844},serviceWorkers:'block'});
+  await passive.addInitScript(()=>{
+    localStorage.setItem('ruhoje:restaurant:v1','setorial-i');
+  });
+  const day3=new Date(Date.parse(today+'T12:00:00Z')+3*86_400_000).toISOString().slice(0,10);
+  const failedTomorrowPlusOne=new Date(Date.parse(today+'T12:00:00Z')+2*86_400_000).toISOString().slice(0,10);
+  const observed=[];
+  await passive.route('https://hub-fump-proxy.hubufmg.workers.dev/**',async route=>{
+    const u=new URL(route.request().url());
+    const date=u.searchParams.get('data');
+    const id=u.searchParams.get('id');
+    observed.push({date,id});
+    if(id==='6' && (date===today || date===failedTomorrowPlusOne)) {
+      return route.fulfill({status:503,contentType:'application/json',
+        headers:{'Access-Control-Allow-Origin':'*'},
+        body:'{"error":"UPSTREAM_CONNECT_FAILED"}'});
+    }
+    const published=id==='6' && (date===tomorrow || date===day3);
+    const cardapios=published ? [{
+      data:date,
+      refeicoes:[{tipoRefeicao:'Almoço',pratos:[
+        {tipoPrato:'Prato protéico 1',descricaoPrato:'Cardápio Pré-Carregado '+date},
+        {tipoPrato:'Acompanhamento 1',descricaoPrato:'Arroz'}
+      ]}]
+    }] : [];
+    return route.fulfill({status:200,contentType:'application/json',
+      headers:{'Access-Control-Allow-Origin':'*'},
+      body:JSON.stringify({id:Number(id),cardapios})});
+  });
+  await passive.route('https://firestore.googleapis.com/**',async route=>route.fulfill({
+    status:200,contentType:'application/json',
+    headers:{'Access-Control-Allow-Origin':'*'},
+    body:JSON.stringify({fields:{payload:{stringValue:JSON.stringify(data)}}})
+  }));
+  const passiveErrors=[];
+  passive.on('pageerror',e=>passiveErrors.push(e.message));
+  await passive.goto(url,{waitUntil:'domcontentloaded'});
+  await passive.getByText('Frango grelhado',{exact:true}).waitFor({timeout:15000});
+  await passive.waitForFunction(([d1,d3])=>{
+    const x1=document.querySelector('.date-card[data-iso="'+d1+'"]');
+    const x3=document.querySelector('.date-card[data-iso="'+d3+'"]');
+    return x1?.dataset.missingMenu==='false' && x3?.dataset.missingMenu==='false';
+  },[tomorrow,day3],{timeout:40000});
+  assert.ok(observed.some(x=>x.id==='6' && x.date===today),
+    'O teste deve simular falha da consulta do dia selecionado');
+  assert.ok(observed.some(x=>x.id==='6' && x.date===tomorrow),
+    'O aplicativo não consultou D+1 sem clique');
+  assert.ok(observed.some(x=>x.id==='6' && x.date===failedTomorrowPlusOne),
+    'O teste deve simular erro na primeira sequência de pré-busca');
+  assert.ok(observed.some(x=>x.id==='6' && x.date===day3),
+    'Falha pontual bloqueou D+3');
+  assert.equal(await passive.locator('.date-card[data-iso="'+failedTomorrowPlusOne+'"]').getAttribute('data-missing-menu'),'true');
+  assert.deepEqual(passiveErrors,[],'Exceção JS no pré-carregamento sem cliques');
+  await passive.close();
+  // A bolinha desapareceu em D+1 e D+3 sem visita manual a nenhuma data.
+
   // Um PWA instalado NÃO pode continuar executando app.js ou config.js
   // inválidos que tenham sido preservados pelo cache anterior ao deploy.
   const pwaPage=await browser.newPage({viewport:{width:390,height:844},serviceWorkers:'allow'});
@@ -144,8 +204,8 @@ try {
   await pwaPage.waitForFunction(()=>!!navigator.serviceWorker.controller,null,{timeout:25000});
   await pwaPage.waitForTimeout(700);
   await pwaPage.evaluate(async()=>{
-    const c=await caches.open('hub-v267-20261116-prefetch-cache-heal-r1');
-    await c.put('/assets/app.js?v=hub-20261116-prefetch-cache-heal-r1',
+    const c=await caches.open('hub-v268-20261116-autoprefetch-r1');
+    await c.put('/assets/app.js?v=hub-20261116-autoprefetch-r1',
       new Response('throw new Error("STALE_CACHE_EXECUTED")',{
         headers:{'Content-Type':'text/javascript'}
       }));

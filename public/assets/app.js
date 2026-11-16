@@ -2,14 +2,14 @@
 import {currentOpening, weeklySummary} from './hours.js';
 import {publishedCategory} from './dish-category.js';
 import {isMissingMenu, dateChipLabel} from './date-availability.js';
-import {readLiveMenu, sourceForRu, isValidLiveEntry, buildLiveUrl} from './fump-live.js';
+import {readLiveMenu, sourceForRu, isValidLiveEntry, validISO, buildLiveUrl} from './fump-live.js';
 import {buildPrefetchPlan, canRunBackgroundFetch, recentlyChecked, PREFETCH_LIMIT_PER_DAY, PREFETCH_MIN_GAP_MS} from './fump-prefetch.js';
 const SOURCE_URL = 'https://fump.ufmg.br/cardapio-do-dia/';
 const STORAGE_RU = 'ruhoje:restaurant:v1';
 const STORAGE_PREFERS_CAFE = 'ruhoje:prefers-cafe:v1';
 const STORAGE_DATA = 'ruhoje:menus:v1';
 const STORAGE_LIVE = 'ruhoje:live-menus:v1';
-const STORAGE_PREFETCH = 'ruhoje:prefetch-checks:v1';
+const STORAGE_PREFETCH = 'ruhoje:prefetch-checks:v2';
 const TIMEZONE = 'America/Sao_Paulo';
 const INGREDIENT_CATALOG_URL = '/data/pratos-ingredientes.json';
 const RU_LIST = [
@@ -30,7 +30,7 @@ const GROUP_ICONS = Object.freeze({
   'Acompanhamentos':'🍚','Saladas':'🥗','Molhos':'🥣','Sobremesas':'🍮','Bebidas':'🥤','Outros':'🍽️'
 });
 const $ = (id) => document.getElementById(id);
-const state = { selectedRu: null, selectedDate: null, data: null, ingredientCatalog: null, ingredientCatalogPromise: null, lastError: null, fallbackUsed: false, syncing: false, initialOpen: false, snapshotSource:'cache', liveMenus: new Map(), liveStatus: new Map(), liveChecks: new Map(), livePending: new Map(), prefetchChecks: new Map(), prefetchQuota: {date:'',count:0}, prefetchGeneration: 0 };
+const state = { selectedRu: null, selectedDate: null, data: null, ingredientCatalog: null, ingredientCatalogPromise: null, lastError: null, fallbackUsed: false, syncing: false, initialOpen: false, snapshotSource:'cache', liveMenus: new Map(), liveStatus: new Map(), liveChecks: new Map(), livePending: new Map(), prefetchChecks: new Map(), prefetchQuota: {date:'',count:0}, prefetchGeneration: 0, prefetchActiveKey: null };
 
 function readStore(key) { try { return localStorage.getItem(key); } catch { return null; } }
 function writeStore(key, value) { try { localStorage.setItem(key, value); } catch {} }
@@ -123,19 +123,27 @@ function recordPrefetchCheck(key,status) {
 }
 function cancelPrefetch() {
   state.prefetchGeneration++;
+  state.prefetchActiveKey=null;
 }
 function startPrefetch(ruId,iso) {
-  const generation=++state.prefetchGeneration;
-  if (!prefetchAllowed()) return;
+  if (!ruId || !prefetchAllowed()) return;
+  const activeKey=liveKey(iso,ruId);
+  // A consulta de hoje pode terminar enquanto a varredura já está em curso.
+  // Não reiniciar a fila: isso cancelava o primeiro dia futuro antes da busca.
+  if (state.prefetchActiveKey===activeKey) return;
   const plan=buildPrefetchPlan(ruId,iso,{
     maxDate:addDays(sPauloParts().iso,14),
     limit:PREFETCH_LIMIT_PER_DAY
   });
   if (!plan.length) return;
+  const generation=++state.prefetchGeneration;
+  state.prefetchActiveKey=activeKey;
   const stillActive=()=>generation===state.prefetchGeneration && prefetchAllowed()
     && state.selectedRu===ruId && state.selectedDate===iso;
-  // Não bloqueia a exibição e realiza uma única requisição por vez.
+  // Começa independentemente do sucesso da consulta da data selecionada.
+  // Uma data futura indisponível não impede consultar as seguintes.
   void (async()=>{
+    let consecutiveFailures=0;
     for (const task of plan) {
       if (!stillActive()) break;
       const previous=state.prefetchChecks.get(task.key);
@@ -148,27 +156,41 @@ function startPrefetch(ruId,iso) {
       await new Promise(resolve=>setTimeout(resolve,PREFETCH_MIN_GAP_MS));
       if (!stillActive()) break;
       if (state.livePending.has(task.key)) continue;
-      // Só o pré-carregamento consome orçamento. Consulta escolhida continua livre.
+      // Apenas background consome orçamento; o usuário pode consultar manualmente.
       state.prefetchQuota.count++;
       persistPrefetchMeta();
       const result=await refreshLive({
         ruId:task.ruId,iso:task.iso,force:true,background:true
       });
-      // Falha de conexão/CORS impede bombardear a FUMP com outras requisições.
-      if (!result || ['FETCH_ERROR','PARSE_ERROR'].includes(result.status)) break;
+      if (!result || result.status==='FETCH_ERROR') {
+        consecutiveFailures++;
+        // Evitar bombardear a origem quando toda a região está indisponível.
+        if (consecutiveFailures>=3) break;
+        continue;
+      }
+      if (result.status==='PARSE_ERROR') break;
+      consecutiveFailures=0;
     }
-  })().catch(error=>console.warn('Pré-carregamento FUMP pausado:',error?.name || 'ERROR'));
+  })().catch(error=>console.warn('Pré-carregamento FUMP pausado:',error?.name || 'ERROR'))
+    .finally(()=>{
+      if (generation===state.prefetchGeneration) state.prefetchActiveKey=null;
+    });
 }
 async function refreshLive({force = false, ruId = state.selectedRu, iso = state.selectedDate || sPauloParts().iso, background = false} = {}) {
   if (!ruId || !navigator.onLine || (background && !prefetchAllowed())) return null;
   const key = liveKey(iso,ruId);
   const now = Date.now();
   if (state.livePending.has(key)) return state.livePending.get(key);
-  if (!force && now-(state.liveChecks.get(key) || 0) < 4*60_000) return {status:'SKIPPED'};
+  if (!force && now-(state.liveChecks.get(key) || 0) < 4*60_000) {
+    const status=state.liveStatus.get(key)?.status;
+    // Não bloquear uma consulta solicitada pelo usuário apenas porque
+    // uma tentativa em segundo plano falhou anteriormente.
+    if (status!=='FETCH_ERROR' && status!=='PARSE_ERROR') return {status:'SKIPPED'};
+  }
   state.liveChecks.set(key,now);
   const proxyUrl=window.RU_CONFIG?.fumpProxyUrl || '';
   const task = readLiveMenu(ruId,iso, background
-    ? {maxAttempts:1,timeoutMs:6500,proxyUrl}
+    ? {maxAttempts:1,timeoutMs:12000,proxyUrl}
     : {maxAttempts:proxyUrl ? 2 : 1,proxyUrl}).then(result => {
     recordPrefetchCheck(key,result.status);
     state.liveStatus.set(key,{status:result.status,at:new Date().toISOString(),error:result.error || null});
@@ -284,6 +306,7 @@ function renderRestaurant() {
       renderDates();
       renderMenus();
       refreshLive();
+      startPrefetch(item.id,state.selectedDate || sPauloParts().iso);
       $('restaurant-dialog').close();
       $('restaurant-trigger').focus();
     });
@@ -345,6 +368,7 @@ function renderDates({ scroll = false } = {}) {
       if (event?.detail === 0) dateStrip.querySelector(`[data-iso="${iso}"]`)?.focus({preventScroll:true});
       renderMenus();
       refreshLive();
+      startPrefetch(state.selectedRu,iso);
     });
     dateStrip.append(card);
   }
@@ -647,7 +671,7 @@ function initTheme() {
  */
 function setupPwaUpdates() {
   if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
-  const releaseKey='ruhoje:sw-refresh:hub-v267-20261116-prefetch-cache-heal-r1';
+  const releaseKey='ruhoje:sw-refresh:hub-v268-20261116-autoprefetch-r1';
   const hadController=!!navigator.serviceWorker.controller;
   let reloadRequested=false;
   let reloading=false;
@@ -692,8 +716,8 @@ function boot() {
   initDialog();
   renderRestaurant(); renderDates({scroll:true}); renderMenus();
   loadIngredientCatalog().then(() => renderMenus());
-  $('today-button').addEventListener('click',()=> {cancelPrefetch();state.selectedDate=sPauloParts().iso;renderDates({scroll:true});renderMenus();refreshLive();});
-  window.addEventListener('online',()=>{fetchMenus();refreshLive({force:true});});
+  $('today-button').addEventListener('click',()=> {cancelPrefetch();state.selectedDate=sPauloParts().iso;renderDates({scroll:true});renderMenus();refreshLive();startPrefetch(state.selectedRu,state.selectedDate);});
+  window.addEventListener('online',()=>{fetchMenus();refreshLive({force:true});startPrefetch(state.selectedRu,state.selectedDate);});
   window.addEventListener('offline',()=>{cancelPrefetch();renderMenus();});
   window.addEventListener('storage',event=>{
     if (event.key===STORAGE_LIVE) {
@@ -704,7 +728,7 @@ function boot() {
   });
   document.addEventListener('visibilitychange',()=> {
     if (document.hidden) cancelPrefetch();
-    else {maybeTick();fetchMenus();refreshLive();}
+    else {maybeTick();fetchMenus();refreshLive();startPrefetch(state.selectedRu,state.selectedDate);}
   });
   let previousToday = sPauloParts().iso;
   let previousMealPeriod = null;
@@ -714,7 +738,7 @@ function boot() {
     if (clock.iso !== previousToday) {
       if (state.selectedDate === previousToday) state.selectedDate = clock.iso;
       cancelPrefetch();
-      previousToday = clock.iso; renderDates({scroll:true}); renderMenus(); refreshLive({force:true});
+      previousToday = clock.iso; renderDates({scroll:true}); renderMenus(); refreshLive({force:true}); startPrefetch(state.selectedRu,state.selectedDate);
     } else if (previousMealPeriod !== currentPeriod) renderMenus();
     renderHours();
     if (!document.hidden) refreshLive();
@@ -723,6 +747,9 @@ function boot() {
   setInterval(maybeTick,60_000); maybeTick();
   fetchMenus();
   refreshLive();
+  // Não aguardar resultado de hoje: os dias futuros podem estar publicados
+  // mesmo quando o RU/data atual responde 503 ou não contém pratos.
+  startPrefetch(state.selectedRu,state.selectedDate);
   if (!state.selectedRu) {requestAnimationFrame(() => openDialog());}
   setupPwaUpdates();
 }
