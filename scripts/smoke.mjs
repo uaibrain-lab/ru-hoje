@@ -52,6 +52,24 @@ try {
   browser=await chromium.launch({headless:true,args:['--no-sandbox']});
   const page=await browser.newPage({viewport:{width:390,height:844},serviceWorkers:'block'});
   let interceptedRequests=0;
+  let liveEnabled=false;
+  // Evita contato externo e prova o fluxo real CORS -> parser -> UI.
+  await page.route('https://fump.ufmg.br:3003/**',async route=> {
+    const request = new URL(route.request().url());
+    const id = request.searchParams.get('id');
+    const date = request.searchParams.get('dataInicio');
+    const cardapios = liveEnabled && id==='6' && date===today
+      ? [{data:today,refeicoes:[{tipoRefeicao:'Almoço',pratos:[
+        {tipoPrato:'Prato protéico 1',descricaoPrato:'Frango ao Vivo'},
+        {tipoPrato:'Acompanhamento 1',descricaoPrato:'Arroz Branco'}
+      ]}]}]
+      : [];
+    await route.fulfill({
+      status:200,contentType:'application/json',
+      headers:{'Access-Control-Allow-Origin':'*'},
+      body:JSON.stringify({id:Number(id),cardapios})
+    });
+  });
   await page.route('https://firestore.googleapis.com/**',async route=> {
     interceptedRequests++;
     return route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*','cache-control':'no-store'},body:JSON.stringify({fields:{payload:{stringValue:JSON.stringify(data)}}})});
@@ -80,6 +98,14 @@ try {
   assert.equal(await page.locator('.meal-card').filter({hasText:'Café indevido'}).count(),0);
   await page.locator('.date-card').last().click();
   await page.getByText('Ainda sem cardápio por aqui').waitFor();
+  // Novos dados reais simulados chegam depois de a cópia Firestore já estar visível.
+  liveEnabled = true;
+  await page.locator('.date-card').first().click();
+  await page.locator('#restaurant-trigger').click();
+  await page.getByRole('button',{name:'RU Setorial I Campus Pampulha',exact:true}).click();
+  await page.evaluate(()=>window.dispatchEvent(new Event('online')));
+  await page.getByText('Frango ao Vivo',{exact:true}).waitFor({timeout:12000});
+  assert.match(await page.locator('#update-line').innerText(),/FUMP ao vivo/);
   assert.deepEqual(errors,[],'Erros de console ou JavaScript durante teste ponta a ponta');
-  console.log('E2E aprovado: primeiro acesso, pratos, duas refeições, mudança de data, preferência após reload.');
+  console.log('E2E aprovado: cache Firestore, consulta FUMP ao vivo, CORS, atualização de refeições, troca de RU e data.');
 } finally {await browser?.close();await new Promise(resolve=>server.close(resolve));}
