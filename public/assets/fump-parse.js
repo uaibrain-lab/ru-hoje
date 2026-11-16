@@ -2,6 +2,7 @@
  * A origem é a API JSON da FUMP. Este módulo não efetua operações de rede.
  */
 import {categoryFromSourceType} from './dish-category.js';
+const ALLOWED_SOURCE_IDS = new Set(['1','2','5','6']);
 const norm = value => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
 const fail = message => {throw new Error(message);};
 function assertIsoDate(value) {
@@ -43,7 +44,7 @@ function cleanDish(value) {
  */
 export function parseMenuJson(json, {iso, sourceId} = {}) {
   assertIsoDate(iso);
-  if (!RU_SOURCES.some(r=>r.sourceId===String(sourceId))) fail('Fonte desconhecida');
+  if (!ALLOWED_SOURCE_IDS.has(String(sourceId))) fail('Fonte desconhecida');
   if (!json || !Array.isArray(json.cardapios)) fail('JSON não contém cardapios[]');
   const result={};
   let checkedDates=0;
