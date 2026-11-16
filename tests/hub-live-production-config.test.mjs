@@ -15,7 +15,6 @@ test('Hub de produção aponta para Worker verificado e possui módulo de consul
   assert.match(app,/proxyUrl=window\.RU_CONFIG\?\.fumpProxyUrl/);
   assert.match(app,/readLiveMenu\(ruId,iso, background/);
   assert.match(app,/startPrefetch\(ruId,iso\)/);
-  assert.match(app,/proxyUrl=window\.RU_CONFIG\?\.fumpProxyUrl/);
   assert.equal(sourceForRu('setorial-i'),'6');
   assert.equal(new URL(buildProxyMenuUrl('setorial-i','2026-11-16',base)).hostname,'hub-fump-proxy.hubufmg.workers.dev');
 });
@@ -31,7 +30,7 @@ test('service worker changes version and HTML app URL to avoid stale code',()=>{
   const html=read('../public/index.html');
   assert.match(sw,/hub-v267-20261116-prefetch-cache-heal-r1/);
   assert.match(html,/app\.js\?v=hub-20261116-prefetch-cache-heal-r1/);
-  assert.match(sw,/path==='\\/config\\.js'/);
+  assert.ok(sw.includes("path==='/config.js'"));
   assert.match(sw,/cache:'no-store'/);
   assert.match(sw,/path\.endsWith\('\.js'\)/);
   assert.match(sw,/fump-prefetch\.js/);
