@@ -1,5 +1,7 @@
 name: Hub UFMG — sincronização FUMP produção
 
+run-name: "FUMP sync | ${{ github.event_name }} | ${{ inputs.mode || 'apply' }} | ${{ inputs.recovery && 'WATCHDOG_RECOVERY' || 'normal' }}"
+
 on:
   # UTC, em minutos pouco concorridos e em varios periodos do dia.
   schedule:
@@ -17,6 +19,11 @@ on:
           - dry-run
           - collect
           - apply
+      recovery:
+        description: 'Execução automática de recuperação pelo watchdog'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read

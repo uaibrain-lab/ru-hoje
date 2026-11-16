@@ -2,15 +2,18 @@ name: Hub UFMG — monitor de atualização automática
 
 on:
   schedule:
-    - cron: '53 11,15,19,23 * * 1-5'
-    - cron: '53 17,22 * * 6'
-    - cron: '53 21 * * 0'
+    # Vigilância contínua diária; minuto fora do início da hora para reduzir atrasos.
+    - cron: '17 * * * *'
   workflow_dispatch:
 
 permissions:
   contents: read
   actions: write
   issues: write
+
+concurrency:
+  group: hub-production-watchdog
+  cancel-in-progress: false
 
 jobs:
   watch:
