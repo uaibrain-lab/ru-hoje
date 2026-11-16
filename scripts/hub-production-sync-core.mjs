@@ -18,9 +18,19 @@ export function assertProductionEnvironment(env = process.env) {
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 function diagnosticCode(error) {
-  const http = String(error?.message || '').match(/\bHTTP\s+(\d{3})\b/i);
-  const value = error?.cause?.code || error?.code || (http ? `HTTP_${http[1]}` : error?.name) || 'UNKNOWN';
+  const message = String(error?.message || '');
+  const wrapped = message.match(/FUMP_FETCH_FAILED_([A-Z0-9_-]+)/i);
+  const http = message.match(/\\bHTTP\\s+(\\d{3})\\b/i);
+  const value = error?.cause?.code || error?.code || (wrapped ? wrapped[1] : null) || (http ? `HTTP_${http[1]}` : null) || (error?.name && error.name !== 'Error' ? error.name : message) || 'UNKNOWN';
   return String(value).replace(/[^A-Z0-9_-]/gi, '_').slice(0, 48).toUpperCase();
+}
+
+function isRetryable(error) {
+  const code = diagnosticCode(error);
+  if (/^(ECONNRESET|ECONNREFUSED|ETIMEDOUT|EAI_AGAIN|ENOTFOUND|UND_ERR_CONNECT_TIMEOUT|UND_ERR_HEADERS_TIMEOUT|UND_ERR_SOCKET|ABORTERROR)$/.test(code)) return true;
+  const http = String(error?.message || '').match(/\\bHTTP\\s+(\\d{3})\\b/i);
+  if (http) return http[1] === '429' || Number(http[1]) >= 500;
+  return false;
 }
 
 export async function safeGet(url, {
@@ -39,11 +49,11 @@ export async function safeGet(url, {
       const transportCode = diagnosticCode(error);
       const host = (() => { try { return new URL(url).host; } catch { return 'HOST_INVALIDO'; } })();
       console.warn(`FUMP_FETCH_RETRY attempt=${attempt}/${maxAttempts} host=${host} cause=${transportCode}`);
-      if (attempt < maxAttempts) {
-        // Backoff exponencial com jitter leve; não repetir rapidamente falhas persistentes.
-        const jitter = Math.floor(Math.random() * Math.min(500, baseDelayMs));
-        await wait(baseDelayMs * (2 ** (attempt - 1)) + jitter);
-      }
+      if (attempt >= maxAttempts || !isRetryable(error)) break;
+      // Backoff exponencial com jitter leve; falhas permanentes (ex.: HTTP 403)
+      // não recebem tentativas repetidas desnecessárias.
+      const jitter = Math.floor(Math.random() * Math.min(500, baseDelayMs));
+      await wait(baseDelayMs * (2 ** (attempt - 1)) + jitter);
     }
   }
   throw new Error(`FUMP_FETCH_FAILED_${diagnosticCode(lastError)}`, {cause: lastError});
