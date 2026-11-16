@@ -78,30 +78,23 @@ else
   HUB_INCIDENT_LABEL=agendamento-atrasado HUB_INCIDENT_STATUS=failure bash scripts/hub-sync-incident.sh
 fi
 
-# Keep a small, non-sensitive weekly repository heartbeat. Public repositories
-# can have scheduled workflows disabled by GitHub after 60 days without activity.
-# This updates one marker per ISO week; it contains no user data or secrets.
-heartbeat_file=".github/automation/heartbeat.json"
-current_week="$(TZ=America/Sao_Paulo date +%G-W%V)"
-previous_week=""
-if [[ -f "$heartbeat_file" ]]; then
-  previous_week="$(jq -r '.isoWeek // empty' "$heartbeat_file" 2>/dev/null || true)"
+# Weekly, non-sensitive activity marker in one closed GitHub issue. This avoids
+# direct commits to main (which may be protected) while keeping an auditable
+# repository activity signal for the public-repository 60-day schedule policy.
+heartbeat_title="Hub UFMG - atividade semanal da automacao"
+heartbeat_number="$(gh issue list --repo "$repo" --state all --limit 100 --json number,title | jq -r --arg title "$heartbeat_title" '.[] | select(.title == $title) | .number' | head -n 1)"
+if [[ -z "$heartbeat_number" ]]; then
+  created_url="$(gh issue create --repo "$repo" --title "$heartbeat_title" --body "Registro técnico de atividade recorrente dos workflows automáticos do Hub UFMG. Não contém dados de participantes nem conteúdo de cardápios.")"
+  heartbeat_number="${created_url##*/}"
+  gh issue close "$heartbeat_number" --repo "$repo" --comment "Issue de auditoria operacional; os registros semanais serão adicionados como comentários."
 fi
-if [[ "$previous_week" != "$current_week" ]]; then
-  mkdir -p "$(dirname "$heartbeat_file")"
-  printf '{\n  "isoWeek": "%s",\n  "updatedAt": "%s",\n  "purpose": "keep scheduled automation active"\n}\n' \
-    "$current_week" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$heartbeat_file"
-  git config user.name "github-actions[bot]"
-  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-  git add "$heartbeat_file"
-  git commit -m "chore(automation): weekly workflow heartbeat [skip ci]" || true
-  if ! git push origin HEAD:main; then
-    echo "::warning::WEEKLY_HEARTBEAT_PUSH_FAILED"
-  else
-    echo "WEEKLY_HEARTBEAT_UPDATED isoWeek=$current_week"
-  fi
+current_week="$(TZ=America/Sao_Paulo date +%G-W%V)"
+existing_heartbeat="$(gh api "repos/$repo/issues/$heartbeat_number/comments?per_page=100&sort=created&direction=desc" | jq --arg week "HEARTBEAT_WEEK=$current_week" '[.[] | select(.body | contains($week))] | length')"
+if (( existing_heartbeat == 0 )); then
+  gh issue comment "$heartbeat_number" --repo "$repo" --body "HEARTBEAT_WEEK=$current_week | checked_at=$(date -u +%Y-%m-%dT%H:%M:%SZ) | workflow=hub-production-watchdog"
+  echo "WEEKLY_REPOSITORY_ACTIVITY_RECORDED week=$current_week issue=$heartbeat_number"
 else
-  echo "WEEKLY_HEARTBEAT_CURRENT isoWeek=$current_week"
+  echo "WEEKLY_REPOSITORY_ACTIVITY_CURRENT week=$current_week issue=$heartbeat_number"
 fi
 
 # A stale menu is reported as a failed health check even when a recovery was dispatched.
