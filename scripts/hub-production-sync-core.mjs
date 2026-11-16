@@ -104,7 +104,7 @@ export function assertCurrentWeekdayCoverage(rows, now = new Date()) {
       .filter(row => row?.iso === today && row?.status === 'com-cardapio-datado')
       .map(row => String(row.sourceId))
   );
-  const missing = RU_SOURCES.map(source => String(source.sourceId)).filter(id => !verified.has(id));
+  const missing = RU_SOURCES.map(source => String(source.sourceId)).filter(id => !verified.has(id)).sort((a, b) => Number(a) - Number(b));
   if (missing.length) fail(`CARDAPIO_ATUAL_INCOMPLETO_RU_${missing.join('_')}`);
   return {skipped: false, date: today, verifiedSourceIds: [...verified]};
 }
