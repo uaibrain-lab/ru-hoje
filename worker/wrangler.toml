@@ -1,0 +1,6 @@
+# Implantar com: npx wrangler deploy --config worker/wrangler.toml
+# Plano Workers Free, sem KV/D1/Cloud Billing no Firebase.
+name = "hub-fump-proxy"
+main = "fump-proxy.mjs"
+compatibility_date = "2026-11-16"
+workers_dev = true
