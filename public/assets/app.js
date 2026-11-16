@@ -2,7 +2,7 @@
 import {currentOpening, weeklySummary} from './hours.js';
 import {publishedCategory} from './dish-category.js';
 import {isMissingMenu, dateChipLabel} from './date-availability.js';
-import {readLiveMenu, sourceForRu, isValidLiveEntry} from './fump-live.js';
+import {readLiveMenu, sourceForRu, isValidLiveEntry, buildLiveUrl} from './fump-live.js';
 const SOURCE_URL = 'https://fump.ufmg.br/cardapio-do-dia/';
 const STORAGE_RU = 'ruhoje:restaurant:v1';
 const STORAGE_PREFERS_CAFE = 'ruhoje:prefers-cafe:v1';
@@ -364,6 +364,16 @@ function renderNoMenu(ru, date) {
   const link = el('a','source-link','Consultar na FUMP ↗');
   link.href = SOURCE_URL; link.target = '_blank'; link.rel = 'noopener noreferrer';
   root.append(link);
+  // A navegação direta não depende de CORS. Em último caso, permite
+  // conferir o JSON público daquele RU/data no endereço oficial, mesmo
+  // quando o Hub não consegue lê-lo por JavaScript.
+  try {
+    const direct = el('a','source-link','Abrir resposta oficial deste RU/data ↗');
+    direct.href = buildLiveUrl(ru.id,date);
+    direct.target = '_blank';
+    direct.rel = 'noopener noreferrer';
+    root.append(direct);
+  } catch { /* ID/data inválido: apenas o link para a página oficial */ }
   return root;
 }
 function formatUpdate(iso) {
