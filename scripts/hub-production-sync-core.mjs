@@ -18,9 +18,8 @@ export function assertProductionEnvironment(env = process.env) {
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 function diagnosticCode(error) {
-  // Node/undici costuma expor a causa de "fetch failed" em error.cause.code.
-  // Registrar somente códigos de transporte/HTTP; nunca URL completa, headers ou tokens.
-  const value = error?.cause?.code || error?.code || error?.name || 'UNKNOWN';
+  const http = String(error?.message || '').match(/\bHTTP\s+(\d{3})\b/i);
+  const value = error?.cause?.code || error?.code || (http ? `HTTP_${http[1]}` : error?.name) || 'UNKNOWN';
   return String(value).replace(/[^A-Z0-9_-]/gi, '_').slice(0, 48).toUpperCase();
 }
 
@@ -43,8 +42,7 @@ export async function safeGet(url, {
       if (attempt < maxAttempts) await wait(baseDelayMs * (2 ** (attempt - 1)));
     }
   }
-  const finalCode = diagnosticCode(lastError);
-  throw new Error(`FUMP_FETCH_FAILED_${finalCode}`, {cause: lastError});
+  throw new Error(`FUMP_FETCH_FAILED_${diagnosticCode(lastError)}`, {cause: lastError});
 }
 
 export async function collectSnapshot(days = 7, {
@@ -61,22 +59,25 @@ export async function collectSnapshot(days = 7, {
   for (let offset = 0; offset < days; offset += 1) {
     const iso = addDate(today, offset);
     const day = {restaurants: {}};
-    const sourcesWithMeals = new Set();
+    const sourcesWithVerifiedMenus = new Set();
     for (const source of RU_SOURCES) {
       const raw = await safeGet(menuUrl(source.sourceId, iso), {getJsonFn, maxAttempts, baseDelayMs});
       const {meals, meta} = parseMenuJson(raw, {iso, sourceId: source.sourceId});
       const hasMeals = Object.keys(meals).length > 0;
-      rows.push({iso, sourceId: source.sourceId, status: hasMeals ? 'com-cardapio' : 'resposta-vazia-nao-autoritativa', meals: Object.fromEntries(Object.entries(meals).map(([key, meal]) => [key, meal.items.length])), meta});
+      const datedResponse = meta.cardapios > 0 && meta.checkedDates > 0;
+      rows.push({iso, sourceId: source.sourceId,
+        status: hasMeals && datedResponse ? 'com-cardapio-datado' : 'resposta-incompleta-nao-autoritativa',
+        meals: Object.fromEntries(Object.entries(meals).map(([key, meal]) => [key, meal.items.length])), meta});
       if (hasMeals) {
-        sourcesWithMeals.add(String(source.sourceId));
+        if (datedResponse) sourcesWithVerifiedMenus.add(String(source.sourceId));
         const fetchedAt = new Date().toISOString();
         for (const appId of source.appIds) day.restaurants[appId] = {meals: Object.fromEntries(Object.entries(meals).map(([key, meal]) => [key, {...meal, fetchedAt}])), fetchedAt, sourceRestaurantId: source.sourceId};
       }
     }
-    // Só uma cobertura positiva das QUATRO fontes autoriza remoção de dados antigos.
-    // Resposta vazia da API pode significar falha parcial ou cardápio ainda não publicado.
+    // Só uma cobertura positiva e datada das QUATRO fontes autoriza remoção de dados antigos.
+    // Resposta vazia, sem data ou parcial pode significar falha de rede ou cardápio ainda não publicado.
     // Nesse cenário o merge conservador atualiza os RUs com dados e preserva os demais.
-    if (sourcesWithMeals.size === RU_SOURCES.length) snapshot.verifiedCompleteDates.push(iso);
+    if (sourcesWithVerifiedMenus.size === RU_SOURCES.length) snapshot.verifiedCompleteDates.push(iso);
     snapshot.days[iso] = day;
   }
   snapshot.generatedAt = new Date().toISOString();
