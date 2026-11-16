@@ -124,23 +124,6 @@ export async function getJsonViaRelay(url, {
     clearTimeout(timer);
   }
 }
-  // A chamada usa TLS verificado. Não desabilitar verificação de certificado.
-  const controller = new AbortController();
-  const timer=setTimeout(()=>controller.abort(),timeoutMs);
-  try {
-    const response=await fetchFn(url, {
-      signal:controller.signal,
-      headers:{Accept:'application/json'},
-      redirect:'error',
-    });
-    if (!response.ok) fail(`HTTP ${response.status} em ${new URL(url).pathname}`);
-    const ct=response.headers.get('content-type') || '';
-    if (ct && !/json/i.test(ct)) fail(`Resposta inesperada: Content-Type ${ct}`);
-    const raw=await response.text();
-    if (raw.length > 2_000_000) fail('Resposta excede limite de segurança (2 MB)');
-    try {return JSON.parse(raw);} catch {fail('Resposta não é JSON válido');}
-  } finally {clearTimeout(timer);}
-}
 
 /** Checa se IDs continuam associados aos mesmos RUs; aborta se estiverem invertidos. */
 export function checkRestaurantList(json) {
