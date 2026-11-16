@@ -35,7 +35,7 @@ test('proxy entrega JSON validado e permite leitura CORS só para domínio Hub',
       assert.equal(parsed.searchParams.get('id'),'6');
       assert.equal(parsed.searchParams.get('dataInicio'),'2026-11-16');
       assert.equal(parsed.searchParams.get('dataFim'),'2026-11-16');
-      assert.equal(init.redirect,'error');
+      assert.equal(init.redirect,'manual');
       return fakeResponse();
     }
   });
@@ -161,4 +161,25 @@ test('API de restaurantes é somente leitura e allowlisted',async()=>{
   assert.equal(response.status,200);
   assert.equal(calls,1);
   assert.equal((await response.json())[0].id,6);
+});
+
+
+test('redirecionamento 302 da FUMP não é seguido nem cacheado',async()=>{
+  const cache=fakeCache();
+  let calls=0;
+  const response=await handleRequest(makeRequest(),{
+    now,cache,fetchFn:async(url,init)=>{
+      calls++;
+      assert.equal(init.redirect,'manual');
+      return new Response(null,{
+        status:302,
+        headers:{Location:'https://evil.example/collect'}
+      });
+    }
+  });
+  assert.equal(response.status,502);
+  assert.deepEqual(await response.json(),{error:'UPSTREAM_REDIRECT_BLOCKED',status:302});
+  assert.equal(calls,1);
+  assert.equal(cache.map.size,0);
+  assert.equal(response.headers.get('Access-Control-Allow-Origin'),goodOrigin);
 });

@@ -125,9 +125,14 @@ export async function handleRequest(request,{
     const upstream=await fetchFn(target.href,{
       method:'GET',
       headers:{Accept:'application/json'},
-      redirect:'error',
+      // workerd não implementa redirect:'error': lança TypeError antes da rede.
+      // 'manual' preserva o status 3xx para rejeição explícita abaixo.
+      redirect:'manual',
       signal:controller.signal
     });
+    if(upstream.status>=300 && upstream.status<400) {
+      return json({error:'UPSTREAM_REDIRECT_BLOCKED',status:upstream.status},502,origin);
+    }
     if(!upstream.ok) return json({error:'UPSTREAM_HTTP',status:upstream.status},502,origin);
     const contentType=upstream.headers.get('Content-Type')||'';
     if(contentType && !/json/i.test(contentType)) return json({error:'UPSTREAM_NOT_JSON'},502,origin);
