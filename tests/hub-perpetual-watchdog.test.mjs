@@ -42,11 +42,11 @@ test('watchdog prevents duplicate recovery and applies a cooldown', () => {
   assert.ok(watchdogScript.includes('5 * 60 * 60'));
 });
 
-test('weekly heartbeat is bounded to one commit per ISO week and pushes to main', () => {
+test('weekly heartbeat is recorded once per ISO week without modifying the default branch', () => {
   assert.ok(watchdogScript.includes('%G-W%V'));
-  assert.ok(watchdogScript.includes('weekly workflow heartbeat [skip ci]'));
-  assert.ok(watchdogScript.includes('git push origin HEAD:main'));
-  assert.ok(watchdogScript.includes('isoWeek'));
-  assert.ok(watchdogScript.includes('updatedAt'));
+  assert.ok(watchdogScript.includes('HEARTBEAT_WEEK=$current_week'));
+  assert.ok(watchdogScript.includes('gh issue comment'));
+  assert.ok(watchdogScript.includes('gh issue close'));
+  assert.doesNotMatch(watchdogScript, /git push origin HEAD:main/);
   assert.doesNotMatch(watchdogScript, /FIREBASE_SERVICE_ACCOUNT_JSON|HUB_PROD_PRIVATE_KEY|API_KEY/i);
 });
