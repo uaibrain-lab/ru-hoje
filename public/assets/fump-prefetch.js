@@ -1,6 +1,7 @@
 /**
  * Pré-carregamento oportunista dos cardápios públicos.
- * Não grava no Firestore, não transmite IP/identidade e não cria filas remotas.
+ * Não grava no Firestore nem registra IP/identidade no Hub. A requisição
+ * direta à FUMP usa a conexão do visitante e expõe seu IP à própria FUMP.
  *
  * Prioridade: usuário escolheu RU/data > próximas datas do mesmo RU >
  * demais fontes na data escolhida > primeiras datas dessas fontes.
