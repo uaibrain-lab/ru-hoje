@@ -498,7 +498,9 @@ function renderMenus() {
   }
   if (day === today.iso && liveStatus && liveStatus.status !== 'VALID_MENU' && !live && data &&
       !state.lastError && !state.fallbackUsed && navigator.onLine) {
-    $('connection-notice').textContent = 'Consulta direta indisponível; exibindo a última versão sincronizada.';
+    $('connection-notice').textContent = liveStatus.status === 'NOT_PUBLISHED'
+      ? 'A FUMP não retornou um novo cardápio para esta data; exibindo a última versão disponível.'
+      : 'Consulta direta indisponível; exibindo a última versão sincronizada.';
     $('connection-notice').hidden = false;
   }
   // Exibir somente refeições efetivamente publicadas pela FUMP. Não criar cartões vazios.
