@@ -190,7 +190,7 @@ async function refreshLive({force = false, ruId = state.selectedRu, iso = state.
   state.liveChecks.set(key,now);
   const proxyUrl=window.RU_CONFIG?.fumpProxyUrl || '';
   const task = readLiveMenu(ruId,iso, background
-    ? {maxAttempts:1,timeoutMs:6500,proxyUrl}
+    ? {maxAttempts:1,timeoutMs:12000,proxyUrl}
     : {maxAttempts:proxyUrl ? 2 : 1,proxyUrl}).then(result => {
     recordPrefetchCheck(key,result.status);
     state.liveStatus.set(key,{status:result.status,at:new Date().toISOString(),error:result.error || null});
