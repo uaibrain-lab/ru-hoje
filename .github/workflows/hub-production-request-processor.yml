@@ -26,6 +26,8 @@ jobs:
       HUB_PROD_SYNC_ENABLED: "${{ vars.HUB_PROD_SYNC_ENABLED || 'false' }}"
       HUB_PROD_PUBLISH_ENABLED: "${{ vars.HUB_PROD_PUBLISH_ENABLED || 'false' }}"
       HUB_PROD_BACKUP_DIR: /tmp/hub-prod-backup
+      FUMP_RELAY_URL: "${{ vars.FUMP_RELAY_URL || '' }}"
+      FUMP_RELAY_TOKEN: "${{ secrets.FUMP_RELAY_TOKEN || '' }}"
       HUB_PROD_MODE: apply
     steps:
       - uses: actions/checkout@v4
