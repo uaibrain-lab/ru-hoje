@@ -41,14 +41,19 @@ test('aplicação exige confirmação dupla e retenta até três vezes', () => {
   assert.equal(exists('scripts/hub-production-request-processor.mjs'), false);
 });
 
-test('watchdog detecta falta de execuções bem sucedidas e aciona recuperação', () => {
+test('watchdog detecta atraso, reconhece contingencia e evita recuperacoes duplicadas', () => {
   const cron=load('.github/workflows/hub-production-watchdog.yml');
   const script=load('scripts/hub-production-watchdog.sh');
+  const fallback=load('.github/workflows/hub-production-request-processor.yml');
   assert.match(cron, /actions: write/);
   assert.match(cron, /issues: write/);
+  assert.match(cron, /group: hub-production-menu-watchdog/);
   assert.match(script, /5 \* 60 \* 60/);
-  assert.match(script, /gh workflow run hub-production-cardapios\.yml/);
-  assert.match(script, /mode=apply/);
+  assert.match(script, /gh workflow run hub-production-request-processor\.yml/);
+  assert.match(script, /event == "schedule" or .event == "workflow_dispatch"/);
+  assert.match(script, /status == "queued" or .status == "in_progress"/);
+  assert.match(fallback, /HUB_PROD_MODE: apply/);
+  assert.match(script, /HUB_INCIDENT_LABEL=redundante/);
   assert.match(load('scripts/hub-sync-incident.sh'), /gh issue create/);
 });
 
