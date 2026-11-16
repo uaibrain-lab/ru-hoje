@@ -1,10 +1,6 @@
 name: FUMP API connectivity probe (read-only)
 
 on:
-  pull_request:
-    paths:
-      - 'scripts/fump-connectivity-probe.mjs'
-      - '.github/workflows/fump-connectivity-probe.yml'
   workflow_dispatch:
 
 permissions:
