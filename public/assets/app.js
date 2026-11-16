@@ -112,7 +112,8 @@ function hydratePrefetchMeta() {
       }
     }
     if (raw.quota?.date===sPauloParts().iso && Number.isInteger(raw.quota.count)) {
-      state.prefetchQuota={date:raw.quota.date,count:Math.max(0,raw.quota.count)};
+      const localCount=state.prefetchQuota.date===raw.quota.date ? state.prefetchQuota.count : 0;
+      state.prefetchQuota={date:raw.quota.date,count:Math.max(0,localCount,raw.quota.count)};
     }
   } catch { /* cache opcional e sem permissões especiais */ }
 }
@@ -621,6 +622,16 @@ function boot() {
   $('today-button').addEventListener('click',()=> {cancelPrefetch();state.selectedDate=sPauloParts().iso;renderDates({scroll:true});renderMenus();refreshLive();});
   window.addEventListener('online',()=>{fetchMenus();refreshLive({force:true});});
   window.addEventListener('offline',()=>{cancelPrefetch();renderMenus();});
+  // Outras abas da mesma origem podem compartilhar o cache sem consultar a API de novo.
+  window.addEventListener('storage',event=>{
+    if (event.key===STORAGE_LIVE) {
+      hydrateLiveMenus();
+      renderDates();
+      renderMenus();
+    } else if (event.key===STORAGE_PREFETCH) {
+      hydratePrefetchMeta();
+    }
+  });
   document.addEventListener('visibilitychange',()=> {
     if (document.hidden) cancelPrefetch();
     else {maybeTick();fetchMenus();refreshLive();}
