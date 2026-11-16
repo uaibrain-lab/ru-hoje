@@ -2,7 +2,7 @@
 import {currentOpening, weeklySummary} from './hours.js';
 import {publishedCategory} from './dish-category.js';
 import {isMissingMenu, dateChipLabel} from './date-availability.js';
-import {readLiveMenu, sourceForRu, isValidLiveEntry} from './fump-live.js';
+import {readLiveMenu, sourceForRu, isValidLiveEntry, buildLiveUrl} from './fump-live.js';
 const SOURCE_URL = 'https://fump.ufmg.br/cardapio-do-dia/';
 const STORAGE_RU = 'ruhoje:restaurant:v1';
 const STORAGE_PREFERS_CAFE = 'ruhoje:prefers-cafe:v1';
@@ -94,7 +94,7 @@ async function refreshLive({force = false} = {}) {
   const task = readLiveMenu(ruId,iso,{
     proxyUrl,maxAttempts:proxyUrl ? 2 : 1
   }).then(result => {
-    state.liveStatus.set(key,{status:result.status,at:new Date().toISOString()});
+    state.liveStatus.set(key,{status:result.status,at:new Date().toISOString(),error:result.error || null});
     if (result.status === 'VALID_MENU') {
       // Apenas dados positivos e validados podem alterar o que aparece.
       const payload = {iso,ruId,meals:result.meals,sourceRestaurantId:result.sourceId,fetchedAt:result.fetchedAt};
@@ -369,6 +369,16 @@ function renderNoMenu(ru, date) {
   const link = el('a','source-link','Consultar na FUMP ↗');
   link.href = SOURCE_URL; link.target = '_blank'; link.rel = 'noopener noreferrer';
   root.append(link);
+  // A navegação direta não depende de CORS. Em último caso, permite
+  // conferir o JSON público daquele RU/data no endereço oficial, mesmo
+  // quando o Hub não consegue lê-lo por JavaScript.
+  try {
+    const direct = el('a','source-link','Abrir resposta oficial deste RU/data ↗');
+    direct.href = buildLiveUrl(ru.id,date);
+    direct.target = '_blank';
+    direct.rel = 'noopener noreferrer';
+    root.append(direct);
+  } catch { /* ID/data inválido: apenas o link para a página oficial */ }
   return root;
 }
 function formatUpdate(iso) {
@@ -423,8 +433,23 @@ function renderMenus() {
   const entries = ['almoco','jantar','cafe'].filter(m => ru.meals.includes(m) && Array.isArray(data?.meals?.[m]?.items) && data.meals[m].items.length > 0);
   const hasItems = entries.some(m => Array.isArray(data?.meals?.[m]?.items) && data.meals[m].items.length);
   if (!hasItems) {
+    // Não esconder falhas de leitura atrás da mensagem "sem cardápio".
+    if (liveStatus?.status === 'FETCH_ERROR') {
+      $('connection-notice').textContent = 'Não foi possível ler a API da FUMP neste navegador (rede ou bloqueio CORS). O sincronizador também não forneceu um cardápio válido para este RU/data.';
+      $('connection-notice').hidden = false;
+    } else if (liveStatus?.status === 'PARSE_ERROR') {
+      $('connection-notice').textContent = 'A FUMP respondeu em formato inesperado. Os pratos não foram publicados para evitar informação incorreta.';
+      $('connection-notice').hidden = false;
+    } else if (liveStatus?.status === 'NOT_PUBLISHED') {
+      $('connection-notice').textContent = 'A consulta à FUMP não retornou pratos nesta data. Isso não confirma que o RU esteja fechado.';
+      $('connection-notice').hidden = false;
+    } else if (!state.data?.days?.[day]?.restaurants?.[state.selectedRu]) {
+      $('connection-notice').textContent = 'Ainda não há cardápio validado neste aplicativo para a data escolhida.';
+      $('connection-notice').hidden = false;
+    }
     list.append(renderNoMenu(ru,day));
-    renderLastUpdateLine(data?.fetchedAt || fallbackUpdate,sourceLabel);
+    // Uma atualização antiga do arquivo geral não é a data da consulta deste RU.
+    renderLastUpdateLine(data?.fetchedAt || null,data?.fetchedAt ? sourceLabel : '');
     return;
   }
   const hasRealMeal = id => !!data?.meals?.[id]?.items?.length;
