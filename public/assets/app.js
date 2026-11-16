@@ -2,10 +2,12 @@
 import {currentOpening, weeklySummary} from './hours.js';
 import {publishedCategory} from './dish-category.js';
 import {isMissingMenu, dateChipLabel} from './date-availability.js';
+import {readLiveMenu, sourceForRu, isValidLiveEntry} from './fump-live.js';
 const SOURCE_URL = 'https://fump.ufmg.br/cardapio-do-dia/';
 const STORAGE_RU = 'ruhoje:restaurant:v1';
 const STORAGE_PREFERS_CAFE = 'ruhoje:prefers-cafe:v1';
 const STORAGE_DATA = 'ruhoje:menus:v1';
+const STORAGE_LIVE = 'ruhoje:live-menus:v1';
 const TIMEZONE = 'America/Sao_Paulo';
 const INGREDIENT_CATALOG_URL = '/data/pratos-ingredientes.json';
 const RU_LIST = [
@@ -26,7 +28,7 @@ const GROUP_ICONS = Object.freeze({
   'Acompanhamentos':'🍚','Saladas':'🥗','Molhos':'🥣','Sobremesas':'🍮','Bebidas':'🥤','Outros':'🍽️'
 });
 const $ = (id) => document.getElementById(id);
-const state = { selectedRu: null, selectedDate: null, data: null, ingredientCatalog: null, ingredientCatalogPromise: null, lastError: null, fallbackUsed: false, syncing: false, initialOpen: false };
+const state = { selectedRu: null, selectedDate: null, data: null, ingredientCatalog: null, ingredientCatalogPromise: null, lastError: null, fallbackUsed: false, syncing: false, initialOpen: false, snapshotSource:'cache', liveMenus: new Map(), liveStatus: new Map(), liveChecks: new Map(), livePending: new Map() };
 
 function readStore(key) { try { return localStorage.getItem(key); } catch { return null; } }
 function writeStore(key, value) { try { localStorage.setItem(key, value); } catch {} }
@@ -46,7 +48,68 @@ function isDataValid(data) {
 }
 function stripDangerous(value) { return String(value ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 240); }
 function friendlyDate(iso, options) { return new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC', ...options }).format(dayDate(iso)); }
-function menuFor(date, ruId) { return state.data?.days?.[date]?.restaurants?.[ruId] || null; }
+function liveKey(date, ruId) {return date + '|' + (sourceForRu(ruId) || 'invalid');}
+function liveMenuFor(date, ruId) {
+  const entry = state.liveMenus.get(liveKey(date,ruId));
+  return isValidLiveEntry(entry,date,ruId) ? entry : null;
+}
+function menuFor(date, ruId) { return liveMenuFor(date,ruId) || state.data?.days?.[date]?.restaurants?.[ruId] || null; }
+function hydrateLiveMenus() {
+  try {
+    const stored = JSON.parse(readStore(STORAGE_LIVE) || '{}');
+    if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return;
+    const first = addDays(sPauloParts().iso,-1);
+    const last = addDays(sPauloParts().iso,14);
+    for (const [key,value] of Object.entries(stored).slice(0,50)) {
+      const [iso,sourceId] = key.split('|');
+      if (!iso || iso < first || iso > last) continue;
+      const ru = RU_LIST.find(r => sourceForRu(r.id) === sourceId);
+      if (ru && isValidLiveEntry(value,iso,ru.id)) state.liveMenus.set(key,value);
+    }
+  } catch { /* armazenamento local pode estar bloqueado ou conter dados legados */ }
+}
+function persistLiveMenus() {
+  const today = sPauloParts().iso;
+  const earliest = addDays(today,-1), latest = addDays(today,14);
+  const entries = [...state.liveMenus.entries()]
+    .filter(([key,value]) => {
+      const [iso,sourceId] = key.split('|');
+      const ru = RU_LIST.find(r => sourceForRu(r.id) === sourceId);
+      return iso >= earliest && iso <= latest && ru && isValidLiveEntry(value,iso,ru.id);
+    }).slice(-36);
+  writeStore(STORAGE_LIVE,JSON.stringify(Object.fromEntries(entries)));
+}
+async function refreshLive({force = false} = {}) {
+  const ruId = state.selectedRu;
+  const iso = state.selectedDate || sPauloParts().iso;
+  if (!ruId || !navigator.onLine) return;
+  const key = liveKey(iso,ruId);
+  const now = Date.now();
+  if (!force && now-(state.liveChecks.get(key) || 0) < 4*60_000) return;
+  if (state.livePending.has(key)) return state.livePending.get(key);
+  state.liveChecks.set(key,now);
+  const task = readLiveMenu(ruId,iso).then(result => {
+    state.liveStatus.set(key,{status:result.status,at:new Date().toISOString()});
+    if (result.status === 'VALID_MENU') {
+      // Apenas dados positivos e validados podem alterar o que aparece.
+      const payload = {iso,ruId,meals:result.meals,sourceRestaurantId:result.sourceId,fetchedAt:result.fetchedAt};
+      state.liveMenus.set(key,payload);
+      persistLiveMenus();
+    } else if (result.status === 'PARSE_ERROR') {
+      console.warn('Cardápio FUMP não reconhecido; preservando contingência', result.error);
+    }
+    if (key === liveKey(state.selectedDate || sPauloParts().iso,state.selectedRu)) {
+      renderDates();
+      renderMenus();
+    }
+    return result;
+  }).catch(error => {
+    state.liveStatus.set(key,{status:'FETCH_ERROR',at:new Date().toISOString()});
+    console.warn('Falha na consulta direta FUMP; mantendo contingência',error?.name || 'ERROR');
+  }).finally(() => state.livePending.delete(key));
+  state.livePending.set(key,task);
+  return task;
+}
 function el(tag, className, text) { const e = document.createElement(tag); if (className) e.className = className; if (text !== undefined) e.textContent = text; return e; }
 function iconSVG(paths) { return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`; }
 function selectedRu() { return RU_LIST.find(ru => ru.id === state.selectedRu); }
@@ -133,6 +196,7 @@ function renderRestaurant() {
       renderRestaurant();
       renderDates();
       renderMenus();
+      refreshLive();
       $('restaurant-dialog').close();
       $('restaurant-trigger').focus();
     });
@@ -175,7 +239,7 @@ function renderDates({ scroll = false } = {}) {
     const iso = addDays(today, offset);
     const date = dayDate(iso);
     const isWeekend = [0, 6].includes(date.getUTCDay());
-    const withoutMenu = isMissingMenu(state.data, iso, state.selectedRu);
+    const withoutMenu = !!(state.data?.days && !menuFor(iso,state.selectedRu) && isMissingMenu(state.data, iso, state.selectedRu));
     const card = el('button', 'date-card');
     card.type = 'button';
     card.dataset.iso = iso;
@@ -192,6 +256,7 @@ function renderDates({ scroll = false } = {}) {
       // Focus returns to the new node after re-render (keyboard accessibility).
       if (event?.detail === 0) dateStrip.querySelector(`[data-iso="${iso}"]`)?.focus({preventScroll:true});
       renderMenus();
+      refreshLive();
     });
     dateStrip.append(card);
   }
@@ -305,11 +370,11 @@ function formatUpdate(iso) {
   if (!iso || !Number.isFinite(Date.parse(iso))) return '';
   return new Intl.DateTimeFormat('pt-BR', { timeZone: TIMEZONE, dateStyle:'short', timeStyle:'short' }).format(new Date(iso));
 }
-function renderLastUpdateLine(iso) {
+function renderLastUpdateLine(iso, source = '') {
   const line = $('update-line');
   if (!line) return;
   const formatted = formatUpdate(iso);
-  line.textContent = formatted ? `Última atualização: ${formatted} · Fonte: FUMP` : '';
+  line.textContent = formatted ? `Cardápio consultado: ${formatted}${source ? ' · ' + source : ''}` : '';
 }
 function renderMenus() {
   const today = sPauloParts();
@@ -318,23 +383,35 @@ function renderMenus() {
   $('menu-heading').textContent = day === today.iso ? 'Cardápio de hoje' : `Cardápio de ${friendlyDate(day,{day:'numeric',month:'short'})}`;
   const list = $('meal-list'); list.replaceChildren();
   $('connection-notice').hidden = true;
+  const live = liveMenuFor(day,state.selectedRu);
   const data = menuFor(day,state.selectedRu);
   const fallbackUpdate = state.data?.generatedAt || null;
+  const liveStatus = state.liveStatus.get(liveKey(day,state.selectedRu));
+  const sourceLabel = live
+    ? (liveStatus?.status === 'VALID_MENU' ? 'FUMP ao vivo' : 'Última consulta direta válida')
+    : state.snapshotSource === 'firestore' ? 'Cópia sincronizada (Firestore)'
+    : state.snapshotSource === 'static' ? 'Cópia estática'
+    : 'Cópia local';
   if (!ru) {
     const msg = el('div','no-menu');
     msg.append(el('h3','', 'Primeiro, escolha seu RU'), el('p','', 'Salvaremos sua preferência para abrir direto no cardápio das próximas vezes.'));
     list.append(msg); renderLastUpdateLine(null); return;
   }
-  if (state.lastError && day === today.iso) {
+  if (state.lastError && !live && day === today.iso) {
     $('connection-notice').textContent = state.data
       ? 'Não foi possível atualizar agora. Exibindo os últimos dados disponíveis; confira a FUMP antes de sair.'
       : 'Não foi possível consultar o cardápio neste momento. Confira os dados diretamente na FUMP.';
     $('connection-notice').hidden = false;
-  } else if (state.fallbackUsed && day === today.iso) {
+  } else if (state.fallbackUsed && !live && day === today.iso) {
     $('connection-notice').textContent = 'Dados carregados da cópia estática de contingência; confirme na FUMP antes de sair.';
     $('connection-notice').hidden = false;
   } else if (!navigator.onLine) {
     $('connection-notice').textContent = 'Você está offline. Os dados disponíveis podem estar desatualizados.';
+    $('connection-notice').hidden = false;
+  }
+  if (day === today.iso && liveStatus && liveStatus.status !== 'VALID_MENU' && !live && data &&
+      !state.lastError && !state.fallbackUsed && navigator.onLine) {
+    $('connection-notice').textContent = 'Consulta direta indisponível; exibindo a última versão sincronizada.';
     $('connection-notice').hidden = false;
   }
   // Exibir somente refeições efetivamente publicadas pela FUMP. Não criar cartões vazios.
@@ -342,7 +419,7 @@ function renderMenus() {
   const hasItems = entries.some(m => Array.isArray(data?.meals?.[m]?.items) && data.meals[m].items.length);
   if (!hasItems) {
     list.append(renderNoMenu(ru,day));
-    renderLastUpdateLine(fallbackUpdate);
+    renderLastUpdateLine(data?.fetchedAt || fallbackUpdate,sourceLabel);
     return;
   }
   const hasRealMeal = id => !!data?.meals?.[id]?.items?.length;
@@ -359,7 +436,7 @@ function renderMenus() {
     $('connection-notice').textContent = 'A última atualização tem mais de 18 horas. Este cardápio pode estar desatualizado; confirme na FUMP.';
     $('connection-notice').hidden = false;
   }
-  renderLastUpdateLine(updatedAt);
+  renderLastUpdateLine(updatedAt,sourceLabel);
 }
 function replaceIfNewer(value) {
   if (!isDataValid(value)) return false;
@@ -390,13 +467,16 @@ async function fetchMenus() {
   try {
     const config = window.RU_CONFIG || {};
     let data;
+    let snapshotSource = 'static';
     if (config.publicFeedUrl) {
+      snapshotSource = 'firestore';
       data = await getJSON(config.publicFeedUrl);
     } else if (config.firebaseProjectId) {
       const id = encodeURIComponent(config.firebaseProjectId);
       try {
         const doc = await getJSON(`https://firestore.googleapis.com/v1/projects/${id}/databases/(default)/documents/publicMenus/current`);
         data = JSON.parse(doc.fields?.payload?.stringValue || 'null');
+        snapshotSource = 'firestore';
       } catch (feedError) {
         // Contingência exclusivamente com dados reais e recentes já publicados no próprio Hosting.
         // O fallback vazio/desatualizado NÃO mascara a indisponibilidade do Firestore.
@@ -412,13 +492,14 @@ async function fetchMenus() {
         if (!isDataValid(staticData) || !validAge || !hasConfirmedLunch) throw feedError;
         data = staticData;
         state.fallbackUsed = true;
+        snapshotSource = 'static';
       }
     } else {
       data = await getJSON('/data/cardapios.json');
     }
     if (!isDataValid(data)) throw new Error('Dados fora do formato esperado');
     await loadIngredientCatalog();
-    replaceIfNewer(data);
+    if (replaceIfNewer(data)) state.snapshotSource = snapshotSource;
   } catch (error) {
     console.warn('Falha ao carregar cardápio:', error);
     state.lastError = error;
@@ -446,13 +527,14 @@ function boot() {
   state.selectedRu = RU_LIST.some(ru => ru.id === savedRu) ? savedRu : null;
   state.selectedDate = sPauloParts().iso;
   try { const cached = JSON.parse(readStore(STORAGE_DATA) || 'null'); if (isDataValid(cached)) state.data = cached; } catch {}
+  hydrateLiveMenus();
   initDialog();
   renderRestaurant(); renderDates({scroll:true}); renderMenus();
   loadIngredientCatalog().then(() => renderMenus());
-  $('today-button').addEventListener('click',()=> {state.selectedDate=sPauloParts().iso;renderDates({scroll:true});renderMenus();});
-  window.addEventListener('online',fetchMenus);
+  $('today-button').addEventListener('click',()=> {state.selectedDate=sPauloParts().iso;renderDates({scroll:true});renderMenus();refreshLive();});
+  window.addEventListener('online',()=>{fetchMenus();refreshLive({force:true});});
   window.addEventListener('offline',renderMenus);
-  document.addEventListener('visibilitychange',()=> { if(!document.hidden){maybeTick();fetchMenus();} });
+  document.addEventListener('visibilitychange',()=> { if(!document.hidden){maybeTick();fetchMenus();refreshLive();} });
   let previousToday = sPauloParts().iso;
   let previousMealPeriod = null;
   function maybeTick() {
@@ -460,13 +542,15 @@ function boot() {
     const currentPeriod = clock.hours * 60 + clock.minutes >= 870 ? 'jantar' : 'almoco';
     if (clock.iso !== previousToday) {
       if (state.selectedDate === previousToday) state.selectedDate = clock.iso;
-      previousToday = clock.iso; renderDates({scroll:true}); renderMenus();
+      previousToday = clock.iso; renderDates({scroll:true}); renderMenus(); refreshLive({force:true});
     } else if (previousMealPeriod !== currentPeriod) renderMenus();
     renderHours();
+    if (!document.hidden) refreshLive();
     previousMealPeriod = currentPeriod;
   }
   setInterval(maybeTick,60_000); maybeTick();
   fetchMenus();
+  refreshLive();
   if (!state.selectedRu) {requestAnimationFrame(() => openDialog());}
   if ('serviceWorker' in navigator && window.isSecureContext) window.addEventListener('load',()=>navigator.serviceWorker.register('/service-worker.js?v=hub-20261109-scheduled-only-r1').catch(()=>{}));
 }

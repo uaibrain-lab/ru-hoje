@@ -68,7 +68,7 @@ jobs:
       - name: Coleta e dry-run somente leitura
         working-directory: cardapios-qa
         env:
-          DAYS: ${{ inputs.days }}
+          DAYS: ${{ inputs.days || '7' }}
         run: |
           case "$DAYS" in 1|2|3|4|5|6|7) ;; *) echo 'DIAS_INVALIDOS'; exit 1;; esac
           node scripts/ocupa-qa-menu-sync.mjs --mode=dry-run --days="$DAYS" > "$RUNNER_TEMP/ocupa-dry-run.json"

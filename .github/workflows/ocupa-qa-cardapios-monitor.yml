@@ -1,4 +1,4 @@
-name: OCUPA UFMG - FUMP API monitor (read-only, 14 days)
+name: OCUPA UFMG - FUMP API monitor (read-only, continuous)
 
 on:
   workflow_dispatch:
@@ -9,7 +9,7 @@ on:
         default: '7'
         type: string
   schedule:
-    # América/São_Paulo; a janela termina em 2026-11-09 inclusive.
+    # América/São_Paulo; monitoramento contínuo, sem data de encerramento.
     - cron: '0,30 5-7 * * 1-6'
       timezone: 'America/Sao_Paulo'
     - cron: '0,15,30,45 8-10 * * 1-6'
@@ -38,8 +38,6 @@ jobs:
       contents: read
       actions: read
     env:
-      MONITOR_START_DATE: '2026-10-27'
-      MONITOR_WINDOW_DAYS: '14'
       DAYS: ${{ inputs.days || '7' }}
     steps:
       - name: Validar repositório e janela
@@ -101,7 +99,7 @@ jobs:
       - name: Consultar API FUMP e calcular diferenças
         working-directory: cardapios-qa
         run: |
-          node scripts/ocupa-qa-api-monitor.mjs --days="$DAYS" --window-start="$MONITOR_START_DATE" --window-days="$MONITOR_WINDOW_DAYS" --state-dir=monitor-state
+          node scripts/ocupa-qa-api-monitor.mjs --days="$DAYS" --state-dir=monitor-state
 
       - name: Publicar estado e relatório como artefatos
         uses: actions/upload-artifact@v4
