@@ -67,11 +67,19 @@ export async function collectSnapshot(days = 7, {
 } = {}) {
   if (!Number.isInteger(days) || days < 1 || days > 7) fail('DIAS_INVALIDOS');
 
-  // Falha da lista de RUs impede mapear a origem com segurança: abortar a coleta inteira.
-  checkRestaurantList(await safeGet(`${API_BASE}/cardapios/restaurantes`, {getJsonFn, maxAttempts, baseDelayMs}));
   const today = dateInBrasilia(now);
   const snapshot = {schemaVersion: 1, generatedAt: new Date().toISOString(), source: SOURCE, days: {}, verifiedCompleteDates: []};
   const rows = [];
+  // A lista de restaurantes é apenas uma verificação auxiliar. A origem (ID)
+  // de cada endpoint já é fixa e conhecida. Se /restaurantes estiver fora do ar,
+  // nunca bloquear /cardapios/cardapio dos quatro RUs por isso.
+  try {
+    checkRestaurantList(await safeGet(`${API_BASE}/cardapios/restaurantes`, {getJsonFn, maxAttempts, baseDelayMs}));
+  } catch (error) {
+    const detail = diagnosticCode(error);
+    console.warn(`FUMP_RESTAURANTES_UNAVAILABLE=${detail}; tentando endpoints individuais`);
+    rows.push({iso: today, sourceId: null, stage:'restaurant-list', status:'FETCH_ERROR', error: detail});
+  }
 
   for (let offset = 0; offset < days; offset += 1) {
     const iso = addDate(today, offset);
@@ -90,6 +98,11 @@ export async function collectSnapshot(days = 7, {
       let meals;
       let meta;
       try {
+        // Uma resposta explicitamente atribuída a outro RU nunca pode contaminar
+        // a publicação, mesmo com o mapeamento auxiliar indisponível.
+        if (raw?.id != null && String(raw.id) !== String(source.sourceId)) {
+          throw new Error('FUMP_RESPONSE_RU_MISMATCH');
+        }
         ({meals, meta} = parseMenuJson(raw, {iso, sourceId: source.sourceId}));
       } catch (error) {
         rows.push({iso, sourceId: source.sourceId, status: 'PARSE_ERROR', error: diagnosticCode(error)});
@@ -97,18 +110,21 @@ export async function collectSnapshot(days = 7, {
       }
 
       const hasMeals = Object.keys(meals).length > 0;
-      const datedResponse = meta.cardapios > 0 && meta.checkedDates > 0;
-      if (!hasMeals || !datedResponse) {
-        // Empty/not-dated payload is not proof that the RU is closed.
-        rows.push({iso, sourceId: source.sourceId, status: 'NOT_PUBLISHED', meals: {}, meta});
+      if (!hasMeals) {
+        // Vazio não significa RU fechado e nunca autoriza remoção.
+        rows.push({iso, sourceId: source.sourceId, status:'NOT_PUBLISHED', meals:{}, meta});
         continue;
       }
-
-      verifiedSources.add(String(source.sourceId));
+      const dateEvidence = meta.checkedDates > 0 ? 'response' : 'request';
+      // Se a FUMP não inclui "data" no corpo, os pratos foram solicitados
+      // para uma ÚNICA data exata. Podem ser mesclados conservadoramente,
+      // mas nunca tornam a data autoritativa para apagar dados antigos.
+      if (dateEvidence === 'response') verifiedSources.add(String(source.sourceId));
       rows.push({
         iso,
         sourceId: source.sourceId,
         status: 'VALID_MENU',
+        dateEvidence,
         meals: Object.fromEntries(Object.entries(meals).map(([key, meal]) => [key, meal.items.length])),
         meta
       });
