@@ -9,7 +9,7 @@ const STORAGE_RU = 'ruhoje:restaurant:v1';
 const STORAGE_PREFERS_CAFE = 'ruhoje:prefers-cafe:v1';
 const STORAGE_DATA = 'ruhoje:menus:v1';
 const STORAGE_LIVE = 'ruhoje:live-menus:v1';
-const STORAGE_PREFETCH = 'ruhoje:prefetch-checks:v1';
+const STORAGE_PREFETCH = 'ruhoje:prefetch-checks:v2';
 const TIMEZONE = 'America/Sao_Paulo';
 const INGREDIENT_CATALOG_URL = '/data/pratos-ingredientes.json';
 const RU_LIST = [
@@ -671,7 +671,7 @@ function initTheme() {
  */
 function setupPwaUpdates() {
   if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
-  const releaseKey='ruhoje:sw-refresh:hub-v267-20261116-prefetch-cache-heal-r1';
+  const releaseKey='ruhoje:sw-refresh:hub-v268-20261116-autoprefetch-r1';
   const hadController=!!navigator.serviceWorker.controller;
   let reloadRequested=false;
   let reloading=false;
