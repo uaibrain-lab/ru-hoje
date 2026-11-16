@@ -53,11 +53,13 @@ try {
   const page=await browser.newPage({viewport:{width:390,height:844},serviceWorkers:'block'});
   let interceptedRequests=0;
   let liveEnabled=false;
+  const liveRequests=[];
   // Evita contato externo e prova o fluxo real CORS -> parser -> UI.
   await page.route('https://fump.ufmg.br:3003/**',async route=> {
     const request = new URL(route.request().url());
     const id = request.searchParams.get('id');
     const date = request.searchParams.get('dataInicio');
+    if (liveEnabled) liveRequests.push({id,date});
     const cardapios = liveEnabled && id==='6' && date===today
       ? [{data:today,refeicoes:[{tipoRefeicao:'Almoço',pratos:[
         {tipoPrato:'Prato protéico 1',descricaoPrato:'Frango ao Vivo'},
@@ -106,6 +108,19 @@ try {
   await page.evaluate(()=>window.dispatchEvent(new Event('online')));
   await page.getByText('Frango ao Vivo',{exact:true}).waitFor({timeout:12000});
   assert.match(await page.locator('#update-line').innerText(),/FUMP ao vivo/);
+  // O coletor continua em segundo plano somente depois do primeiro resultado.
+  // Valida que as futuras datas do mesmo RU têm prioridade sobre os demais RUs.
+  const firstFuture=new Date(today+'T12:00:00Z');
+  firstFuture.setUTCDate(firstFuture.getUTCDate()+1);
+  const nextDay=firstFuture.toISOString().slice(0,10);
+  const deadline=Date.now()+9000;
+  while (!liveRequests.some(x=>x.id==='6' && x.date===nextDay) && Date.now()<deadline) {
+    await new Promise(resolve=>setTimeout(resolve,100));
+  }
+  const firstRu6=liveRequests.filter(x=>x.id==='6');
+  assert.ok(firstRu6.some(x=>x.date===today),'Não consultou primeiro a data escolhida');
+  assert.ok(firstRu6.some(x=>x.date===nextDay),'Não fez pré-carregamento da data seguinte');
+  assert.deepEqual(liveRequests.filter(x=>x.date===nextDay).slice(0,1).map(x=>x.id),['6']);
   assert.deepEqual(errors,[],'Erros de console ou JavaScript durante teste ponta a ponta');
   console.log('E2E aprovado: cache Firestore, consulta FUMP ao vivo, CORS, atualização de refeições, troca de RU e data.');
 } finally {await browser?.close();await new Promise(resolve=>server.close(resolve));}
