@@ -6,7 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {Firestore, FieldValue} from '@google-cloud/firestore';
 import {mergeSnapshots} from './merge-snapshots.mjs';
 import {decideWrite} from './ocupa-qa-menu-core.mjs';
-import {PROJECT, DOCUMENT, assertProductionEnvironment, collectSnapshot} from './hub-production-sync-core.mjs';
+import {PROJECT, DOCUMENT, assertProductionEnvironment, collectSnapshot, assertCurrentWeekdayCoverage} from './hub-production-sync-core.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -33,6 +33,9 @@ async function backup(oldPayload, updateTime) {
 
 async function main() {
   const {snapshot, rows} = await collectSnapshot(days);
+  // Apply de produção exige cobertura atual positiva e datada dos quatro RUs nos dias úteis.
+  // Dry-run/collect permanecem disponíveis para diagnosticar fontes incompletas sem escrita.
+  if (mode === 'apply') assertCurrentWeekdayCoverage(rows);
   const summary = {project: PROJECT, document: DOCUMENT, mode, rows, days: Object.keys(snapshot.days).length, verifiedCompleteDates: snapshot.verifiedCompleteDates.length, remoteWrites: 0};
   if (mode === 'collect') { console.log(JSON.stringify(summary)); return; }
   const db = new Firestore({projectId: PROJECT, databaseId: '(default)'});
