@@ -6,7 +6,7 @@ window.RU_CONFIG = Object.freeze({
   publicFeedUrl: "",
   // Preencher com a origem HTTPS do Worker depois de testar o acesso real à FUMP.
   // Exemplo: "https://hub-fump-proxy.<sua-conta>.workers.dev"
-  fumpProxyUrl: ""
+  fumpProxyUrl: "https://hub-fump-proxy.hubufmg.workers.dev"
 });
 
 /* FESTAS_CONFIG_V2_START — valores públicos de desenvolvimento */
