@@ -53,7 +53,7 @@ test('resposta vazia de um RU não declara a data completa nem autoriza apagar d
     maxAttempts:1
   });
   assert.deepEqual(snapshot.verifiedCompleteDates,[]);
-  assert.equal(rows.filter(x=>x.status==='resposta-vazia-nao-autoritativa').length,2);
+  assert.equal(rows.filter(x=>x.status==='resposta-incompleta-nao-autoritativa').length,2);
   assert.equal(snapshot.days[iso].restaurants['setorial-i'],undefined);
   assert.equal(snapshot.days[iso].restaurants['setorial-ii'],undefined);
 
@@ -71,7 +71,7 @@ test('somente cobertura positiva e datada das quatro fontes autoriza data comple
     maxAttempts:1
   });
   assert.deepEqual(snapshot.verifiedCompleteDates,[iso]);
-  assert.equal(rows.filter(x=>x.status==='com-cardapio').length,4);
+  assert.equal(rows.filter(x=>x.status==='com-cardapio-datado').length,4);
 });
 
 test('resposta de rede registra causa sanitizada e retenta', async () => {
