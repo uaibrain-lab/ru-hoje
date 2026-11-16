@@ -10,21 +10,22 @@ Este relay usa `UrlFetchApp` no ambiente Google para fazer somente as duas consu
 
 1. Abra https://script.google.com/ e crie um projeto novo chamado **Hub UFMG — Relay FUMP**.
 2. Copie todo o conteúdo de `google-apps-script/FumpRelay.gs` para o editor `Code.gs`.
-3. Abra **Configurações do projeto → Propriedades do script → Adicionar propriedade**:
+3. Antes de implantar, execute a função `diagnosticarAcessoFump` no editor. Autorize o escopo de requisição externa. O log deve mostrar `FUMP_PROBE status=HTTP_200 id=6 ... cardapios=N`, com `N > 0`. Essa é a prova de que a infraestrutura Google consegue alcançar a FUMP. Se houver timeout ou `cardapios=0`, pare aqui: não implante nem habilite publicação; precisamos de outro relay ou liberação de rede pela FUMP.
+4. Abra **Configurações do projeto → Propriedades do script → Adicionar propriedade**:
    - Nome: `FUMP_RELAY_TOKEN`
    - Valor: um token aleatório de 64 caracteres hexadecimais.
-4. Gere um token no PowerShell (não o publique nem o envie no chat):
+5. Gere um token no PowerShell (não o publique nem o envie no chat):
    ```powershell
    $token = -join (1..64 | ForEach-Object { '{0:x}' -f (Get-Random -Maximum 16) })
    Set-Clipboard $token
    Write-Host "Token gerado e copiado para a área de transferência."
    ```
    Cole esse mesmo valor na propriedade de script e, depois, no GitHub Secret descrito abaixo. Não o grave em arquivo nem no repositório.
-5. Em **Implantar → Nova implantação → Aplicativo da Web**:
+6. Em **Implantar → Nova implantação → Aplicativo da Web**:
    - Executar como: **Você**
    - Quem pode acessar: **Qualquer pessoa**
    - Implantar e autorizar o escopo de requisição externa.
-6. Copie a URL terminada em `/exec` da implantação. Não compartilhe o token.
+7. Copie a URL terminada em `/exec` da implantação. Não compartilhe o token.
 
 ## Configuração do GitHub
 
