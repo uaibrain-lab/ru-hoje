@@ -1,4 +1,4 @@
-name: OCUPA UFMG - FUMP API monitor (read-only, 14 days)
+name: OCUPA UFMG - FUMP API monitor (read-only, manual)
 
 on:
   workflow_dispatch:
@@ -8,18 +8,6 @@ on:
         required: true
         default: '7'
         type: string
-  schedule:
-    # América/São_Paulo; a janela termina em 2026-11-09 inclusive.
-    - cron: '0,30 5-7 * * 1-6'
-      timezone: 'America/Sao_Paulo'
-    - cron: '0,15,30,45 8-10 * * 1-6'
-      timezone: 'America/Sao_Paulo'
-    - cron: '0,30 11-13 * * 1-6'
-      timezone: 'America/Sao_Paulo'
-    - cron: '0,15,30,45 14-17 * * 1-6'
-      timezone: 'America/Sao_Paulo'
-    - cron: '0 18-21 * * 1-6'
-      timezone: 'America/Sao_Paulo'
 
 permissions:
   contents: read
@@ -31,7 +19,7 @@ concurrency:
 
 jobs:
   monitor:
-    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     timeout-minutes: 12
     permissions:
