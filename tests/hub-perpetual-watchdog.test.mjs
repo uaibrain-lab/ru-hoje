@@ -25,7 +25,7 @@ test('watchdog is scheduled every hour on every day with no expiry', () => {
 });
 
 test('watchdog has only the permissions needed for health, recovery and heartbeat', () => {
-  assert.ok(watchdog.includes('contents: write'));
+  assert.ok(watchdog.includes('contents: read'));
   assert.ok(watchdog.includes('actions: write'));
   assert.ok(watchdog.includes('issues: write'));
 });
