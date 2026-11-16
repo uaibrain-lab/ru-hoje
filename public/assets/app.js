@@ -89,7 +89,7 @@ async function refreshLive({force = false} = {}) {
   if (state.livePending.has(key)) return state.livePending.get(key);
   state.liveChecks.set(key,now);
   const task = readLiveMenu(ruId,iso).then(result => {
-    state.liveStatus.set(key,{status:result.status,at:new Date().toISOString()});
+    state.liveStatus.set(key,{status:result.status,at:new Date().toISOString(),error:result.error || null});
     if (result.status === 'VALID_MENU') {
       // Apenas dados positivos e validados podem alterar o que aparece.
       const payload = {iso,ruId,meals:result.meals,sourceRestaurantId:result.sourceId,fetchedAt:result.fetchedAt};
@@ -418,8 +418,23 @@ function renderMenus() {
   const entries = ['almoco','jantar','cafe'].filter(m => ru.meals.includes(m) && Array.isArray(data?.meals?.[m]?.items) && data.meals[m].items.length > 0);
   const hasItems = entries.some(m => Array.isArray(data?.meals?.[m]?.items) && data.meals[m].items.length);
   if (!hasItems) {
+    // Não esconder falhas de leitura atrás da mensagem "sem cardápio".
+    if (liveStatus?.status === 'FETCH_ERROR') {
+      $('connection-notice').textContent = 'Não foi possível ler a API da FUMP neste navegador (rede ou bloqueio CORS). O sincronizador também não forneceu um cardápio válido para este RU/data.';
+      $('connection-notice').hidden = false;
+    } else if (liveStatus?.status === 'PARSE_ERROR') {
+      $('connection-notice').textContent = 'A FUMP respondeu em formato inesperado. Os pratos não foram publicados para evitar informação incorreta.';
+      $('connection-notice').hidden = false;
+    } else if (liveStatus?.status === 'NOT_PUBLISHED') {
+      $('connection-notice').textContent = 'A consulta à FUMP não retornou pratos nesta data. Isso não confirma que o RU esteja fechado.';
+      $('connection-notice').hidden = false;
+    } else if (!state.data?.days?.[day]?.restaurants?.[state.selectedRu]) {
+      $('connection-notice').textContent = 'Ainda não há cardápio validado neste aplicativo para a data escolhida.';
+      $('connection-notice').hidden = false;
+    }
     list.append(renderNoMenu(ru,day));
-    renderLastUpdateLine(data?.fetchedAt || fallbackUpdate,sourceLabel);
+    // Uma atualização antiga do arquivo geral não é a data da consulta deste RU.
+    renderLastUpdateLine(data?.fetchedAt || null,data?.fetchedAt ? sourceLabel : '');
     return;
   }
   const hasRealMeal = id => !!data?.meals?.[id]?.items?.length;
