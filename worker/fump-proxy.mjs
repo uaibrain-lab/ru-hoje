@@ -138,8 +138,19 @@ export async function handleRequest(request,{
     if(!(isRestaurants ? Array.isArray(raw) : validSourcePayload(raw,id,date))) {
       return json({error:'UPSTREAM_SCHEMA_INVALID'},502,origin);
     }
-  } catch {
-    return json({error:'UPSTREAM_CONNECT_FAILED'},503,origin);
+  } catch (error) {
+    // Diagnóstico estritamente de transporte: nenhuma URL, payload ou credencial
+    // é registrada. O Worker devolve códigos seguros para diferenciar timeout,
+    // TLS e bloqueio de rede sem mascarar falha como cardápio vazio.
+    const name=String(error?.name||'Error').replace(/[^A-Za-z0-9_]/g,'').slice(0,32);
+    const causeCode=String(error?.cause?.code||error?.code||'')
+      .replace(/[^A-Za-z0-9_]/g,'').slice(0,48);
+    const message=String(error?.message||'')
+      .replace(/https?:\/\/\S+/g,'[URL]').replace(/[\r\n]/g,' ')
+      .slice(0,120);
+    const diagnostic={name,code:causeCode,message};
+    console.warn('FUMP_UPSTREAM_CONNECT_FAILURE',JSON.stringify(diagnostic));
+    return json({error:'UPSTREAM_CONNECT_FAILED',diagnostic},503,origin);
   } finally { clearTimeout(timeout); }
 
   const body=JSON.stringify(raw);
