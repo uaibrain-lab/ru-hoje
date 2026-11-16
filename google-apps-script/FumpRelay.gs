@@ -147,3 +147,35 @@ function safeRelayCode_(error) {
   return String(error && error.message || 'INTERNAL_ERROR')
     .replace(/[^A-Za-z0-9_-]/g,'_').slice(0,64).toUpperCase();
 }
+
+
+/**
+ * Execute manualmente no editor Apps Script antes de implantar.
+ * Confirma se a rede Google alcança o endpoint atual e imprime apenas metadados.
+ */
+function diagnosticarAcessoFump() {
+  const today = Utilities.formatDate(new Date(), 'America/Sao_Paulo', 'yyyy-MM-dd');
+  const url = FUMP_RELAY_API + '/cardapios/cardapio?id=6&dataInicio=' +
+    encodeURIComponent(today) + '&dataFim=' + encodeURIComponent(today);
+  const response = UrlFetchApp.fetch(url, {
+    method:'get',
+    headers:{Accept:'application/json'},
+    followRedirects:false,
+    muteHttpExceptions:true,
+    validateHttpsCertificates:true,
+    timeoutSeconds:25
+  });
+  const status = response.getResponseCode();
+  if (status !== 200) {
+    console.log('FUMP_PROBE status=HTTP_' + status + ' date=' + today);
+    throw new Error('FUMP_PROBE_HTTP_' + status);
+  }
+  const data = JSON.parse(response.getContentText());
+  const count = Array.isArray(data.cardapios) ? data.cardapios.length : -1;
+  console.log('FUMP_PROBE status=HTTP_200 id=' + String(data.id || 'unknown') +
+    ' date=' + today + ' cardapios=' + count);
+  if (String(data.id) !== '6' || !Array.isArray(data.cardapios)) {
+    throw new Error('FUMP_PROBE_SCHEMA_INVALID');
+  }
+  return {status:200,id:String(data.id),date:today,cardapios:count};
+}
