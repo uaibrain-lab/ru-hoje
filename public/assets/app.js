@@ -634,6 +634,47 @@ function initTheme() {
   apply();
 }
 
+/**
+ * Troca uma versão antiga da aplicação automaticamente quando um Service
+ * Worker novo assume. Não interrompe diálogos/formulários em andamento.
+ * O ID é por release: novos deploys poderão atualizar normalmente.
+ */
+function setupPwaUpdates() {
+  if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
+  const releaseKey='ruhoje:sw-refresh:hub-v267-20261116-prefetch-cache-heal-r1';
+  const hadController=!!navigator.serviceWorker.controller;
+  let reloadRequested=false;
+  let reloading=false;
+  const safeToReload=()=>!document.hidden &&
+    !document.querySelector('dialog[open]') &&
+    !document.activeElement?.matches('input, textarea, [contenteditable="true"]');
+  const refreshIfSafe=()=>{
+    if (!reloadRequested || reloading || !safeToReload()) return;
+    try {
+      if (sessionStorage.getItem(releaseKey)==='done') return;
+      sessionStorage.setItem(releaseKey,'done');
+    } catch { /* navegação sem armazenamento continua possível */ }
+    reloading=true;
+    window.location.reload();
+  };
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if (!hadController) return; // Primeiro controle: app atual já é a versão correta.
+    reloadRequested=true;
+    refreshIfSafe();
+  });
+  window.addEventListener('focus',refreshIfSafe);
+  document.addEventListener('visibilitychange',refreshIfSafe);
+  document.addEventListener('click',()=>queueMicrotask(refreshIfSafe));
+  const update=()=>navigator.serviceWorker.getRegistration()
+    .then(registration=>registration?.update()).catch(()=>{});
+  const register=()=>navigator.serviceWorker.register('/service-worker.js',{updateViaCache:'none'})
+    .then(registration=>registration.update()).catch(()=>{});
+  if(document.readyState==='complete') register();
+  else window.addEventListener('load',register,{once:true});
+  window.addEventListener('online',update);
+  window.addEventListener('pageshow',event=>{if(event.persisted) update();});
+}
+
 function boot() {
   initTheme();
   const savedRu = readStore(STORAGE_RU);
@@ -677,6 +718,6 @@ function boot() {
   fetchMenus();
   refreshLive();
   if (!state.selectedRu) {requestAnimationFrame(() => openDialog());}
-  if ('serviceWorker' in navigator && window.isSecureContext) window.addEventListener('load',()=>navigator.serviceWorker.register('/service-worker.js?v=hub-20261109-scheduled-only-r1').catch(()=>{}));
+  setupPwaUpdates();
 }
 boot();
