@@ -84,16 +84,20 @@ export async function handleRequest(request,{
     return new Response(null,{status:204,headers});
   }
   if (request.method!=='GET') return json({error:'METHOD_NOT_ALLOWED'},405,origin);
-  if (url.pathname!=='/api/menu') return json({error:'NOT_FOUND'},404,origin);
+  const isRestaurants=url.pathname==='/api/restaurants';
+  const isMenu=url.pathname==='/api/menu';
+  if (!isRestaurants && !isMenu) return json({error:'NOT_FOUND'},404,origin);
   const id=url.searchParams.get('id');
   const date=url.searchParams.get('data');
-  if (!IDS.has(id) || !dateInWindow(date,now) || url.searchParams.size!==2) {
+  if ((isRestaurants && url.searchParams.size!==0) ||
+      (isMenu && (!IDS.has(id) || !dateInWindow(date,now) || url.searchParams.size!==2))) {
     return json({error:'INVALID_SOURCE_OR_DATE'},400,origin);
   }
 
   // Cache compartilhado no POP Cloudflare; não contém cabeçalho CORS
   // para permitir várias origens legítimas sobre a mesma resposta.
-  const cacheKey=new Request(`${url.origin}/api/menu?id=${id}&data=${date}`,{method:'GET'});
+  const cacheKey=new Request(isRestaurants ? `${url.origin}/api/restaurants`
+    : `${url.origin}/api/menu?id=${id}&data=${date}`,{method:'GET'});
   if(cache){
     try {
       const hit=await cache.match(cacheKey);
@@ -108,10 +112,12 @@ export async function handleRequest(request,{
     } catch { /* cache indisponível não impede acesso à origem */ }
   }
 
-  const target = new URL('/cardapios/cardapio',API_ORIGIN);
-  target.searchParams.set('id',id);
-  target.searchParams.set('dataInicio',date);
-  target.searchParams.set('dataFim',date);
+  const target = new URL(isRestaurants ? '/cardapios/restaurantes' : '/cardapios/cardapio',API_ORIGIN);
+  if(isMenu){
+    target.searchParams.set('id',id);
+    target.searchParams.set('dataInicio',date);
+    target.searchParams.set('dataFim',date);
+  }
   const controller=new AbortController();
   const timeout=setTimeout(()=>controller.abort(),9000);
   let raw;
@@ -129,13 +135,15 @@ export async function handleRequest(request,{
     if(!body || body.length>MAX_BODY) return json({error:'UPSTREAM_BODY_INVALID'},502,origin);
     try { raw=JSON.parse(body); }
     catch { return json({error:'UPSTREAM_INVALID_JSON'},502,origin); }
-    if(!validSourcePayload(raw,id,date)) return json({error:'UPSTREAM_SCHEMA_INVALID'},502,origin);
+    if(!(isRestaurants ? Array.isArray(raw) : validSourcePayload(raw,id,date))) {
+      return json({error:'UPSTREAM_SCHEMA_INVALID'},502,origin);
+    }
   } catch {
     return json({error:'UPSTREAM_CONNECT_FAILED'},503,origin);
   } finally { clearTimeout(timeout); }
 
   const body=JSON.stringify(raw);
-  const seconds=raw.cardapios.length ? 240 : 30;
+  const seconds=isRestaurants ? 1800 : (raw.cardapios.length ? 240 : 30);
   if(cache){
     const put=cache.put(cacheKey,new Response(body,{
       status:200,
