@@ -1,0 +1,30 @@
+name: FUMP API connectivity probe (read-only)
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/fump-connectivity-probe.mjs'
+      - '.github/workflows/fump-connectivity-probe.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022, macos-14]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Testar FUMP por HTTPS 443 e API 3003 (somente leitura)
+        shell: bash
+        run: node scripts/fump-connectivity-probe.mjs
