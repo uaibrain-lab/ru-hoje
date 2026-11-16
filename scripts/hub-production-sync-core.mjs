@@ -39,7 +39,11 @@ export async function safeGet(url, {
       const transportCode = diagnosticCode(error);
       const host = (() => { try { return new URL(url).host; } catch { return 'HOST_INVALIDO'; } })();
       console.warn(`FUMP_FETCH_RETRY attempt=${attempt}/${maxAttempts} host=${host} cause=${transportCode}`);
-      if (attempt < maxAttempts) await wait(baseDelayMs * (2 ** (attempt - 1)));
+      if (attempt < maxAttempts) {
+        // Backoff exponencial com jitter leve; não repetir rapidamente falhas persistentes.
+        const jitter = Math.floor(Math.random() * Math.min(500, baseDelayMs));
+        await wait(baseDelayMs * (2 ** (attempt - 1)) + jitter);
+      }
     }
   }
   throw new Error(`FUMP_FETCH_FAILED_${diagnosticCode(lastError)}`, {cause: lastError});
@@ -52,34 +56,68 @@ export async function collectSnapshot(days = 7, {
   baseDelayMs = 800,
 } = {}) {
   if (!Number.isInteger(days) || days < 1 || days > 7) fail('DIAS_INVALIDOS');
+
+  // Falha da lista de RUs impede mapear a origem com segurança: abortar a coleta inteira.
   checkRestaurantList(await safeGet(`${API_BASE}/cardapios/restaurantes`, {getJsonFn, maxAttempts, baseDelayMs}));
   const today = dateInBrasilia(now);
   const snapshot = {schemaVersion: 1, generatedAt: new Date().toISOString(), source: SOURCE, days: {}, verifiedCompleteDates: []};
   const rows = [];
+
   for (let offset = 0; offset < days; offset += 1) {
     const iso = addDate(today, offset);
     const day = {restaurants: {}};
-    const sourcesWithVerifiedMenus = new Set();
+    const verifiedSources = new Set();
+
     for (const source of RU_SOURCES) {
-      const raw = await safeGet(menuUrl(source.sourceId, iso), {getJsonFn, maxAttempts, baseDelayMs});
-      const {meals, meta} = parseMenuJson(raw, {iso, sourceId: source.sourceId});
+      let raw;
+      try {
+        raw = await safeGet(menuUrl(source.sourceId, iso), {getJsonFn, maxAttempts, baseDelayMs});
+      } catch (error) {
+        rows.push({iso, sourceId: source.sourceId, status: 'FETCH_ERROR', error: diagnosticCode(error)});
+        continue;
+      }
+
+      let meals;
+      let meta;
+      try {
+        ({meals, meta} = parseMenuJson(raw, {iso, sourceId: source.sourceId}));
+      } catch (error) {
+        rows.push({iso, sourceId: source.sourceId, status: 'PARSE_ERROR', error: diagnosticCode(error)});
+        continue;
+      }
+
       const hasMeals = Object.keys(meals).length > 0;
       const datedResponse = meta.cardapios > 0 && meta.checkedDates > 0;
-      rows.push({iso, sourceId: source.sourceId,
-        status: hasMeals && datedResponse ? 'com-cardapio-datado' : 'resposta-incompleta-nao-autoritativa',
-        meals: Object.fromEntries(Object.entries(meals).map(([key, meal]) => [key, meal.items.length])), meta});
-      if (hasMeals) {
-        if (datedResponse) sourcesWithVerifiedMenus.add(String(source.sourceId));
-        const fetchedAt = new Date().toISOString();
-        for (const appId of source.appIds) day.restaurants[appId] = {meals: Object.fromEntries(Object.entries(meals).map(([key, meal]) => [key, {...meal, fetchedAt}])), fetchedAt, sourceRestaurantId: source.sourceId};
+      if (!hasMeals || !datedResponse) {
+        // Empty/not-dated payload is not proof that the RU is closed.
+        rows.push({iso, sourceId: source.sourceId, status: 'NOT_PUBLISHED', meals: {}, meta});
+        continue;
+      }
+
+      verifiedSources.add(String(source.sourceId));
+      rows.push({
+        iso,
+        sourceId: source.sourceId,
+        status: 'VALID_MENU',
+        meals: Object.fromEntries(Object.entries(meals).map(([key, meal]) => [key, meal.items.length])),
+        meta
+      });
+      const fetchedAt = new Date().toISOString();
+      for (const appId of source.appIds) {
+        day.restaurants[appId] = {
+          meals: Object.fromEntries(Object.entries(meals).map(([key, meal]) => [key, {...meal, fetchedAt}])),
+          fetchedAt,
+          sourceRestaurantId: source.sourceId
+        };
       }
     }
-    // Só uma cobertura positiva e datada das QUATRO fontes autoriza remoção de dados antigos.
-    // Resposta vazia, sem data ou parcial pode significar falha de rede ou cardápio ainda não publicado.
-    // Nesse cenário o merge conservador atualiza os RUs com dados e preserva os demais.
-    if (sourcesWithVerifiedMenus.size === RU_SOURCES.length) snapshot.verifiedCompleteDates.push(iso);
+
+    // Uma data só é autoritativa para remoção quando as quatro fontes têm menu validado.
+    // Para dados incompletos, mergeSnapshots conserva tudo que não veio nesta leitura.
+    if (verifiedSources.size === RU_SOURCES.length) snapshot.verifiedCompleteDates.push(iso);
     snapshot.days[iso] = day;
   }
+
   snapshot.generatedAt = new Date().toISOString();
   const hasAnyMenu = Object.values(snapshot.days).some(day => Object.keys(day?.restaurants || {}).length > 0);
   if (!hasAnyMenu) fail('CARDAPIO_PERIODO_AUSENTE');
@@ -87,9 +125,11 @@ export async function collectSnapshot(days = 7, {
 }
 
 /**
- * Em dias úteis, o apply de produção exige cardápio válido e datado de todos os RUs
- * para HOJE. Não bloquear dry-run/coleta: eles devem produzir diagnóstico.
- * Feriados e dias de fechamento continuam exigindo avaliação externa/read-only.
+ * Proteção do apply em dia útil:
+ * não exigir que todos os restaurantes publiquem refeições no mesmo momento.
+ * Permitir atualização independente dos RUs com menu válido e datado;
+ * a ausência de qualquer fonte continua não autoritativa e é preservada pelo merge.
+ * Sem nenhum menu válido para hoje, bloquear a escrita.
  */
 export function assertCurrentWeekdayCoverage(rows, now = new Date()) {
   const weekday = new Intl.DateTimeFormat('en-US', {
@@ -101,10 +141,9 @@ export function assertCurrentWeekdayCoverage(rows, now = new Date()) {
   const today = dateInBrasilia(now);
   const verified = new Set(
     rows
-      .filter(row => row?.iso === today && row?.status === 'com-cardapio-datado')
+      .filter(row => row?.iso === today && row?.status === 'VALID_MENU')
       .map(row => String(row.sourceId))
   );
-  const missing = RU_SOURCES.map(source => String(source.sourceId)).filter(id => !verified.has(id)).sort((a, b) => Number(a) - Number(b));
-  if (missing.length) fail(`CARDAPIO_ATUAL_INCOMPLETO_RU_${missing.join('_')}`);
-  return {skipped: false, date: today, verifiedSourceIds: [...verified]};
+  if (!verified.size) fail('CARDAPIO_ATUAL_SEM_FONTE_VALIDA');
+  return {skipped: false, date: today, verifiedSourceIds: [...verified].sort()};
 }
