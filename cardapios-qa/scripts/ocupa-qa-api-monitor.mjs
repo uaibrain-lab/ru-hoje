@@ -2,7 +2,6 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {API_BASE, RU_SOURCES, SOURCE_PAGE, addDate, dateInBrasilia, getJson, checkRestaurantList, menuUrl, parseMenuJson} from './fump-api.mjs';
-import {monitorWindowState} from '../../scripts/ocupa-qa-monitor-window.mjs';
 
 const args = new Map(process.argv.slice(2).filter(x => x.startsWith('--')).map(x => {
   const [key, ...value] = x.slice(2).split('=');
@@ -10,32 +9,13 @@ const args = new Map(process.argv.slice(2).filter(x => x.startsWith('--')).map(x
 }));
 const days = Number(args.get('days') || '7');
 const stateDir = path.resolve(args.get('state-dir') || 'monitor-state');
-const windowStart = args.get('window-start') || '2026-10-27';
-const windowDays = Number(args.get('window-days') || '14');
 if (!Number.isInteger(days) || days < 1 || days > 7) throw new Error('DIAS_INVALIDOS');
-if (!Number.isInteger(windowDays) || windowDays < 1 || windowDays > 31) throw new Error('JANELA_INVALIDA');
 
 const sha256 = value => createHash('sha256').update(value).digest('hex');
 const normalize = value => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
 const now = new Date();
 const observedAt = now.toISOString();
 const today = dateInBrasilia(now);
-const windowState = monitorWindowState({today, windowStart, windowDays});
-if (!windowState.active) {
-  // Janela temporária encerrada/futura é um no-op normal; evita falhas agendadas
-  // recorrentes e não altera o estado de monitoramento anterior.
-  console.log(JSON.stringify({
-    status: 'SKIPPED_OUTSIDE_WINDOW',
-    reason: windowState.reason,
-    today,
-    windowStart,
-    cutoff: windowState.cutoff,
-    timezone: 'America/Sao_Paulo',
-    networkRequests: 0,
-    stateWrites: 0,
-  }));
-  process.exit(0);
-}
 
 await fs.mkdir(stateDir, {recursive: true});
 let previous = {schemaVersion: 1, observations: {}};
@@ -108,10 +88,10 @@ for (const [key, current] of Object.entries(result.observations)) {
   }
 }
 
-const state = {schemaVersion: 1, source: SOURCE_PAGE, api: API_BASE, windowStart, windowDays, lastObservedAt: observedAt, observations: result.observations};
+const state = {schemaVersion: 1, source: SOURCE_PAGE, api: API_BASE, lastObservedAt: observedAt, observations: result.observations};
 const report = {
   schemaVersion: 1, mode: 'read-only', source: SOURCE_PAGE, api: API_BASE,
-  observedAt, timezone: 'America/Sao_Paulo', date: today, windowStart, windowDays,
+  observedAt, timezone: 'America/Sao_Paulo', date: today,
   dates: result.dates, observationCount: Object.keys(result.observations).length,
   changes, empty: result.empty, failures: result.failures, remoteWrites: 0,
 };
