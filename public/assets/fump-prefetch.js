@@ -29,13 +29,15 @@ export function nextIso(iso, n) {
  * Nunca supõe que menu vazio é fechamento; a tentativa futura será reavaliada.
  */
 export function buildPrefetchPlan(selectedRu, iso, {
-  maxDate = nextIso(iso, 14),
+  maxDate = null,
   futureDays = 5,
   otherFutureDays = 2,
   limit = PREFETCH_LIMIT_PER_DAY,
 } = {}) {
   const selectedSource = sourceForRu(selectedRu);
-  if (!selectedSource || !validISO(iso) || !validISO(maxDate) || maxDate < iso) return [];
+  if (!selectedSource || !validISO(iso)) return [];
+  const lastDate = maxDate == null ? nextIso(iso,14) : maxDate;
+  if (!validISO(lastDate) || lastDate < iso) return [];
   if (![futureDays, otherFutureDays, limit].every(Number.isInteger)) return [];
   if (futureDays < 0 || otherFutureDays < 0 || limit < 0) return [];
   const others = ['setorial-i','setorial-ii','saude','ica']
@@ -43,7 +45,7 @@ export function buildPrefetchPlan(selectedRu, iso, {
   const result = [];
   const seen = new Set([iso+'|'+selectedSource]);
   function add(ruId, date) {
-    if (date > maxDate || result.length >= limit) return;
+    if (date > lastDate || result.length >= limit) return;
     const source = sourceForRu(ruId);
     const key = date+'|'+source;
     if (!source || seen.has(key)) return;
@@ -52,13 +54,13 @@ export function buildPrefetchPlan(selectedRu, iso, {
   }
   for (let n=1; n<=futureDays && result.length<limit; n++) {
     const date = nextIso(iso,n);
-    if (date > maxDate) break;
+    if (date > lastDate) break;
     add(selectedRu,date);
   }
   for (const ru of others) add(ru,iso);
   for (let n=1; n<=otherFutureDays && result.length<limit; n++) {
     const date = nextIso(iso,n);
-    if (date > maxDate) break;
+    if (date > lastDate) break;
     for (const ru of others) add(ru,date);
   }
   return result;
