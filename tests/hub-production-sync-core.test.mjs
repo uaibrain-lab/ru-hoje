@@ -140,3 +140,60 @@ test('apply em fim de semana não exige menu atual para publicar', () => {
   const weekend = new Date('2026-11-21T12:00:00.000Z');
   assert.deepEqual(assertCurrentWeekdayCoverage([],weekend),{skipped:true,reason:'FIM_DE_SEMANA'});
 });
+
+
+test('lista /restaurantes indisponível não bloqueia cardápios individuais válidos', async () => {
+  let menuReads = 0;
+  const getter = async url => {
+    if (url.endsWith('/cardapios/restaurantes')) {
+      throw new TypeError('fetch failed', {cause:Object.assign(new Error('timeout'),{code:'ETIMEDOUT'})});
+    }
+    menuReads++;
+    return menuResponse(new URL(url).searchParams.get('id'));
+  };
+  const {snapshot,rows} = await collectSnapshot(1,{getJsonFn:getter,now:fixedNow,maxAttempts:1});
+  assert.equal(menuReads,4);
+  assert.equal(rows.find(x=>x.stage==='restaurant-list')?.status,'FETCH_ERROR');
+  assert.equal(rows.filter(x=>x.status==='VALID_MENU').length,4);
+  assert.ok(snapshot.days[iso].restaurants['setorial-i']);
+  assert.ok(snapshot.days[iso].restaurants['setorial-ii']);
+});
+
+test('body sem campo data contém pratos válidos, atribuídos ao dia exato solicitado, sem apagamentos', async () => {
+  const getter = async url => {
+    if (url.endsWith('/cardapios/restaurantes')) return restaurants;
+    const id=new URL(url).searchParams.get('id');
+    const result=menuResponse(id);
+    delete result.cardapios[0].data;
+    return result;
+  };
+  const {snapshot,rows}=await collectSnapshot(1,{getJsonFn:getter,now:fixedNow,maxAttempts:1});
+  assert.deepEqual(snapshot.verifiedCompleteDates,[]);
+  assert.equal(rows.filter(x=>x.status==='VALID_MENU').length,4);
+  assert.ok(rows.filter(x=>x.status==='VALID_MENU').every(x=>x.dateEvidence==='request'));
+  assert.doesNotThrow(()=>assertCurrentWeekdayCoverage(rows,fixedNow));
+  const merged=mergeSnapshots(previousSnapshot(),snapshot,fixedNow);
+  assert.equal(merged.days[iso].restaurants['setorial-i'].meals.almoco.items[0].name,'Arroz RU 6');
+  assert.equal(merged.days[iso].restaurants.saude.meals.almoco.items[0].name,'Arroz RU 2');
+});
+
+test('ID errado no corpo é rejeitado mesmo sem /restaurantes, sem contaminação', async () => {
+  const getter = async url => {
+    if (url.endsWith('/cardapios/restaurantes')) throw new Error('HTTP 503');
+    const id=new URL(url).searchParams.get('id');
+    return menuResponse(id==='6'?'1':id);
+  };
+  const {snapshot,rows}=await collectSnapshot(1,{getJsonFn:getter,now:fixedNow,maxAttempts:1});
+  assert.equal(rows.find(x=>x.sourceId==='6')?.status,'PARSE_ERROR');
+  assert.equal(rows.filter(x=>x.status==='VALID_MENU').length,3);
+  assert.equal(snapshot.days[iso].restaurants['setorial-i'],undefined);
+  assert.ok(snapshot.days[iso].restaurants.saude);
+});
+
+test('resposta sem pratos permanece NOT_PUBLISHED e jamais autoriza fechamento', async () => {
+  const {snapshot,rows}=await collectSnapshot(1,{
+    getJsonFn:fakeGetter({emptyIds:['6']}),now:fixedNow,maxAttempts:1
+  });
+  assert.equal(rows.find(x=>x.sourceId==='6')?.status,'NOT_PUBLISHED');
+  assert.deepEqual(snapshot.verifiedCompleteDates,[]);
+});
