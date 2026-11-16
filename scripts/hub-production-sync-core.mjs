@@ -36,7 +36,7 @@ function isRetryable(error) {
 export async function safeGet(url, {
   getJsonFn = getJson,
   maxAttempts = 3,
-  timeoutMs = 14000,
+  timeoutMs = 30000,
   baseDelayMs = 800,
 } = {}) {
   if (!Number.isInteger(maxAttempts) || maxAttempts < 1 || maxAttempts > 5) fail('TENTATIVAS_INVALIDAS');
