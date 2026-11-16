@@ -60,6 +60,41 @@ async function main() {
       )
     };
   }
+  // Verificação externa real, sem writes: o proxy atende menus de hoje
+  // E dos próximos dias? Dados vazios não são interpretados como RU fechado.
+  const future=new Date(iso+'T12:00:00Z');
+  future.setUTCDate(future.getUTCDate()+1);
+  const tomorrow=future.toISOString().slice(0,10);
+  result.proxy={origin:'https://hub-fump-proxy.hubufmg.workers.dev',checks:[]};
+  for(const date of [iso,tomorrow]){
+    for(const id of ['6','1','2','5']){
+      const url=new URL('/api/menu',result.proxy.origin);
+      url.searchParams.set('id',id);
+      url.searchParams.set('data',date);
+      try{
+        const response=await retrieve(url.href);
+        const json=JSON.parse(response.content);
+        if(String(json?.id)!==id || !Array.isArray(json?.cardapios))
+          throw new Error('RU_OR_SCHEMA_MISMATCH');
+        let dishes=0;
+        for(const day of json.cardapios){
+          for(const meal of day?.refeicoes || []){
+            if(Array.isArray(meal?.pratos)) dishes+=meal.pratos.length;
+          }
+        }
+        result.proxy.checks.push({
+          date,sourceId:id,
+          status:dishes>0 ? 'VALID_MENU' : 'NOT_PUBLISHED',
+          dishes
+        });
+      }catch(error){
+        result.proxy.checks.push({
+          date,sourceId:id,status:'FETCH_ERROR',
+          code:String(error?.message||error?.name||'UNKNOWN').slice(0,60)
+        });
+      }
+    }
+  }
   result.menuDates=Object.keys(payload?.days||{}).sort().slice(-10);
   const blank=Object.values(result.menu).every(x=>Object.values(x.meals).every(count=>count===0));
   result.hasMenuToday=!blank;
