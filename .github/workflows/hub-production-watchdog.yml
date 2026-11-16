@@ -12,6 +12,10 @@ permissions:
   actions: write
   issues: write
 
+concurrency:
+  group: hub-production-menu-watchdog
+  cancel-in-progress: false
+
 jobs:
   watch:
     runs-on: ubuntu-24.04
