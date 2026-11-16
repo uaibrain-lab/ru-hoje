@@ -88,7 +88,12 @@ async function refreshLive({force = false} = {}) {
   if (!force && now-(state.liveChecks.get(key) || 0) < 4*60_000) return;
   if (state.livePending.has(key)) return state.livePending.get(key);
   state.liveChecks.set(key,now);
-  const task = readLiveMenu(ruId,iso).then(result => {
+  const proxyUrl=window.RU_CONFIG?.fumpProxyUrl || '';
+  // Sem proxy, CORS pode bloquear permanentemente a origem da FUMP.
+  // Uma tentativa é suficiente; retentativas não contornam a política.
+  const task = readLiveMenu(ruId,iso,{
+    proxyUrl,maxAttempts:proxyUrl ? 2 : 1
+  }).then(result => {
     state.liveStatus.set(key,{status:result.status,at:new Date().toISOString()});
     if (result.status === 'VALID_MENU') {
       // Apenas dados positivos e validados podem alterar o que aparece.

@@ -3,7 +3,10 @@
 window.RU_CONFIG = Object.freeze({
   firebaseProjectId: "hubufmg",
   // Opcional: URL HTTP(S) de um JSON público atualizado por outro coletor.
-  publicFeedUrl: ""
+  publicFeedUrl: "",
+  // Preencher com a origem HTTPS do Worker depois de testar o acesso real à FUMP.
+  // Exemplo: "https://hub-fump-proxy.<sua-conta>.workers.dev"
+  fumpProxyUrl: ""
 });
 
 /* FESTAS_CONFIG_V2_START — valores públicos de desenvolvimento */

@@ -42,6 +42,10 @@ export function menuUrl(sourceId, iso) {
   return url.href;
 }
 export async function getJson(url, {fetchFn = fetch, timeoutMs = 14000} = {}) {
+  const publicProxyUrl=process.env.FUMP_PUBLIC_PROXY_URL || '';
+  if(publicProxyUrl) {
+    return getJsonViaPublicProxy(url,{fetchFn,timeoutMs,publicProxyUrl});
+  }
   const relayUrl = process.env.FUMP_RELAY_URL || '';
   const relayToken = process.env.FUMP_RELAY_TOKEN || '';
   if (relayUrl || relayToken) {
@@ -64,6 +68,44 @@ export async function getJson(url, {fetchFn = fetch, timeoutMs = 14000} = {}) {
     const raw=await response.text();
     if (raw.length > 2_000_000) fail('Resposta excede limite de segurança (2 MB)');
     try {return JSON.parse(raw);} catch {fail('Resposta não é JSON válido');}
+  } finally {clearTimeout(timer);}
+}
+
+/**
+ * Proxy público Cloudflare: sem credenciais. O endereço da FUMP sempre passa
+ * pela allowlist existente (host, porta, caminho e IDs), nunca por proxy aberto.
+ * O Worker deve ser validado em operação real antes de configurar o workflow.
+ */
+export async function getJsonViaPublicProxy(url,{
+  fetchFn=fetch,
+  timeoutMs=14000,
+  publicProxyUrl
+}={}) {
+  let endpoint;
+  try {endpoint=new URL(publicProxyUrl);} catch {fail('FUMP_PUBLIC_PROXY_URL_INVALID');}
+  if(endpoint.protocol!=='https:' || !endpoint.hostname || endpoint.username ||
+      endpoint.password || endpoint.search || endpoint.hash ||
+      !['','/'].includes(endpoint.pathname)) fail('FUMP_PUBLIC_PROXY_URL_INVALID');
+  const request=buildFumpRelayRequest(url);
+  const proxyPath=request.resource==='restaurants' ? '/api/restaurants' : '/api/menu';
+  const proxy=new URL(proxyPath,endpoint);
+  if(request.resource==='menu') {
+    proxy.searchParams.set('id',request.id);
+    proxy.searchParams.set('data',request.date);
+  }
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),timeoutMs);
+  try {
+    const response=await fetchFn(proxy.href,{
+      method:'GET',signal:controller.signal,redirect:'error',
+      headers:{Accept:'application/json'},
+    });
+    if(!response.ok) fail(`FUMP_PUBLIC_PROXY_HTTP_${response.status}`);
+    const ct=response.headers?.get?.('content-type')||'';
+    if(ct && !/json/i.test(ct)) fail('FUMP_PUBLIC_PROXY_NOT_JSON');
+    const body=await response.text();
+    if(!body || body.length>2_000_000) fail('FUMP_PUBLIC_PROXY_BODY_INVALID');
+    try {return JSON.parse(body);} catch {fail('FUMP_PUBLIC_PROXY_INVALID_JSON');}
   } finally {clearTimeout(timer);}
 }
 

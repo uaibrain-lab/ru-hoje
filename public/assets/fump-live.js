@@ -30,6 +30,25 @@ export function buildLiveUrl(ruId, iso) {
   return url.href;
 }
 
+/**
+ * Recebe somente a origem HTTPS configurada pelo proprietário do Hub.
+ * Nunca permite ao usuário escolher URL de upstream.
+ */
+export function buildProxyMenuUrl(ruId, iso, proxyBase) {
+  const id=sourceForRu(ruId);
+  if(!id || !validISO(iso)) throw new Error('FUMP_PROXY_INVALID_SOURCE_OR_DATE');
+  let base;
+  try {base=new URL(proxyBase);} catch {throw new Error('FUMP_PROXY_URL_INVALID');}
+  if(base.protocol!=='https:' || base.username || base.password ||
+      base.search || base.hash || !['','/'].includes(base.pathname)) {
+    throw new Error('FUMP_PROXY_URL_INVALID');
+  }
+  const endpoint=new URL('/api/menu',base);
+  endpoint.searchParams.set('id',id);
+  endpoint.searchParams.set('data',iso);
+  return endpoint.href;
+}
+
 async function fetchOnce(url, fetchFn, timeoutMs) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(),timeoutMs);
@@ -68,10 +87,11 @@ export async function readLiveMenu(ruId, iso, {
   timeoutMs = DEFAULT_TIMEOUT_MS,
   maxAttempts = 2,
   sleepFn = sleep,
-  nowFn = () => new Date()
+  nowFn = () => new Date(),
+  proxyUrl = ''
 } = {}) {
   let url;
-  try { url = buildLiveUrl(ruId,iso); }
+  try { url = proxyUrl ? buildProxyMenuUrl(ruId,iso,proxyUrl) : buildLiveUrl(ruId,iso); }
   catch { return {status:'PARSE_ERROR',ruId,iso,error:'INVALID_SOURCE_OR_DATE'}; }
   const sourceId = sourceForRu(ruId);
   if (!Number.isInteger(maxAttempts) || maxAttempts < 1 || maxAttempts > 3) {
