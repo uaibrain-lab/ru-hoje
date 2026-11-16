@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {API_BASE, RU_SOURCES, SOURCE_PAGE, addDate, dateInBrasilia, getJson, checkRestaurantList, menuUrl, parseMenuJson} from './fump-api.mjs';
+import {monitorWindowState} from '../../scripts/ocupa-qa-monitor-window.mjs';
 
 const args = new Map(process.argv.slice(2).filter(x => x.startsWith('--')).map(x => {
   const [key, ...value] = x.slice(2).split('=');
@@ -19,8 +20,22 @@ const normalize = value => String(value ?? '').normalize('NFD').replace(/[\u0300
 const now = new Date();
 const observedAt = now.toISOString();
 const today = dateInBrasilia(now);
-const cutoff = addDate(windowStart, windowDays - 1);
-if (today < windowStart || today > cutoff) throw new Error('JANELA_MONITORAMENTO_ENCERRADA');
+const windowState = monitorWindowState({today, windowStart, windowDays});
+if (!windowState.active) {
+  // Janela temporária encerrada/futura é um no-op normal; evita falhas agendadas
+  // recorrentes e não altera o estado de monitoramento anterior.
+  console.log(JSON.stringify({
+    status: 'SKIPPED_OUTSIDE_WINDOW',
+    reason: windowState.reason,
+    today,
+    windowStart,
+    cutoff: windowState.cutoff,
+    timezone: 'America/Sao_Paulo',
+    networkRequests: 0,
+    stateWrites: 0,
+  }));
+  process.exit(0);
+}
 
 await fs.mkdir(stateDir, {recursive: true});
 let previous = {schemaVersion: 1, observations: {}};
