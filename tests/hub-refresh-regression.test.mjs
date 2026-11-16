@@ -9,7 +9,8 @@ test('nenhum botão manual ou escrita de pedido ao Firestore no frontend', () =>
   const html = load('public/index.html');
   assert.doesNotMatch(html, /refresh-button|refresh-feedback/);
   assert.doesNotMatch(app, /requestCommunityRefresh|menuSyncRequests|refresh-button|readRefreshState|refreshMessage|refreshDb/);
-  assert.match(app, /window\.addEventListener\('online',fetchMenus\)/);
+  assert.match(app, /window\.addEventListener\('online'/);
+  assert.match(app, /fetchMenus\(\);refreshLive\(\{force:true\}\)/);
   assert.match(app, /document\.addEventListener\('visibilitychange'/);
   assert.match(load('public/service-worker.js'), /data\/pratos-ingredientes\.json/);
 });
