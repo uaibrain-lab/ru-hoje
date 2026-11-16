@@ -85,3 +85,26 @@ export async function collectSnapshot(days = 7, {
   if (!hasAnyMenu) fail('CARDAPIO_PERIODO_AUSENTE');
   return {snapshot, rows};
 }
+
+/**
+ * Em dias úteis, o apply de produção exige cardápio válido e datado de todos os RUs
+ * para HOJE. Não bloquear dry-run/coleta: eles devem produzir diagnóstico.
+ * Feriados e dias de fechamento continuam exigindo avaliação externa/read-only.
+ */
+export function assertCurrentWeekdayCoverage(rows, now = new Date()) {
+  const weekday = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Sao_Paulo',
+    weekday: 'short',
+  }).format(now);
+  if (weekday === 'Sat' || weekday === 'Sun') return {skipped: true, reason: 'FIM_DE_SEMANA'};
+
+  const today = dateInBrasilia(now);
+  const verified = new Set(
+    rows
+      .filter(row => row?.iso === today && row?.status === 'com-cardapio-datado')
+      .map(row => String(row.sourceId))
+  );
+  const missing = RU_SOURCES.map(source => String(source.sourceId)).filter(id => !verified.has(id));
+  if (missing.length) fail(`CARDAPIO_ATUAL_INCOMPLETO_RU_${missing.join('_')}`);
+  return {skipped: false, date: today, verifiedSourceIds: [...verified]};
+}
