@@ -13,7 +13,9 @@ test('Hub de produção aponta para Worker verificado e possui módulo de consul
   assert.ok(config.includes('fumpProxyUrl: "'+base+'"'));
   const app=read('../public/assets/app.js');
   assert.match(app,/proxyUrl=window\.RU_CONFIG\?\.fumpProxyUrl/);
-  assert.match(app,/readLiveMenu\(ruId,iso,\{/);
+  assert.match(app,/readLiveMenu\(ruId,iso, background/);
+  assert.match(app,/startPrefetch\(ruId,iso\)/);
+  assert.match(app,/proxyUrl=window\.RU_CONFIG\?\.fumpProxyUrl/);
   assert.equal(sourceForRu('setorial-i'),'6');
   assert.equal(new URL(buildProxyMenuUrl('setorial-i','2026-11-16',base)).hostname,'hub-fump-proxy.hubufmg.workers.dev');
 });
@@ -27,7 +29,15 @@ test('GitHub scheduled sync uses same verified proxy without requiring manually 
 test('service worker changes version and HTML app URL to avoid stale code',()=>{
   const sw=read('../public/service-worker.js');
   const html=read('../public/index.html');
-  assert.match(sw,/hub-v266-20261116-fump-proxy-active-r1/);
-  assert.match(html,/app\.js\?v=hub-20261116-proxy-active-r1/);
-  assert.match(sw,/url\.pathname === '\/config\.js'/);
+  assert.match(sw,/hub-v267-20261116-prefetch-cache-heal-r1/);
+  assert.match(html,/app\.js\?v=hub-20261116-prefetch-cache-heal-r1/);
+  assert.match(sw,/path==='\\/config\\.js'/);
+  assert.match(sw,/cache:'no-store'/);
+  assert.match(sw,/path\.endsWith\('\.js'\)/);
+  assert.match(sw,/fump-prefetch\.js/);
+  const app=read('../public/assets/app.js');
+  assert.match(app,/register\('\/service-worker\.js',\{updateViaCache:'none'\}\)/);
+  assert.match(app,/addEventListener\('controllerchange'/);
+  const hosting=JSON.parse(read('../firebase.json'));
+  assert.ok(hosting.hosting.headers.some(x=>x.source==='**/*.js' && x.headers.some(h=>h.key==='Cache-Control' && /no-cache/.test(h.value))));
 });
