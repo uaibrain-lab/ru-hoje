@@ -484,7 +484,10 @@ function renderMenus() {
   const live = liveMenuFor(day,state.selectedRu);
   const data = menuFor(day,state.selectedRu);
   const fallbackUpdate = state.data?.generatedAt || null;
-  const liveStatus = state.liveStatus.get(liveKey(day,state.selectedRu));
+  const selectedKey=liveKey(day,state.selectedRu);
+  const liveStatus = state.liveStatus.get(selectedKey);
+  // A consulta ao Worker em andamento não deve parecer um erro definitivo.
+  const waitingForLive=state.livePending.has(selectedKey) && !liveStatus;
   const sourceLabel = live
     ? (liveStatus?.status === 'VALID_MENU' ? 'FUMP ao vivo' : 'Última consulta direta válida')
     : state.snapshotSource === 'firestore' ? 'Cópia sincronizada (Firestore)'
@@ -495,7 +498,7 @@ function renderMenus() {
     msg.append(el('h3','', 'Primeiro, escolha seu RU'), el('p','', 'Salvaremos sua preferência para abrir direto no cardápio das próximas vezes.'));
     list.append(msg); renderLastUpdateLine(null); return;
   }
-  if (state.lastError && !live && day === today.iso) {
+  if (state.lastError && !live && !waitingForLive && day === today.iso) {
     $('connection-notice').textContent = state.data
       ? 'Não foi possível atualizar agora. Exibindo os últimos dados disponíveis; confira a FUMP antes de sair.'
       : 'Não foi possível consultar o cardápio neste momento. Confira os dados diretamente na FUMP.';
@@ -516,8 +519,11 @@ function renderMenus() {
   const entries = ['almoco','jantar','cafe'].filter(m => ru.meals.includes(m) && Array.isArray(data?.meals?.[m]?.items) && data.meals[m].items.length > 0);
   const hasItems = entries.some(m => Array.isArray(data?.meals?.[m]?.items) && data.meals[m].items.length);
   if (!hasItems) {
-    // Não esconder falhas de leitura atrás da mensagem "sem cardápio".
-    if (liveStatus?.status === 'FETCH_ERROR') {
+    // Aguardar resultado ao vivo antes de anunciar erro de atualização.
+    if (waitingForLive && navigator.onLine) {
+      $('connection-notice').textContent = 'Consultando o cardápio atualizado da FUMP…';
+      $('connection-notice').hidden = false;
+    } else if (liveStatus?.status === 'FETCH_ERROR') {
       $('connection-notice').textContent = 'Não foi possível ler a API da FUMP neste navegador (rede ou bloqueio CORS). O sincronizador também não forneceu um cardápio válido para este RU/data.';
       $('connection-notice').hidden = false;
     } else if (liveStatus?.status === 'PARSE_ERROR') {
