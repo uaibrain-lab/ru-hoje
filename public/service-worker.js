@@ -3,7 +3,7 @@
  * Cache permanece disponível offline, mas nunca congela uma versão antiga
  * de app.js, config.js ou seus imports após um deploy.
  */
-const VERSION = 'hub-v268-20261116-autoprefetch-r1';
+const VERSION = 'hub-v269-20261116-hide-api-link-r1';
 const SHELL = [
   '/', '/index.html', '/interno/index.html', '/favicon.ico', '/config.js',
   '/assets/app.js', '/assets/fump-live.js', '/assets/fump-prefetch.js',

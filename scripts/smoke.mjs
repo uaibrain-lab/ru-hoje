@@ -105,6 +105,10 @@ try {
   assert.equal(await page.locator('.meal-card').filter({hasText:'Café indevido'}).count(),0);
   await page.locator('.date-card').last().click();
   await page.getByText('Ainda sem cardápio por aqui').waitFor();
+  // O endpoint técnico JSON da FUMP não é oferecido como link ao visitante.
+  assert.equal(await page.getByRole('link',{name:/Abrir resposta oficial deste RU\/data/i}).count(),0);
+  assert.equal(await page.locator('.no-menu a[href*=":3003/"]').count(),0);
+
   // Novos dados reais simulados chegam depois de a cópia Firestore já estar visível.
   liveEnabled = true;
   await page.locator('.date-card').first().click();
@@ -204,8 +208,8 @@ try {
   await pwaPage.waitForFunction(()=>!!navigator.serviceWorker.controller,null,{timeout:25000});
   await pwaPage.waitForTimeout(700);
   await pwaPage.evaluate(async()=>{
-    const c=await caches.open('hub-v268-20261116-autoprefetch-r1');
-    await c.put('/assets/app.js?v=hub-20261116-autoprefetch-r1',
+    const c=await caches.open('hub-v269-20261116-hide-api-link-r1');
+    await c.put('/assets/app.js?v=hub-20261116-hide-api-link-r1',
       new Response('throw new Error("STALE_CACHE_EXECUTED")',{
         headers:{'Content-Type':'text/javascript'}
       }));

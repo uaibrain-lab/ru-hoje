@@ -28,13 +28,16 @@ test('GitHub scheduled sync uses same verified proxy without requiring manually 
 test('service worker changes version and HTML app URL to avoid stale code',()=>{
   const sw=read('../public/service-worker.js');
   const html=read('../public/index.html');
-  assert.match(sw,/hub-v268-20261116-autoprefetch-r1/);
-  assert.match(html,/app\.js\?v=hub-20261116-autoprefetch-r1/);
+  assert.match(sw,/hub-v269-20261116-hide-api-link-r1/);
+  assert.match(html,/app\.js\?v=hub-20261116-hide-api-link-r1/);
   assert.ok(sw.includes("path==='/config.js'"));
   assert.match(sw,/cache:'no-store'/);
   assert.match(sw,/path\.endsWith\('\.js'\)/);
   assert.match(sw,/fump-prefetch\.js/);
   const app=read('../public/assets/app.js');
+  assert.ok(!app.includes('Abrir resposta oficial deste RU/data'));
+  assert.ok(!app.includes("const direct = el('a','source-link'"));
+  
   assert.match(app,/register\('\/service-worker\.js',\{updateViaCache:'none'\}\)/);
   assert.match(app,/addEventListener\('controllerchange'/);
   const hosting=JSON.parse(read('../firebase.json'));
