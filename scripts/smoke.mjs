@@ -159,7 +159,7 @@ try {
     window.RU_CONFIG?.fumpProxyUrl==='https://hub-fump-proxy.hubufmg.workers.dev',
     null,{timeout:20000});
   await pwaPage.getByRole('button',{name:'RU Setorial I Campus Pampulha',exact:true}).click();
-  await pwaPage.getByText('Frango do Dia Seguinte',{exact:true}).count();
+  await pwaPage.getByText('Frango ao Vivo',{exact:true}).waitFor({timeout:12000});
   assert.deepEqual(pwaErrors,[],'PWA executou JavaScript obsoleto do CacheStorage');
   await pwaPage.close();
 
