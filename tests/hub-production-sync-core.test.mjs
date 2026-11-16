@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {collectSnapshot, safeGet} from '../scripts/hub-production-sync-core.mjs';
+import {collectSnapshot, safeGet, assertCurrentWeekdayCoverage} from '../scripts/hub-production-sync-core.mjs';
 import {mergeSnapshots} from '../scripts/merge-snapshots.mjs';
 
 const fixedNow = new Date('2026-11-16T12:00:00.000Z');
@@ -88,4 +88,20 @@ test('resposta de rede registra causa sanitizada e retenta', async () => {
     /FUMP_FETCH_FAILED_ECONNRESET/
   );
   assert.equal(calls,2);
+});
+
+test('apply em dia útil exige os quatro RUs com cardápio atual datado', async () => {
+  const partial=await collectSnapshot(1,{
+    getJsonFn:fakeGetter({emptyIds:['1','6']}),
+    now:fixedNow,
+    maxAttempts:1
+  });
+  assert.throws(()=>assertCurrentWeekdayCoverage(partial.rows,fixedNow),/CARDAPIO_ATUAL_INCOMPLETO_RU_1_6/);
+
+  const complete=await collectSnapshot(1,{
+    getJsonFn:fakeGetter(),
+    now:fixedNow,
+    maxAttempts:1
+  });
+  assert.doesNotThrow(()=>assertCurrentWeekdayCoverage(complete.rows,fixedNow));
 });
