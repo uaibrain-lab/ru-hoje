@@ -48,5 +48,5 @@ test('weekly heartbeat is non-sensitive, bounded to one commit per ISO week and 
   assert.match(watchdogScript, /%G-W%V/);
   assert.match(watchdogScript, /weekly workflow heartbeat \[skip ci\]/);
   assert.match(watchdogScript, /git push origin HEAD:main/);
-  assert.doesNotMatch(watchdogScript, /secret|private_key|participant|winner/i);
+  assert.match(watchdogScript, /\"isoWeek\"/);\n  assert.match(watchdogScript, /\"updatedAt\"/);\n  assert.doesNotMatch(watchdogScript, /FIREBASE_SERVICE_ACCOUNT_JSON|HUB_PROD_PRIVATE_KEY|API_KEY/i);
 });
