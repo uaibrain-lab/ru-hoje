@@ -47,7 +47,13 @@ export function buildProxyMenuUrl(ruId, iso, proxyBase) {
   if(!id || !validISO(iso)) throw new Error('FUMP_PROXY_INVALID_SOURCE_OR_DATE');
   let base;
   try {base=new URL(proxyBase);} catch {throw new Error('FUMP_PROXY_URL_INVALID');}
-  if(base.protocol!=='https:' || base.username || base.password ||
+  // Exceção restrita à prévia no próprio computador: nunca autorizar HTTP
+  // remoto nem um proxy de outro host/porta a partir da aplicação publicada.
+  const localPreview=typeof location!=='undefined' &&
+    ['localhost','127.0.0.1'].includes(location.hostname) &&
+    location.protocol==='http:' && base.protocol==='http:' &&
+    base.origin===location.origin;
+  if((base.protocol!=='https:' && !localPreview) || base.username || base.password ||
       base.search || base.hash || !['','/'].includes(base.pathname)) {
     throw new Error('FUMP_PROXY_URL_INVALID');
   }
