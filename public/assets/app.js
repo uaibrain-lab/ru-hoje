@@ -1,7 +1,7 @@
 // OCUPA_RU_P3_CLIENT_FIX
 import {currentOpening, weeklySummary} from './hours.js';
 import {publishedCategory} from './dish-category.js';
-import {isMissingMenu, dateChipLabel} from './date-availability.js';
+import {hasMenuForDate, dateChipLabel} from './date-availability.js';
 import {readLiveMenu, sourceForRu, isValidLiveEntry, validISO} from './fump-live.js';
 import {buildPrefetchPlan, canRunBackgroundFetch, recentlyChecked, PREFETCH_LIMIT_PER_DAY, PREFETCH_MIN_GAP_MS} from './fump-prefetch.js';
 const SOURCE_URL = 'https://fump.ufmg.br/cardapio-do-dia/';
@@ -56,6 +56,20 @@ function liveMenuFor(date, ruId) {
   return isValidLiveEntry(entry,date,ruId) ? entry : null;
 }
 function menuFor(date, ruId) { return liveMenuFor(date,ruId) || state.data?.days?.[date]?.restaurants?.[ruId] || null; }
+/**
+ * O marcador de ausência exige uma resposta positiva de "não publicado" para
+ * este RU/data. Falha de rede e ausência no snapshot não provam falta de cardápio.
+ */
+function missingMenuForDate(iso,ruId) {
+  if (!sourceForRu(ruId)) return false;
+  if (liveMenuFor(iso,ruId) || hasMenuForDate(state.data,iso,ruId)) return false;
+  const key=liveKey(iso,ruId);
+  const current=state.liveStatus.get(key)?.status;
+  if (current==='NOT_PUBLISHED') return true;
+  if (current==='FETCH_ERROR' || current==='PARSE_ERROR') return false;
+  return recentlyChecked(state.prefetchChecks.get(key))
+    && state.prefetchChecks.get(key).status==='NOT_PUBLISHED';
+}
 function hydrateLiveMenus() {
   try {
     const stored = JSON.parse(readStore(STORAGE_LIVE) || '{}');
@@ -181,19 +195,16 @@ async function refreshLive({force = false, ruId = state.selectedRu, iso = state.
   const key = liveKey(iso,ruId);
   const now = Date.now();
   if (state.livePending.has(key)) return state.livePending.get(key);
-  if (!force && now-(state.liveChecks.get(key) || 0) < 4*60_000) {
-    const status=state.liveStatus.get(key)?.status;
-    // Não bloquear uma consulta solicitada pelo usuário apenas porque
-    // uma tentativa em segundo plano falhou anteriormente.
-    if (status!=='FETCH_ERROR' && status!=='PARSE_ERROR') return {status:'SKIPPED'};
-  }
+  // Tentativas de background e o clock a cada minuto respeitam cooldown,
+  // inclusive HTTP 503. Interação explícita passa force:true.
+  if (!force && now-(state.liveChecks.get(key) || 0) < 4*60_000) return {status:'SKIPPED'};
   state.liveChecks.set(key,now);
   const proxyUrl=window.RU_CONFIG?.fumpProxyUrl || '';
   const task = readLiveMenu(ruId,iso, background
     ? {maxAttempts:1,timeoutMs:12000,proxyUrl}
     : {maxAttempts:proxyUrl ? 2 : 1,proxyUrl}).then(result => {
     recordPrefetchCheck(key,result.status);
-    state.liveStatus.set(key,{status:result.status,at:new Date().toISOString(),error:result.error || null});
+    state.liveStatus.set(key,{status:result.status,at:new Date().toISOString(),cacheStatus:result.cacheStatus||'',error:result.error || null});
     if (result.status === 'VALID_MENU') {
       // Apenas dados positivos e validados podem alterar o que aparece.
       const payload = {iso,ruId,meals:result.meals,sourceRestaurantId:result.sourceId,fetchedAt:result.fetchedAt};
@@ -305,7 +316,7 @@ function renderRestaurant() {
       renderRestaurant();
       renderDates();
       renderMenus();
-      refreshLive();
+      refreshLive({force:!liveMenuFor(state.selectedDate || sPauloParts().iso,item.id)});
       startPrefetch(item.id,state.selectedDate || sPauloParts().iso);
       $('restaurant-dialog').close();
       $('restaurant-trigger').focus();
@@ -349,7 +360,7 @@ function renderDates({ scroll = false } = {}) {
     const iso = addDays(today, offset);
     const date = dayDate(iso);
     const isWeekend = [0, 6].includes(date.getUTCDay());
-    const withoutMenu = !!(state.data?.days && !menuFor(iso,state.selectedRu) && isMissingMenu(state.data, iso, state.selectedRu));
+    const withoutMenu = missingMenuForDate(iso,state.selectedRu);
     const card = el('button', 'date-card');
     card.type = 'button';
     card.dataset.iso = iso;
@@ -367,7 +378,7 @@ function renderDates({ scroll = false } = {}) {
       // Focus returns to the new node after re-render (keyboard accessibility).
       if (event?.detail === 0) dateStrip.querySelector(`[data-iso="${iso}"]`)?.focus({preventScroll:true});
       renderMenus();
-      refreshLive();
+      refreshLive({force:!liveMenuFor(iso,state.selectedRu)});
       startPrefetch(state.selectedRu,iso);
     });
     dateStrip.append(card);
@@ -503,7 +514,8 @@ function renderMenus() {
   // A consulta ao Worker em andamento não deve parecer um erro definitivo.
   const waitingForLive=state.livePending.has(selectedKey) && !liveStatus;
   const sourceLabel = live
-    ? (liveStatus?.status === 'VALID_MENU' ? 'FUMP ao vivo' : 'Última consulta direta válida')
+    ? (liveStatus?.cacheStatus === 'STALE' ? 'Última resposta oficial em contingência'
+      : liveStatus?.status === 'VALID_MENU' ? 'FUMP ao vivo' : 'Última consulta direta válida')
     : state.snapshotSource === 'firestore' ? 'Cópia sincronizada (Firestore)'
     : state.snapshotSource === 'static' ? 'Cópia estática'
     : 'Cópia local';
@@ -523,6 +535,10 @@ function renderMenus() {
   } else if (!navigator.onLine) {
     $('connection-notice').textContent = 'Você está offline. Os dados disponíveis podem estar desatualizados.';
     $('connection-notice').hidden = false;
+  }
+  if (live && liveStatus?.cacheStatus === 'STALE') {
+    $('connection-notice').textContent='A consulta atual está indisponível. Exibindo uma resposta anterior validada da FUMP.';
+    $('connection-notice').hidden=false;
   }
   if (day === today.iso && liveStatus && liveStatus.status !== 'VALID_MENU' && !live && data &&
       !state.lastError && !state.fallbackUsed && navigator.onLine) {
@@ -661,7 +677,7 @@ function initTheme() {
  */
 function setupPwaUpdates() {
   if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
-  const releaseKey='ruhoje:sw-refresh:hub-v269-20261116-hide-api-link-r1';
+  const releaseKey='ruhoje:sw-refresh:hub-v270-20261116-demand-ready-r1';
   const hadController=!!navigator.serviceWorker.controller;
   let reloadRequested=false;
   let reloading=false;
@@ -706,7 +722,7 @@ function boot() {
   initDialog();
   renderRestaurant(); renderDates({scroll:true}); renderMenus();
   loadIngredientCatalog().then(() => renderMenus());
-  $('today-button').addEventListener('click',()=> {cancelPrefetch();state.selectedDate=sPauloParts().iso;renderDates({scroll:true});renderMenus();refreshLive();startPrefetch(state.selectedRu,state.selectedDate);});
+  $('today-button').addEventListener('click',()=> {cancelPrefetch();state.selectedDate=sPauloParts().iso;renderDates({scroll:true});renderMenus();refreshLive({force:!liveMenuFor(state.selectedDate,state.selectedRu)});startPrefetch(state.selectedRu,state.selectedDate);});
   window.addEventListener('online',()=>{fetchMenus();refreshLive({force:true});startPrefetch(state.selectedRu,state.selectedDate);});
   window.addEventListener('offline',()=>{cancelPrefetch();renderMenus();});
   window.addEventListener('storage',event=>{

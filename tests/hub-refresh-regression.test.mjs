@@ -15,17 +15,18 @@ test('nenhum botão manual ou escrita de pedido ao Firestore no frontend', () =>
   assert.match(load('public/service-worker.js'), /data\/pratos-ingredientes\.json/);
 });
 
-test('agendamentos alternados usam gates e impedem concorrência', () => {
+test('rotinas manuais de coleta preservam gates sem agendamento automático', () => {
   const primary = load('.github/workflows/hub-production-cardapios.yml');
   const fallback = load('.github/workflows/hub-production-request-processor.yml');
   for (const w of [primary, fallback]) {
-    assert.match(w, /schedule:/);
+    assert.doesNotMatch(w, /^  schedule:/m);
+    assert.match(w, /workflow_dispatch:/);
     assert.match(w, /group: hub-production-menu-writer/);
     assert.match(w, /cancel-in-progress: false/);
     assert.match(w, /bash scripts\/hub-production-scheduled-run\.sh/);
     assert.match(w, /HUB_PROD_PUBLISH_ENABLED/);
     assert.match(w, /issues: write/);
-    assert.match(w, /cron: '[0-9][0-9] /);
+    assert.doesNotMatch(w, /cron: '[0-9][0-9] /);
   }
   assert.match(primary, /hub-prod-sync@hubufmg\.iam\.gserviceaccount\.com/);
   assert.match(fallback, /hub-prod-refresh@hubufmg\.iam\.gserviceaccount\.com/);
@@ -42,9 +43,11 @@ test('aplicação exige confirmação dupla e retenta até três vezes', () => {
   assert.equal(exists('scripts/hub-production-request-processor.mjs'), false);
 });
 
-test('watchdog detecta falta de execuções bem sucedidas e aciona recuperação', () => {
+test('watchdog é somente manual e preserva limites para recuperação administrativa', () => {
   const cron=load('.github/workflows/hub-production-watchdog.yml');
   const script=load('scripts/hub-production-watchdog.sh');
+  assert.doesNotMatch(cron, /^  schedule:/m);
+  assert.match(cron, /workflow_dispatch:/);
   assert.match(cron, /actions: write/);
   assert.match(cron, /issues: write/);
   assert.match(script, /5 \* 60 \* 60/);

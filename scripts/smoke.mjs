@@ -178,7 +178,15 @@ try {
   await passive.waitForFunction(([d1,d3])=>{
     const x1=document.querySelector('.date-card[data-iso="'+d1+'"]');
     const x3=document.querySelector('.date-card[data-iso="'+d3+'"]');
-    return x1?.dataset.missingMenu==='false' && x3?.dataset.missingMenu==='false';
+    // Sem cardápio consultado, a bolinha também fica ausente; por isso
+    // o teste só pode passar depois de verificar PRATOS REAIS no cache local.
+    let entries;
+    try {entries=JSON.parse(localStorage.getItem('ruhoje:live-menus:v1')||'{}');}
+    catch{return false;}
+    const haveMenu=iso=>entries[iso+'|6']?.meals?.almoco?.items?.some(item=>
+      String(item.name).includes('Cardápio Pré-Carregado'));
+    return haveMenu(d1) && haveMenu(d3) &&
+      x1?.dataset.missingMenu==='false' && x3?.dataset.missingMenu==='false';
   },[tomorrow,day3],{timeout:40000});
   assert.ok(observed.some(x=>x.id==='6' && x.date===today),
     'O teste deve simular falha da consulta do dia selecionado');
@@ -188,7 +196,8 @@ try {
     'O teste deve simular erro na primeira sequência de pré-busca');
   assert.ok(observed.some(x=>x.id==='6' && x.date===day3),
     'Falha pontual bloqueou D+3');
-  assert.equal(await passive.locator('.date-card[data-iso="'+failedTomorrowPlusOne+'"]').getAttribute('data-missing-menu'),'true');
+  // Falha HTTP 503 significa disponibilidade desconhecida, nunca "sem cardápio".
+  assert.equal(await passive.locator('.date-card[data-iso="'+failedTomorrowPlusOne+'"]').getAttribute('data-missing-menu'),'false');
   assert.deepEqual(passiveErrors,[],'Exceção JS no pré-carregamento sem cliques');
   await passive.close();
   // A bolinha desapareceu em D+1 e D+3 sem visita manual a nenhuma data.
@@ -208,8 +217,8 @@ try {
   await pwaPage.waitForFunction(()=>!!navigator.serviceWorker.controller,null,{timeout:25000});
   await pwaPage.waitForTimeout(700);
   await pwaPage.evaluate(async()=>{
-    const c=await caches.open('hub-v269-20261116-hide-api-link-r1');
-    await c.put('/assets/app.js?v=hub-20261116-hide-api-link-r1',
+    const c=await caches.open('hub-v270-20261116-demand-ready-r1');
+    await c.put('/assets/app.js?v=hub-20261116-demand-ready-r1',
       new Response('throw new Error("STALE_CACHE_EXECUTED")',{
         headers:{'Content-Type':'text/javascript'}
       }));

@@ -13,10 +13,8 @@ on:
       - 'public/index.html'
       - 'public/service-worker.js'
   # UTC, em minutos pouco concorridos e em varios periodos do dia.
-  schedule:
-    - cron: '41 8,12,16,20 * * 1-5'
-    - cron: '41 13,18 * * 6'
-    - cron: '41 16 * * 0'
+  # Cardapios atualizados sob demanda pelo navegador via Cloudflare Worker.
+  # Coleta administrativa permanece disponivel por workflow_dispatch.
   workflow_dispatch:
     inputs:
       mode:
@@ -72,7 +70,7 @@ jobs:
         run: bash scripts/hub-production-scheduled-run.sh
 
   publish-hosting:
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'uaibrain-lab/ru-hoje' }}
+    if: ${{ github.event_name == 'push' && vars.HUB_HOSTING_AUTO_DEPLOY_ENABLED == 'true' && github.ref == 'refs/heads/main' && github.repository == 'uaibrain-lab/ru-hoje' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:

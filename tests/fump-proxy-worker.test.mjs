@@ -145,7 +145,7 @@ test('resposta com cardapios vazios não é considerada RU fechado e tem cache c
     now,fetchFn:async()=>fakeResponse({id:6,cardapios:[]})
   });
   assert.equal(response.status,200);
-  assert.equal(response.headers.get('Cache-Control'),'public,max-age=30');
+  assert.equal(response.headers.get('Cache-Control'),'public,max-age=30,stale-if-error=0');
   assert.deepEqual((await response.json()).cardapios,[]);
 });
 
@@ -182,4 +182,20 @@ test('redirecionamento 302 da FUMP não é seguido nem cacheado',async()=>{
   assert.equal(calls,1);
   assert.equal(cache.map.size,0);
   assert.equal(response.headers.get('Access-Control-Allow-Origin'),goodOrigin);
+});
+
+test('respostas positivas expoem timestamp oficial do Worker e contingencia com limite',async()=>{
+  const cache=fakeCache();
+  const reply=await handleRequest(makeRequest(),{now,cache,fetchFn:async()=>fakeResponse()});
+  assert.equal(reply.status,200);
+  assert.equal(reply.headers.get('Cache-Control'),'public,max-age=240,stale-if-error=1800');
+  assert.equal(reply.headers.get('X-Menu-Fetched-At'),now.toISOString());
+  assert.match(reply.headers.get('Access-Control-Expose-Headers'),/CF-Cache-Status/);
+  const replay=await handleRequest(makeRequest(),{
+    now,cache,fetchFn:async()=>{throw Error('cache should work');}
+  });
+  assert.equal(replay.status,200);
+  assert.equal(replay.headers.get('X-Menu-Cache'),'HIT');
+  assert.equal(replay.headers.get('X-Menu-Fetched-At'),now.toISOString());
+  assert.equal(replay.headers.get('Cache-Control'),'public,max-age=60,stale-if-error=1800');
 });

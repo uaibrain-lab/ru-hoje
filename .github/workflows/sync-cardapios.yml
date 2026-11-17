@@ -13,16 +13,7 @@ on:
         type: boolean
         default: false
         required: true
-  schedule:
-    # Fuso Brasília (UTC-3, sem horário de verão em 2026); cron do GitHub é UTC.
-    # Seg-sex: 05h45 antes do café (abre 06h45); 09h30 antes do almoço (10h30);
-    #          16h10 antes do jantar (17h10).
-    # Sábado: 10h00 antes do almoço (11h00). Domingo: sem coleta regular.
-    # Consultar 7 datas corridas: DOMINGOS também são consultados, caso haja cardápio.
-    - cron: '45 8 * * 1-5'
-    - cron: '30 12 * * 1-5'
-    - cron: '10 19 * * 1-5'
-    - cron: '0 13 * * 6'
+  # Legado administrativo sem cron; novos menus chegam via Worker no navegador.
 permissions:
   contents: read
 concurrency:

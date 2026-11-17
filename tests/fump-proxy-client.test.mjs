@@ -46,6 +46,7 @@ test('browser usa endpoint CORS do proxy e mesmo parser da FUMP',async()=>{
       actual=url;
       assert.equal(opts.mode,'cors');
       assert.equal(opts.credentials,'omit');
+      assert.equal(opts.cache,'default');
       return fakeResponse();
     }
   });
@@ -95,4 +96,25 @@ test('node transforma 502 do Worker em erro; não publica dados vazios por falha
     publicProxyUrl:base,
     fetchFn:async()=>fakeResponse({error:'UPSTREAM_HTTP',status:500},502)
   }),/FUMP_PUBLIC_PROXY_HTTP_502/);
+});
+
+test('menu servido como stale no cache compartilhado conserva data de coleta e rotulo',async()=>{
+  const collectedAt='2026-11-16T15:00:00.000Z';
+  const result=await readLiveMenu('setorial-i',iso,{
+    proxyUrl:base,
+    nowFn:()=>new Date('2026-11-16T16:00:00.000Z'),
+    fetchFn:async()=>({
+      ok:true,status:200,
+      headers:{get:name=>({
+        'content-type':'application/json',
+        'x-menu-fetched-at':collectedAt,
+        'cf-cache-status':'STALE'
+      }[name.toLowerCase()]||null)},
+      text:async()=>JSON.stringify(fixtures)
+    })
+  });
+  assert.equal(result.status,'VALID_MENU');
+  assert.equal(result.cacheStatus,'STALE');
+  assert.equal(result.fetchedAt,collectedAt);
+  assert.equal(result.meals.almoco.items[0].name,'Arroz');
 });

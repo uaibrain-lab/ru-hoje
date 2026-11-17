@@ -28,8 +28,8 @@ test('GitHub scheduled sync uses same verified proxy without requiring manually 
 test('service worker changes version and HTML app URL to avoid stale code',()=>{
   const sw=read('../public/service-worker.js');
   const html=read('../public/index.html');
-  assert.match(sw,/hub-v269-20261116-hide-api-link-r1/);
-  assert.match(html,/app\.js\?v=hub-20261116-hide-api-link-r1/);
+  assert.match(sw,/hub-v270-20261116-demand-ready-r1/);
+  assert.match(html,/app\.js\?v=hub-20261116-demand-ready-r1/);
   assert.ok(sw.includes("path==='/config.js'"));
   assert.match(sw,/cache:'no-store'/);
   assert.match(sw,/path\.endsWith\('\.js'\)/);
@@ -42,4 +42,33 @@ test('service worker changes version and HTML app URL to avoid stale code',()=>{
   assert.match(app,/addEventListener\('controllerchange'/);
   const hosting=JSON.parse(read('../firebase.json'));
   assert.ok(hosting.hosting.headers.some(x=>x.source==='**/*.js' && x.headers.some(h=>h.key==='Cache-Control' && /no-cache/.test(h.value))));
+});
+
+test('atualizacao FUMP por acesso nao requer cron GitHub nem exibe ausencia sem verificacao',()=>{
+  const core=read('../public/assets/app.js');
+  assert.match(core,/function missingMenuForDate\(iso,ruId\)/);
+  assert.match(core,/current==='NOT_PUBLISHED'/);
+  assert.match(core,/status==='NOT_PUBLISHED'/);
+  assert.match(core,/if \(!force && now-\(state\.liveChecks\.get\(key\) \|\| 0\) < 4\*60_000\) return \{status:'SKIPPED'\}/);
+  assert.match(core,/refreshLive\(\{force:true\}\)/);
+  const wf=[
+    'hub-production-cardapios.yml',
+    'hub-production-request-processor.yml',
+    'hub-production-watchdog.yml',
+    'sync-cardapios.yml'
+  ];
+  for(const filename of wf){
+    const yaml=read('../.github/workflows/'+filename);
+    assert.ok(!/^  schedule:/m.test(yaml),'Cron de cardápios inesperado: '+filename);
+    assert.ok(yaml.includes('workflow_dispatch:'),'Diagnóstico manual indisponível: '+filename);
+  }
+  assert.match(read('../.github/workflows/hub-production-cardapios.yml'),/HUB_HOSTING_AUTO_DEPLOY_ENABLED/);
+  const workerCfg=read('../worker/wrangler.toml');
+  assert.match(workerCfg,/\[placement\]\s*region = "gcp:southamerica-east1"/);
+  assert.match(workerCfg,/\[cache\]\s*enabled = true/);
+  // Vary: Origin precisa continuar presente para evitar cache CORS incorreto.
+  const worker=read('../worker/fump-proxy.mjs');
+  assert.ok(worker.includes("'Vary':'Origin'"));
+  assert.ok(worker.includes("'Cache-Control',cacheSeconds ?"));
+
 });

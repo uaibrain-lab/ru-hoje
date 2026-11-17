@@ -51,16 +51,17 @@ test('frontend inclui domingos, atualiza os pontos quando chegam dados e muda o 
   const sw=fs.readFileSync(new URL('../public/service-worker.js',import.meta.url),'utf8');
   assert.match(app,/for \(let offset = 0; offset < 15; offset\+\+\)/);
   assert.doesNotMatch(app,/getUTCDay\(\) === 0\) continue/);
-  assert.match(app,/isMissingMenu\(state\.data, iso, state\.selectedRu\)/);
+  assert.match(app,/missingMenuForDate\(iso,state\.selectedRu\)/);
   assert.match(app,/renderRestaurant\(\);\s*renderDates\(\);\s*renderMenus\(\);/);
   assert.match(app,/writeStore\(STORAGE_DATA, JSON\.stringify\(value\)\); \} catch \{\}\s*\/\/[^\n]+\s*renderDates\(\);/);
   assert.match(sw,/\/assets\/date-availability\.js/);
 });
 
-test('agenda somente seg-sex e sábado, em UTC e com horizonte de sete dias',()=>{
+test('coleta legada pode ser usada manualmente com horizonte de sete dias',()=>{
   const wf=fs.readFileSync(new URL('../.github/workflows/sync-cardapios.yml',import.meta.url),'utf8');
   const crons=[...wf.matchAll(/- cron: '([^']+)'/g)].map(m=>m[1]);
-  assert.deepEqual(crons,['45 8 * * 1-5','30 12 * * 1-5','10 19 * * 1-5','0 13 * * 6']);
+  assert.deepEqual(crons,[]);
+  assert.match(wf,/workflow_dispatch:/);
   assert.match(wf,/DAYS: \$\{\{ github\.event\.inputs\.days \|\| '7' \}\}/);
   assert.match(wf,/RU_SYNC_PUBLISH_ENABLED == 'true'/);
   assert.match(wf,/RU_SYNC_SCHEDULE_ENABLED == 'true'/);
