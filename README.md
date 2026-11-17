@@ -2,6 +2,46 @@
 
 Projeto independente do UaiBrain. Principal uso: smartphones. Interface PWA, cache offline e favorita o último RU usado.
 
+## Prévia local do Hub (sem publicar)
+
+O servidor HTTP genérico do Python não atende `/interno` com `cleanUrls` nem supera o CORS do Worker da FUMP. Use o servidor de prévia do projeto, **Node.js 22+**, na pasta do repositório/branch:
+
+```powershell
+node scripts/preview-local.mjs
+```
+
+Abra **http://127.0.0.1:8080/**. Teste o Interno em **http://127.0.0.1:8080/?aba=interno** e as Festas fictícias em **http://127.0.0.1:8080/?aba=festas&festas-demo=1**. Pressione Ctrl+C para encerrar.
+
+O servidor resolve as URLs limpas do Firebase e encaminha somente `GET /api/menu` e `GET /api/restaurants` ao Worker oficial, usando valores fixos e validados. A resposta preserva o carimbo da FUMP e nunca cria pratos, altera o Worker ou grava no Firebase. A configuração do proxy local é incluída na resposta de `config.js` em memória, sem modificar o arquivo publicado. Por segurança, só escuta em `127.0.0.1`: para usar em um telefone físico é necessário montar um canal seguro de prévia separado. A seção Festas em modo real pode depender de autorizações do Firebase; prefira `festas-demo=1` para testar o layout.
+
+## Auditoria de layout mobile da aba Festas (17/11/2026)
+
+Os cards de festas agora exibem **cartaz e dados lado a lado**, sem esticar a altura da arte em função dos botões. O cartaz usa proporção vertical 3:4, `object-fit:contain` e continua abrindo o cartaz completo ao toque. Os botões de **Ingressos** e **Sorteio/Resultados** ocupam uma linha exclusiva de largura integral abaixo das informações. Título longo usa quebra automática; organizador apresenta até duas linhas; data, horário e local quebram linha sem ocultar o conteúdo; tags se distribuem em mais de uma linha e o status das inscrições aparece abaixo das ações. Os cards sem cartaz usam a largura integral para informação e ações. Em celulares de 280–319 px, os dois botões ficam empilhados.
+
+**Testes:** `npm run test:festas:mobile` usa Chromium em dez larguras (280, 320, 360, 375, 390, 412, 430, 600, 768, 850 px), com cinco configurações por largura (cartaz presente/ausente, zero/um/dois botões e status). Valida 50 cenários de geometria, textos, miniatura, área de toque, ordem visual e ausência de scroll horizontal. O teste anterior `npm run test:festas:card` continua verificando a borda e o raio em nove resoluções até 2560 px. Ambos rodam na CI. A chave de cache do PWA foi atualizada para `hub-v281-20261117-festas-mobile` para evitar exibir CSS antigo após um eventual deploy.
+
+## Classificação consistente dos pratos
+
+O módulo `public/assets/dish-category.js` centraliza as categorias visuais do cardápio. O índice abrange **217 nomes distintos**: 202 oriundos da união dos **126 pratos do catálogo de ingredientes** e dos **142 nomes observados no histórico** (66 em comum), mais **15 nomes detectados pela consulta FUMP em novembro de 2026**. Há também aliases e correções nominais. **Todos os nomes catalogados como opções vegetarianas ou pratos principais/proteínas têm prioridade sobre o tipo lançado pela FUMP**, inclusive os 15 novos quando classificados em uma dessas categorias. Para acompanhamentos, molhos, saladas e demais categorias, o catálogo é fallback quando a FUMP não informa um tipo confiável.
+
+Ordem de classificação: **(1)** catálogo por nome exato, quando o prato é conhecido como `vegetariana` ou `proteina`; **(2)** tipo explícito e reconhecido da FUMP para as demais categorias e para pratos desconhecidos; **(3)** catálogo como fallback caso a FUMP não informe um tipo reconhecido. Essa prioridade também vale para cardápios de RUs diferentes e para categorias de exibição legadas. Exemplo: `Quibe de Cenoura` é sempre `Opção vegetariana`; `Carne de porco frita` continua em `Pratos principais` mesmo se vier marcada como `Prato protéico 3`. Os rótulos originais `sourceType` continuam preservados para diagnóstico. Comparação é por **nome normalizado exato**, não por palavras isoladas; a classificação do site não atesta ingredientes, alergênicos nem mudanças de receita.
+
+O arquivo `public/data/cardapios.json` é **somente uma evidência histórica**: não é usado para preencher cardápios atuais. A aplicação continua exigindo confirmação da FUMP via Worker. As verificações em `tests/hub-catalog-classification.test.mjs` detectam pratos conhecidos sem categoria e protegem a precedência entre o catálogo e o tipo oficial.
+
+Uma auditoria adicional em `scripts/audit-dish-classification.mjs` percorre **todos os 685 registros do histórico**, incluindo os **19 que continham categoria vazia**, sem alterar o arquivo de origem. Ela valida se a classificação efetiva é conhecida e identifica divergências para revisão. Execute `npm run audit:categories`; o comando encerra com erro se um nome registrado não puder ser classificado. O teste `hub-dish-classification-audit.test.mjs` também executa essa verificação em toda rodada de `npm test`, para detectar lacunas em futuros acréscimos ao catálogo. Itens inteiramente novos da FUMP que ainda não constam nas fontes registradas precisam de evidência nova para classificação segura.
+
+### Varredura de cardápios da FUMP (somente leitura)
+
+A varredura pontual de **17/11/2026 a 01/12/2026** no Worker do Hub consultou as **4 fontes em 15 datas**: **60/60 respostas HTTP 200**, sendo **10 com cardápios**, **50 vazias**, **171 pratos e 88 nomes distintos**. Os 171 pratos possuíam categoria efetiva; **15 nomes inéditos** foram incorporados ao catálogo como fallback, e a divergência de `Quibe de Cenoura` foi confirmada (fonte ID 1 = `Prato protéico 3`, fonte ID 2 = `Prato protéico 2`). O prato foi corrigido para opção vegetariana. As divergências já confirmadas de `Bife de milho`, `Quibe assado com lentilha`, `Espinafre com ricota e abobrinha` e `Hambúrguer de grão-de-bico` também foram observadas.
+
+O relatório completo da execução original foi arquivado como artefato do GitHub Actions em [Validar projeto, execução 44090456146](https://github.com/uaibrain-lab/ru-hoje/actions/runs/44090456146). A execução foi **única**: a etapa de rede foi removida do workflow de validação, evitando 60 chamadas extras a cada commit.
+
+Para repetir **sob demanda** o intervalo do Worker, execute `npm run audit:fump-window`, que grava `audit-results/fump-window-classification.json` apenas na máquina local. **Limitação:** o Worker protege o uso gratuito e aceita somente hoje até D+14. No GitHub Actions, a API direta `https://fump.ufmg.br:3003` sofreu timeout nas consultas de 17/11/2026, 10/2026, 10/2025 e 10/2020; esses intervalos antigos NÃO foram auditados remotamente.
+
+Quando houver acesso direto à porta 3003 (por exemplo, de uma máquina na rede brasileira), use `npm run audit:fump:history -- 2000-01-01` para consultar a API histórica ano a ano, com limite de requisições, espera entre GETs, divisão de respostas grandes e relatório `audit-results/fump-historical-classification.json`. O limite inicial `2000-01-01` é explícito e ajustável; não há documentação confirmada de uma data histórica mínima suportada. A auditoria é incompleta se a fonte falhar ou bloquear acesso; **nunca confundir erro/timeout com ausência de cardápio**. O script não escreve nenhum cardápio no sistema.
+
+**Nota:** instruções de versões e workflows antigos mais abaixo neste README são históricas e podem não refletir a produção atual.
+
 ## Estado comprovado
 
 - `npm test`: 9/9 testes de parser e mesclagem aprovados neste ambiente.
