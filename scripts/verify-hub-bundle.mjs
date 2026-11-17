@@ -4,7 +4,7 @@
  *
  * node scripts/verify-hub-bundle.mjs --bundle "C:\\...\\Hub-UFMG.bundle"
  */
-import {readFileSync,existsSync,mkdtempSync,rmSync} from 'node:fs';
+import {readFileSync,existsSync,mkdirSync,mkdtempSync,rmSync} from 'node:fs';
 import {basename,dirname,join,resolve} from 'node:path';
 import {tmpdir} from 'node:os';
 import {createHash} from 'node:crypto';
@@ -24,10 +24,14 @@ export function verifyHubBundle(bundle) {
   if(!match||match[2]!==basename(path))throw new Error('MANIFESTO_SHA256_INVALIDO');
   const digest=createHash('sha256').update(readFileSync(path)).digest('hex');
   if(digest!==match[1].toLowerCase())throw new Error('BUNDLE_SHA256_DIVERGENTE');
-  // Git verifica se todos os objetos necessários ao bundle são autocontidos.
-  run(dirname(path),'bundle','verify',path);
+  // git bundle verify exige um diretório Git, e não funciona
+  // diretamente da pasta Documents onde guardamos o .bundle.
   const root=mkdtempSync(join(tmpdir(),'hub-restore-check-'));
   try {
+    const verifier=join(root,'empty');
+    mkdirSync(verifier);
+    run(verifier,'init','-q');
+    run(verifier,'bundle','verify',path);
     const target=join(root,'restored');
     run(root,'clone','--no-checkout','--quiet',path,target);
     const commit=run(target,'rev-parse','HEAD').trim();
