@@ -51,7 +51,11 @@ function festaMeta(startsAt,place){
 }
 function localizedDate(raw){if(!raw)return '';const [ymd,hm]=String(raw).split('T');const [y,m,d]=(ymd||'').split('-');return `${d||'--'}/${m||'--'} · ${hm||'--:--'}`;}
 function plural(count,singular,pluralForm){return `${count} ${count===1?singular:pluralForm}`;}
-function switchTab(tab){
+function tabFromLocation(){
+  const name=new URLSearchParams(window.location.search).get('aba');
+  return ['menu','interno','festas','sobre'].includes(name)?name:'menu';
+}
+function switchTab(tab,historyMode='push'){
   const pages={menu:'bandeco-main',festas:'festas-page',interno:'interno-page',sobre:'sobre-page'};
   if(!Object.hasOwn(pages,tab))return;
   const changed=!Object.entries(pages).some(([name,id])=>name===tab && !$(id).hidden);
@@ -64,6 +68,12 @@ function switchTab(tab){
   }
   if(tab==='festas')void refreshEvents();else stopPublicEventsListener();
   if(tab==='interno')notifyInternoShown();
+  if(changed && historyMode==='push'){
+    const url=new URL(window.location.href);
+    if(tab==='menu')url.searchParams.delete('aba');
+    else url.searchParams.set('aba',tab);
+    window.history.pushState({hubTab:tab},'',url);
+  }
   if(changed)window.scrollTo(0,0);
 }
 function notifyInternoShown(){
@@ -342,10 +352,24 @@ async function authorized(){const {adminAuth,authMod,adminDb,dbMod}=await servic
     throw error;
   }
 }
+let adminWatcherPromise=null;
+function ensureAdminWatcher(){
+  if(DEMO || adminWatcherPromise)return adminWatcherPromise;
+  adminWatcherPromise=service().then(({adminAuth,authMod})=>
+    authMod.onAuthStateChanged(adminAuth,user=>{
+      if(!state.admin)return;
+      const googleUser=user&&!user.isAnonymous&&user.providerData?.some(item=>item.providerId==='google.com');
+      // Troca de conta ou logout revoga imediatamente o painel local.
+      if(!googleUser || user.uid!==state.user?.uid)void clearAdminSession();
+    })
+  ).catch(error=>{adminWatcherPromise=null;console.warn('Observação administrativa indisponível:',error?.name||'ERROR');});
+  return adminWatcherPromise;
+}
 async function openAdmin(){openModal('admin-dialog');note('admin-status','');if(DEMO){state.admin=true;$('admin-login').hidden=true;$('admin-panel').hidden=false;
     note('admin-status','Laboratório: acesso administrativo fictício. Não conectado à produção.');await loadDefaultRules();await loadTagCatalog();await renderAdminEvents();adminTab('events');return;}
   let ocupaAdminStage='authentication-and-owner';
   try{if(!await authorized()){note('admin-status','Acesso não autorizado.',true);return;}state.admin=true;$('admin-login').hidden=true;$('admin-panel').hidden=false;
+    void ensureAdminWatcher();
     note('admin-status','Acesso administrativo autorizado. Dados pessoais indisponíveis até revisão de segurança.');
     ocupaAdminStage='load-default-rules';await loadDefaultRules();
     ocupaAdminStage='load-tag-catalog';await loadTagCatalog();
@@ -661,6 +685,8 @@ function init(){
     collapse?.setAttribute('aria-label','Expandir menu lateral');
   }}catch{}
   for(const tab of ['menu','festas','interno','sobre'])$('tab-'+tab).addEventListener('click',()=>switchTab(tab));
+  window.addEventListener('popstate',()=>switchTab(tabFromLocation(),'none'));
+  switchTab(tabFromLocation(),'none');
   $('interno-frame')?.addEventListener('load',notifyInternoShown);
   $('admin-lock').addEventListener('click',openAdmin);$('admin-login').addEventListener('click',openAdmin);
   const adminClose=$('admin-dialog').querySelector('[data-close]');
@@ -700,9 +726,5 @@ function init(){
   setEditorVisible(false);$('signup-switch-participant')?.addEventListener('click',openParticipantSwitchPrompt);$('participant-switch-cancel')?.addEventListener('click',closeParticipantSwitchPrompt);$('participant-switch-cancel-x')?.addEventListener('click',closeParticipantSwitchPrompt);$('participant-switch-continue')?.addEventListener('click',()=>switchParticipant());
   if(DEMO)setInterval(demoScheduler,1000);
   else {setInterval(()=>{if(publicEventsActive())renderEvents();},15000);document.addEventListener('visibilitychange',()=>{if(document.hidden)stopPublicEventsListener();else if(publicEventsActive())void refreshEvents();});}
-  if(!DEMO)service().then(({adminAuth,authMod})=>authMod.onAuthStateChanged(adminAuth,user=>{
-    const googleUser=user&&!user.isAnonymous&&user.providerData?.some(item=>item.providerId==='google.com');
-    if(state.admin&&!googleUser)clearAdminSession();
-  })).catch(()=>{});
 }
 init();
