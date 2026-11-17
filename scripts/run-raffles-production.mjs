@@ -2,6 +2,7 @@
 import {createHash} from 'node:crypto';
 import fs from 'node:fs';
 import {prepareRaffle,due,isScheduledRaffleWindow} from './raffle-engine.mjs';
+import {entryFromDoc,entriesSnapshotHash,publishRaffleAtomically} from './raffle-publication-guard.mjs';
 
 const TARGET_PROJECT='hubufmg';
 const TARGET_SERVICE_ACCOUNT='hub-prod-raffles@hubufmg.iam.gserviceaccount.com';
@@ -36,19 +37,16 @@ try{
   for(const doc of snap.docs){
     const data=doc.data();if(!due(data))continue;
     try{
-      const eventRef=doc.ref,resultRef=doc.ref.collection('results').doc('official'),privateRef=doc.ref.collection('resultPrivate').doc('official');
-      const entries=(await doc.ref.collection('entries').get()).docs.map(d=>({uid:d.id,createdAt:d.data().createdAt?.toDate?.()?.toISOString?.()||'',encryptedProfile:d.data().encryptedProfile}));
+      const eventRef=doc.ref;
+      // Esta leitura é prévia; a consulta transacional revalida TODOS os
+      // documentos da coleção antes de confirmar o resultado.
+      const entries=(await doc.ref.collection('entries').get()).docs.map(entryFromDoc);
       if(data.participantCount!==entries.length)throw Error('Contagem de inscrições divergente; revisão manual necessária.');
       const {publicResult,privateResult}=await prepareRaffle({event:data,entries,profiles:[],privateKey});
-      const snapshotHash=createHash('sha256').update(entries.map(e=>`${e.uid}:${e.createdAt}:${JSON.stringify(e.encryptedProfile||{})}`).sort().join('\n')).digest('hex');
+      const snapshotHash=entriesSnapshotHash(entries);
       publicResult.entriesSnapshotSha256=snapshotHash;privateResult.entriesSnapshotSha256=snapshotHash;
-      const published=await db.runTransaction(async tx=>{
-        const latest=await tx.get(eventRef);const old=await tx.get(resultRef);
-        if(!latest.exists||old.exists||!due(latest.data()))return false;
-        if(latest.data().participantCount!==entries.length)throw Error('Contagem mudou desde o snapshot.');
-        tx.create(resultRef,{...publicResult,publishedAt:FieldValue.serverTimestamp()});
-        tx.create(privateRef,{...privateResult,createdAt:FieldValue.serverTimestamp()});
-        tx.update(eventRef,{raffleStatus:'drawn',updatedAt:FieldValue.serverTimestamp()});return true;
+      const published=await publishRaffleAtomically({
+        db,eventRef,event:data,entries,publicResult,privateResult,FieldValue
       });
       console.log(published?`Hub evento ${safeId(doc.id)}: resultado publicado.`:`Hub evento ${safeId(doc.id)}: já processado.`);
     }catch{failures++;console.error(`Hub evento ${safeId(doc.id)}: falha não sensível.`);}
