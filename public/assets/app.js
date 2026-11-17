@@ -6,7 +6,6 @@ import {readLiveMenu, sourceForRu, isValidLiveEntry, validISO} from './fump-live
 import {buildPrefetchPlan, canRunBackgroundFetch, recentlyChecked, PREFETCH_LIMIT_PER_DAY, PREFETCH_MIN_GAP_MS} from './fump-prefetch.js';
 const SOURCE_URL = 'https://fump.ufmg.br/cardapio-do-dia/';
 const STORAGE_RU = 'ruhoje:restaurant:v1';
-const STORAGE_PREFERS_CAFE = 'ruhoje:prefers-cafe:v1';
 const LEGACY_MENU_KEYS = ['ruhoje:menus:v1','ruhoje:live-menus:v1'];
 const STORAGE_PREFETCH = 'ruhoje:prefetch-quota:v3';
 const LEGACY_PREFETCH_META = 'ruhoje:prefetch-checks:v2';
@@ -315,12 +314,12 @@ function renderHours() {
   root.hidden=!ru;
   if (!ru) return;
   const status=currentOpening(ru.id);
-  $('hours-status').textContent=status.message;
+  $('hours-status').textContent=status.message + (status.details?.toLowerCase().includes('café da manhã') ? ' · acesso restrito' : '');
   $('hours-dot').className='hours-dot '+(status.state==='open'?'is-open':'is-closed');
   const list=$('hours-list');list.replaceChildren();
   for(const block of weeklySummary(ru.id)) {
     const row=el('div','hours-row');
-    row.append(el('strong','',block.day),el('span','',block.services.join(' · ')||'Não atende'));
+    row.append(el('strong','',block.day),el('span','',block.services.map(service => service.startsWith('Café da manhã') ? `${service} (acesso restrito)` : service).join(' · ')||'Não atende'));
     list.append(row);
   }
 }
@@ -419,7 +418,7 @@ function renderMealCard(mealId, payload, isFeatured, ru) {
   for (const groupName of GROUP_ORDER) {
     const dishes = groups.get(groupName);
     if (!dishes?.length) continue;
-    const group = el('section','menu-group');
+    const group = el('section','menu-group' + (groupName === 'Pratos principais' ? ' menu-group--main' : groupName === 'Opção vegetariana' ? ' menu-group--vegetarian' : ''));
     const heading = el('h4','menu-group-title');
     const symbol = el('span','category-emoji',GROUP_ICONS[groupName]);
     symbol.setAttribute('aria-hidden','true');
@@ -459,16 +458,18 @@ function renderMealCard(mealId, payload, isFeatured, ru) {
   card.append(contents);
   return card;
 }
-function renderNoMenu(ru, date) {
+function renderNoMenu(ru, date, status = 'NOT_PUBLISHED') {
   const root = el('div','no-menu');
   const picture = el('div','empty-illustration');
   picture.innerHTML = iconSVG('<circle cx="12" cy="12" r="8"/><path d="M8 12h8M12 8v8"/>');
-  root.append(picture, el('h3', '', 'Ainda sem cardápio por aqui'));
-  const weekDay=dayDate(date).getUTCDay();
-  const notUsuallyOpen=weekDay===0 || (weekDay===6 && !ru.saturday);
-  root.append(el('p','', notUsuallyOpen
-    ? `${ru.name} não tem atendimento regular previsto nessa data. Consulte a FUMP para possíveis exceções.`
-    : `Não encontramos pratos confirmados para ${ru.name} em ${friendlyDate(date,{day:'numeric',month:'long'})}. Pode ser que a FUMP ainda não tenha divulgado os dados ou que a atualização tenha falhado.`));
+  const noService=nonOperatingDayForDate(date,ru.id);
+  const error=status==='FETCH_ERROR' || status==='PARSE_ERROR';
+  root.append(picture,el('h3','',error?'Consulta indisponível':noService?'Sem atendimento regular previsto':'Cardápio ainda não divulgado'));
+  root.append(el('p','',error
+    ? 'Não foi possível confirmar os pratos diretamente na FUMP. Tente novamente quando a conexão estiver disponível.'
+    : noService
+      ? `${ru.name} não tem atendimento regular previsto nessa data. Consulte a FUMP para possíveis exceções.`
+      : `A FUMP ainda não confirmou pratos para ${ru.name} em ${friendlyDate(date,{day:'numeric',month:'long'})}.`));
   const link = el('a','source-link','Consultar na FUMP ↗');
   link.href = SOURCE_URL; link.target = '_blank'; link.rel = 'noopener noreferrer';
   root.append(link);
@@ -495,7 +496,7 @@ function renderMenus() {
   const data = menuFor(day,state.selectedRu);
   const selectedKey=liveKey(day,state.selectedRu);
   const liveStatus=state.liveStatus.get(selectedKey);
-  const waitingForLive=state.livePending.has(selectedKey) && !liveStatus;
+  const waitingForLive=navigator.onLine && !live && !liveStatus && !nonOperatingDayForDate(day,state.selectedRu);
   if (!ru) {
     const msg=el('div','no-menu');
     msg.append(el('h3','','Primeiro, escolha seu RU'),
@@ -507,12 +508,20 @@ function renderMenus() {
     $('connection-notice').hidden=false;
   }
   // Exibir somente refeições efetivamente publicadas pela FUMP. Não criar cartões vazios.
-  const entries = ['almoco','jantar','cafe'].filter(m => ru.meals.includes(m) && Array.isArray(data?.meals?.[m]?.items) && data.meals[m].items.length > 0);
-  const hasItems = entries.some(m => Array.isArray(data?.meals?.[m]?.items) && data.meals[m].items.length);
+  // Café da manhã é restrito e não possui cardápio público nesta interface.
+  const entries = ['almoco','jantar'].filter(m => ru.meals.includes(m) && Array.isArray(data?.meals?.[m]?.items) && data.meals[m].items.length > 0);
+  const hasItems = entries.length > 0;
   if (!hasItems) {
-    if (waitingForLive && navigator.onLine) {
+    if (waitingForLive) {
       $('connection-notice').textContent='Consultando o cardápio atualizado da FUMP…';
       $('connection-notice').hidden=false;
+      const skeleton=el('div','meal-skeleton');
+      skeleton.setAttribute('role','status');
+      skeleton.setAttribute('aria-label','Carregando cardápio oficial');
+      skeleton.append(el('div','loading-shimmer'),el('div','loading-shimmer'),el('div','loading-shimmer'));
+      list.append(skeleton);
+      renderLastUpdateLine(null);
+      return;
     } else if (liveStatus?.status==='FETCH_ERROR' && navigator.onLine) {
       $('connection-notice').textContent='Não foi possível consultar a FUMP agora. Nenhum cardápio anterior será exibido.';
       $('connection-notice').hidden=false;
@@ -520,14 +529,15 @@ function renderMenus() {
       $('connection-notice').textContent='A FUMP respondeu em formato inesperado; nenhum prato foi exibido.';
       $('connection-notice').hidden=false;
     }
-    list.append(renderNoMenu(ru,day));
+    list.append(renderNoMenu(ru,day,!navigator.onLine?'FETCH_ERROR':liveStatus?.status));
     renderLastUpdateLine(null);
     return;
   }
   const hasRealMeal = id => !!data?.meals?.[id]?.items?.length;
   const after1430 = (today.hours*60+today.minutes)>=870;
+  // À tarde não reapresentar o almoço como refeição em destaque.
   const featured = day === today.iso
-    ? (after1430 && hasRealMeal('jantar') ? 'jantar' : hasRealMeal('almoco') ? 'almoco' : entries.find(hasRealMeal))
+    ? (after1430 ? (hasRealMeal('jantar') ? 'jantar' : null) : (hasRealMeal('almoco') ? 'almoco' : null))
     : null;
   const order = entries.slice().sort((a,b) => Number(b === featured)-Number(a === featured));
   for (const meal of order) list.append(renderMealCard(meal,data?.meals?.[meal],meal === featured,ru));
