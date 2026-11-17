@@ -96,7 +96,7 @@ export function auditPhaseZero(read=localRead) {
       'Fase 1: Firestore/JSON e menu local foram retirados da exibição; revisar cache do Worker na Fase 2',
       'Interno ainda carrega Leaflet externo e tiles OSM; contingência na Fase 5',
       'Sorteios ainda dependem de GitHub Actions; migrar apenas após homologação da Fase 6',
-      'Cache do Worker usa 240 s e pode servir resposta anterior; revisar na Fase 2'
+      'Fase 2: cardápios com cache Worker de 60 s, sem stale; testar status real e limites externos após o deploy'
     ]
   };
 }
