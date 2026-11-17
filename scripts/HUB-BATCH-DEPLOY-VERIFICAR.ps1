@@ -1,7 +1,7 @@
 <#
  Hub UFMG - deploy unificado apos aprovacao do batch (Fases 3, 4 e 5).
- Deploy coordenado de Worker + Hosting + Firestore Rules. Também publica
- Cron independente read-only; NAO executa sorteios.
+ Deploy coordenado Worker, Cron independente, Hosting e Firestore Rules.
+ NAO executa sorteios.
  Windows PowerShell 5.1, necessita Firebase CLI autenticada.
 #>
 $ErrorActionPreference = "Stop"
@@ -30,16 +30,16 @@ Write-Host "Conferindo protecoes locais..." -ForegroundColor Cyan
 & node scripts/hub-phase0-readonly-audit.mjs
 if($LASTEXITCODE -ne 0){throw "AUDITORIA_FALHOU"}
 
-# Publicar também Worker: inclui Cron Trigger independente de GitHub,
-# além da política FUMP 60s já homologada anteriormente.
-Write-Host "Publicando Cloudflare Worker e Cron de verificação read-only..." -ForegroundColor Cyan
+# Publicar Worker atualizado: adiciona monitor independente por Cron sem
+# afetar o proxy GET já aprovado e sem executar sorteios.
+Write-Host "Publicando Worker e cron independente da Cloudflare..." -ForegroundColor Cyan
 & node --check worker/hub-independent-monitor.mjs
 if($LASTEXITCODE -ne 0){throw "WORKER_MONITOR_SINTAXE_FALHOU"}
 & npx.cmd --yes wrangler deploy --config worker/wrangler.toml
 if($LASTEXITCODE -ne 0){throw "WORKER_DEPLOY_FALHOU"}
 
-# Endpoint deliberadamente inválido: teste do Worker sem depender da FUMP
-# estar disponível naquele momento. Deve rejeitar ID fora do allowlist.
+# Verificação que NÃO depende de a FUMP estar respondendo nesta hora.
+# Pedido com ID impossível deve receber 400, sem ser encaminhado à origem.
 $probeUrl="https://hub-fump-proxy.hubufmg.workers.dev/api/menu?id=999&data=2026-11-17"
 $headerFile=[IO.Path]::GetTempFileName()
 $bodyFile=[IO.Path]::GetTempFileName()
@@ -49,54 +49,10 @@ try {
   $probeBody=Get-Content -LiteralPath $bodyFile -Raw -Encoding UTF8
   if(-not $probeBody.Contains('"error":"INVALID_SOURCE_OR_DATE"')){throw "WORKER_RESPOSTA_INESPERADA"}
   $probeHeaders=Get-Content -LiteralPath $headerFile -Raw -Encoding UTF8
-  if($probeHeaders -notmatch '(?im)^access-control-allow-origin:\s*https://hubufmg\.web\.app\s*
-if($LASTEXITCODE -ne 0){throw "FIREBASE_DEPLOY_FALHOU"}
-
-$nonce=[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
-$base="https://hubufmg.web.app"
-function Get-PublicText([string]$url) {
-  $out=(& curl.exe -fsSL --max-time 35 "$url") -join ""
-  if($LASTEXITCODE -ne 0){throw "PUBLIC_URL_FALHOU: $url"}
-  return $out
-}
-$sw=Get-PublicText "$base/service-worker.js?v=$nonce"
-$app=Get-PublicText "$base/assets/app.js?v=$nonce"
-$interno=Get-PublicText "$base/interno?v=$nonce"
-$leaflet=Get-PublicText "$base/assets/vendor/leaflet-1.9.4.js?v=$nonce"
-$leafletCSS=Get-PublicText "$base/assets/vendor/leaflet-1.9.4.css?v=$nonce"
-if(-not $sw.Contains("hub-v277-20261117-batch3-5-r1")){throw "SW_NAO_ATUALIZADO"}
-if(-not $app.Contains("ruhoje:prefetch-quota:v3")){throw "PREFETCH_NAO_ATUALIZADO"}
-if(-not $interno.Contains('src="/assets/vendor/leaflet-1.9.4.js"')){throw "INTERNO_NAO_ATUALIZADO"}
-if(-not $leaflet.Contains("Leaflet 1.9.4") -and -not $leaflet.Contains("Leaflet v1.9.4")){throw "LEAFLET_INVALIDO"}
-if(-not $leafletCSS.Contains(".leaflet-container")){throw "CSS_LEAFLET_INVALIDO"}
-Write-Host "HUB_BATCH_FASES_3_4_5_PUBLICADO_E_VERIFICADO" -ForegroundColor Green
-Write-Host "OBS: as regras Firestore foram publicadas pelo CLI; a checagem HTTP confirma os arquivos Hosting." -ForegroundColor Yellow
-){
+  if($probeHeaders -notmatch '(?im)^access-control-allow-origin:\s*https://hubufmg\.web\.app\s*$'){
     throw "WORKER_CORS_NAO_VALIDADO"
   }
-  if($probeHeaders -notmatch '(?im)^cache-control:\s*no-store\s*
-if($LASTEXITCODE -ne 0){throw "FIREBASE_DEPLOY_FALHOU"}
-
-$nonce=[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
-$base="https://hubufmg.web.app"
-function Get-PublicText([string]$url) {
-  $out=(& curl.exe -fsSL --max-time 35 "$url") -join ""
-  if($LASTEXITCODE -ne 0){throw "PUBLIC_URL_FALHOU: $url"}
-  return $out
-}
-$sw=Get-PublicText "$base/service-worker.js?v=$nonce"
-$app=Get-PublicText "$base/assets/app.js?v=$nonce"
-$interno=Get-PublicText "$base/interno?v=$nonce"
-$leaflet=Get-PublicText "$base/assets/vendor/leaflet-1.9.4.js?v=$nonce"
-$leafletCSS=Get-PublicText "$base/assets/vendor/leaflet-1.9.4.css?v=$nonce"
-if(-not $sw.Contains("hub-v277-20261117-batch3-5-r1")){throw "SW_NAO_ATUALIZADO"}
-if(-not $app.Contains("ruhoje:prefetch-quota:v3")){throw "PREFETCH_NAO_ATUALIZADO"}
-if(-not $interno.Contains('src="/assets/vendor/leaflet-1.9.4.js"')){throw "INTERNO_NAO_ATUALIZADO"}
-if(-not $leaflet.Contains("Leaflet 1.9.4") -and -not $leaflet.Contains("Leaflet v1.9.4")){throw "LEAFLET_INVALIDO"}
-if(-not $leafletCSS.Contains(".leaflet-container")){throw "CSS_LEAFLET_INVALIDO"}
-Write-Host "HUB_BATCH_FASES_3_4_5_PUBLICADO_E_VERIFICADO" -ForegroundColor Green
-Write-Host "OBS: as regras Firestore foram publicadas pelo CLI; a checagem HTTP confirma os arquivos Hosting." -ForegroundColor Yellow
-){
+  if($probeHeaders -notmatch '(?im)^cache-control:\s*no-store\s*$'){
     throw "WORKER_ERRO_CACHEAVEL"
   }
 }finally{
