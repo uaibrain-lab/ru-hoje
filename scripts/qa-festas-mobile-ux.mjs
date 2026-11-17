@@ -129,8 +129,13 @@ try{
           'Cartaz sobrepõe texto: '+hint);
       }
       if(variant.actions){
-        assert.ok(result.actions.left<result.content.left,
-          'Ações continuam espremidas na coluna de informação: '+hint);
+        if(variant.poster){
+          assert.ok(result.actions.left<result.content.left,
+            'Ações continuam espremidas na coluna de informação: '+hint);
+        }else{
+          assert.ok(result.actions.left>=result.card.left-1,
+            'Ações sem cartaz não podem vazar do card: '+hint);
+        }
         const headerBottom=Math.max(result.poster?.bottom||0,result.content.bottom);
         assert.ok(result.actions.top>=headerBottom-1,
           'Ações sobrepostas aos dados ou cartaz: '+hint);
