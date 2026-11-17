@@ -2,8 +2,10 @@
  * Categorias conhecidas do Hub UFMG, combinando o catálogo histórico de
  * ingredientes do ICA e correções pontuais verificadas em cardápios FUMP.
  *
- * A categoria de um nome EXATO catalogado prevalece sobre os tipos genéricos
- * do endpoint. Para nomes desconhecidos, usa-se o tipo oficial recebido.
+ * Para um nome EXATO catalogado como opção vegetariana ou prato principal,
+ * nossa classificação prevalece sobre o tipo genérico da FUMP (frequentemente
+ * lançado em uma posição errada). Nas demais categorias, o tipo oficial
+ * reconhecido continua prioritário; sem ele, recorre-se ao catálogo.
  * Nunca inferir por palavras isoladas como "bife", "milho" ou "bolinho".
  * Não confundir classificação de exibição com certificação nutricional.
  */
@@ -26,9 +28,9 @@ const UNREGISTERED_OVERRIDES = Object.freeze({
   'asa de frango assada': 'proteina',
 });
 
-// Catálogo auxiliar alimentado pelo PDF "Ingredientes - ICA".
-// Ele só é consultado quando a FUMP não informa um tipo confiável;
-// classificações oficiais reconhecidas continuam prevalecendo.
+// Catálogo de receitas alimentado pelo PDF "Ingredientes - ICA".
+// Pratos principais e vegetarianos catalogados têm prioridade sobre a FUMP.
+// Para os demais grupos, a classificação é auxiliar se a fonte for explícita.
 const ICA_CATALOG = Object.freeze({
   // Acompanhamentos
   'arroz a grega': 'acompanhamento',
@@ -176,8 +178,8 @@ const ICA_CATALOG = Object.freeze({
 
 // Referências de classificações de cardápios históricos FUMP (outubro/2026).
 // Não são cardápios atuais e NUNCA serão exibidos como pratos publicados.
-// Para nomes presentes apenas aqui, a categoria oficial ATUAL prevalece;
-// esta tabela atua como fallback quando o item vem sem tipo reconhecido.
+// Para nomes vegetarianos/principais identificados aqui, priorizar catálogo.
+// Para os demais grupos, esta tabela atua como fallback sem tipo reconhecido.
 const HISTORICAL_FUMP_CATEGORIES = Object.freeze({
   // acompanhamento (1)
   "bolinho de milho": "acompanhamento",
@@ -261,8 +263,8 @@ const HISTORICAL_FUMP_CATEGORIES = Object.freeze({
 
 // Novos nomes detectados em consulta oficial ao Worker da FUMP em
 // 17–19/11/2026 (IDs 6, 1, 2, 5; datas consultadas até 01/12).
-// Atua SOMENTE como fallback se o tipo atual vier ausente: receitas e
-// categorias podem mudar; nunca substituir o dado oficial atual sem prova.
+// Vegetarianos/principais registrados têm prioridade por nome exato.
+// Os demais grupos atuam como fallback se o tipo atual vier ausente.
 const OBSERVED_FUMP_CATEGORIES_NOV2026 = Object.freeze({
   'banana prata': 'sobremesa',
   'carne moida com legumes': 'proteina',
@@ -296,9 +298,10 @@ const VERIFIED_VEGETARIAN_LEGACY = new Set([
   'assado de grao de bico',
 ]);
 
-// 1. Categorias revisadas (catálogo de ingredientes e exceções verificadas).
-// 2. Nomes só observados no histórico: fallback, não força mudança do tipo
-//    oficial atual quando ele existe (receitas podem variar entre os RUs).
+// 1. Categorias revisadas de receitas + exceções verificadas.
+// 2. Nomes observados no histórico ou na última varredura.
+// Para categoria principal/vegetariana o catálogo inteiro é autoritativo;
+// para os demais tipos continua sendo uma referência auxiliar.
 const VERIFIED_DISH_CATEGORIES = Object.freeze({
   ...ICA_CATALOG,
   ...UNREGISTERED_OVERRIDES,
@@ -324,32 +327,20 @@ export function unregisteredCategory(name) {
 }
 
 /**
- * Nome exato só prevalece sobre um tipo atual explícito se o conflito já
- * foi confirmado em RUs distintos ou auditado individualmente. Exemplo:
- * "Bife de milho" já foi publicado como proteína no Setorial I.
+ * O catálogo reconhece o prato pelo nome exato, independentemente do RU.
+ * Categorias principais e vegetarianas catalogadas são prioritárias sobre
+ * todos os tipos FUMP, incluindo posições protéicas, guarnições e entradas.
+ * Isso vale também para o histórico e novos nomes oficialmente observados.
+ * Não classificar por substring: nomes desconhecidos seguem a classificação
+ * explícita da FUMP; outros grupos catalogados são apenas fallback.
  */
-const VERIFIED_SOURCE_CORRECTIONS = Object.freeze({
-  'bife de milho': 'vegetariana',
-  'soja refogada com legumes': 'vegetariana',
-  // Confirmado pelo usuário: opção vegetariana mesmo quando o tipo FUMP variar.
-  'quibe assado com lentilha': 'vegetariana',
-  // Confirmados pelo usuário; os nomes já existiam no histórico da FUMP
-  // como "Prato protéico 3", mas outros RUs podem fornecer tipos conflitantes.
-  'espinafre com ricota e abobrinha': 'vegetariana',
-  'hamburguer de grao de bico': 'vegetariana',
-  // Confirmado como prato vegetariano no histórico e em 19/11/2026:
-  // ID=1 usa protéico 3; ID=2 usa protéico 2 para o mesmo nome.
-  'quibe de cenoura': 'vegetariana',
-});
-
-/**
- * A categoria FUMP atual permanece prioritária, exceto nos poucos conflitos
- * explicitamente verificados acima. Com tipo desconhecido, consultar o índice
- * dos 202 nomes: 126 receitas do ICA + 76 nomes só do histórico.
- */
+function priorityMainCategory(name) {
+  const known=knownDishCategory(name);
+  return known==='proteina' || known==='vegetariana' ? known : '';
+}
 export function categoryFromSourceType(sourceType, name = '') {
-  const fix=VERIFIED_SOURCE_CORRECTIONS[normal(name)];
-  if(fix) return fix;
+  const preferred=priorityMainCategory(name);
+  if(preferred) return preferred;
   const t=normal(sourceType);
   if(t.includes('entrada')) return 'salada';
   if(t.includes('sobremesa')) return 'sobremesa';
@@ -363,17 +354,14 @@ export function categoryFromSourceType(sourceType, name = '') {
 }
 
 /**
- * Exibição: respeitar a categoria explicitamente publicada pela FUMP,
- * com correções confirmadas para casos específicos. Na ausência de tipo
- * atual, manter categorias legadas reconhecidas salvo erros documentados.
- * Se nem tipo nem categoria existirem, usar o catálogo como fallback.
+ * Exibição: aplicar a mesma prioridade de pratos principais/vegetarianos do
+ * parser também a dados já recebidos (ou caches legados). Nos demais grupos,
+ * usar primeiro o tipo FUMP reconhecido e só então o fallback nominal.
  */
 export function publishedCategory(category,name,sourceType='') {
   const key=normal(name);
-  const correction=VERIFIED_SOURCE_CORRECTIONS[key];
-  if(correction) return correction;
-  // Corrigido historicamente: frango informado com categoria genérica molho.
-  if(key==='frango ao molho de tomate') return 'proteina';
+  const preferred=priorityMainCategory(name);
+  if(preferred) return preferred;
 
   const original=normal(sourceType);
   if(original && original!=='tipo de item nao cadastrado') {
