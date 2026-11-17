@@ -365,12 +365,25 @@ try {
     await busPage.locator('#tab-interno').click();
     await bus.locator('#sheet').waitFor({timeout:20000});
     assert.equal(await bus.locator('body').evaluate(()=>location.pathname),'/interno');
-    // Links ainda armazenados em HTML antigo também devem abrir o mapa.
-    await busPage.locator('#interno-frame').evaluate(frame=>{
+    // Links antigos redirecionam. Não inspecionar o iframe enquanto o
+    // documento anterior está sendo destruído: guardar sua identidade e
+    // exigir um documento NOVO, completamente carregado, na rota canônica.
+    await busPage.evaluate(()=>{
+      const frame=document.getElementById('interno-frame');
+      window.__previousInternoDoc=frame.contentDocument;
       frame.src='/interno/index.html?legacy=1';
     });
-    await bus.locator('#sheet').waitFor({timeout:20000});
-    assert.match(await bus.locator('body').evaluate(()=>document.title),/Interno/);
+    await busPage.waitForFunction(()=>{
+      const frame=document.getElementById('interno-frame');
+      try {
+        const doc=frame?.contentDocument;
+        return doc && doc!==window.__previousInternoDoc &&
+          doc.readyState==='complete' && !!doc.querySelector('#sheet') &&
+          /Interno/.test(doc.title) &&
+          frame.contentWindow.location.pathname==='/interno';
+      }catch{return false;}
+    },null,{timeout:20000});
+    await busPage.evaluate(()=>delete window.__previousInternoDoc);
     assert.match(await bus.locator('body').innerText(),/Pontos|Linhas|Ponto perto de mim/);
     // Se ficar offline, o shell canônico já foi armazenado na instalação do SW.
     await busContext.setOffline(true);
