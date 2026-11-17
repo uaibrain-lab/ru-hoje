@@ -59,6 +59,7 @@ try {
   const page=await browser.newPage({viewport:{width:390,height:844},serviceWorkers:'block'});
   let interceptedRequests=0;
   let liveEnabled=false;
+  let failOfficialToday=false;
   const tomorrow=new Date(Date.parse(today+'T12:00:00Z')+86_400_000).toISOString().slice(0,10);
   const relayRequests=[];
   // Testa a rota Cloudflare que é efetivamente usada no Hosting.
@@ -67,6 +68,13 @@ try {
     const id = request.searchParams.get('id');
     const date = request.searchParams.get('data');
     relayRequests.push({id,date});
+    if (id==='6' && date===today && failOfficialToday) {
+      return route.fulfill({
+        status:503,contentType:'application/json',
+        headers:{'Access-Control-Allow-Origin':'*'},
+        body:'{"error":"UPSTREAM_CONNECT_FAILED"}'
+      });
+    }
     const future=id==='6' && date===tomorrow;
     const activeToday=liveEnabled && id==='6' && date===today;
     const name=future ? 'Frango do Dia Seguinte' : 'Frango ao Vivo';
@@ -146,6 +154,16 @@ try {
   await page.getByText('Frango do Dia Seguinte',{exact:true}).waitFor({timeout:12000});
   assert.equal(relayRequests.filter(x=>x.id==='6'&&x.date===tomorrow).length,tomorrowBefore,
     'Clique em data já prefetched não deve duplicar requisição recente');
+  // A FUMP pode alterar o cardápio ou ficar indisponível depois de um
+  // resultado válido: jamais reaproveitar o prato anterior como se fosse atual.
+  await page.locator('.date-card').first().click();
+  await page.getByText('Frango ao Vivo',{exact:true}).waitFor({timeout:12000});
+  failOfficialToday=true;
+  await page.evaluate(()=>window.dispatchEvent(new Event('online')));
+  await page.getByText('Ainda sem cardápio por aqui').waitFor({timeout:17000});
+  assert.equal(await page.getByText('Frango ao Vivo',{exact:true}).count(),0);
+  assert.match(await page.locator('#connection-notice').innerText(),/Não foi possível consultar a FUMP/);
+  failOfficialToday=false;
   assert.deepEqual(errors,[],'Erros de console ou JavaScript durante teste ponta a ponta');
 
 
