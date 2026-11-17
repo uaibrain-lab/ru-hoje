@@ -183,8 +183,18 @@ try {
   await page.locator('.date-card').first().click();
   await page.getByText('Frango ao Vivo',{exact:true}).waitFor({timeout:12000});
   failOfficialToday=true;
-  await page.evaluate(()=>window.dispatchEvent(new Event('online')));
+  // Avançar somente o relógio do cooldown da página no E2E, sem aguardar 30s.
+  // A data oficial da resposta continua vindo da API simulada.
+  await page.evaluate(()=>{
+    window.__realDateNow=Date.now;
+    Date.now=()=>window.__realDateNow()+31_000;
+    window.dispatchEvent(new Event('online'));
+  });
   await page.getByText('Ainda sem cardápio por aqui').waitFor({timeout:17000});
+  await page.evaluate(()=>{
+    Date.now=window.__realDateNow;
+    delete window.__realDateNow;
+  });
   assert.equal(await page.getByText('Frango ao Vivo',{exact:true}).count(),0);
   assert.match(await page.locator('#connection-notice').innerText(),/Não foi possível consultar a FUMP/);
   failOfficialToday=false;
