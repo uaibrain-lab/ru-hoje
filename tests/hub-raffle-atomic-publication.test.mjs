@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  entryFromDoc,entriesSnapshotHash,eventFingerprint,
+  entryFromDoc,entriesSnapshotHash,eventFingerprint,assertPreparedRaffleResult,
   assertRaffleSnapshotUnchanged,publishRaffleAtomically
 } from '../scripts/raffle-publication-guard.mjs';
 
@@ -24,8 +24,11 @@ const doc=entry=>({
   })
 });
 const field={serverTimestamp:()=>({serverTime:true})};
-const pub={status:'published',eligibleCount:2,winners:[{mask:'Pessoa P.'}],alternates:[]};
-const priv={winnerUids:['u1'],alternateUids:[],eligibleCount:2};
+const digest=entriesSnapshotHash(entries);
+const pub={status:'published',schemaVersion:2,eligibleCount:2,participantCount:2,
+  winners:[{mask:'Pe••••'}, {mask:'Ma••••'}],alternates:[],entriesSnapshotSha256:digest};
+const priv={schemaVersion:2,winnerUids:['u1','u2'],alternateUids:[],
+  eligibleCount:2,attemptedEntries:2,invalidEntryCount:0,entriesSnapshotSha256:digest};
 
 function harness({currentEvent=event,currentEntries=entries,publicExists=false,privateExists=false,exists=true}={}){
   const reads=[],writes=[];
@@ -131,6 +134,44 @@ test('contagem divergente e evento inexistente não deixam escrita parcial',asyn
   const b=harness({exists:false});
   await assert.rejects(()=>apply(b),/EVENTO_REMOVIDO/);
   assert.deepEqual(b.writes,[]);
+});
+
+test('resultado vazio ou com menos ganhadores que o pool nunca é publicado',()=>{
+  for(const changed of [
+    {...pub,eligibleCount:0,winners:[]},
+    {...pub,winners:[pub.winners[0]]},
+    {...pub,participantCount:1},
+    {...pub,schemaVersion:1}
+  ])assert.throws(()=>assertPreparedRaffleResult({
+    event,entries,publicResult:changed,privateResult:priv
+  }),/RESULTADO_PREPARADO_INCONSISTENTE|QUANTIDADE_GANHADORES_DIVERGENTE/);
+});
+
+test('IDs repetidos, IDs estranhos e hashes de inscrição divergentes falham fechado',()=>{
+  for(const changed of [
+    {...priv,winnerUids:['u1','u1']},
+    {...priv,winnerUids:['u1','intruso']},
+    {...priv,entriesSnapshotSha256:'0'.repeat(64)}
+  ])assert.throws(()=>assertPreparedRaffleResult({
+    event,entries,publicResult:pub,privateResult:changed
+  }),/GANHADORES_INVALIDOS_OU_DUPLICADOS|HASH_DO_RESULTADO_INCONSISTENTE/);
+});
+
+test('nem mesmo uma transação válida grava resultado sem vencedores consistentes',async()=>{
+  const h=harness();
+  await assert.rejects(()=>publishRaffleAtomically({
+    db:h.db,eventRef:h.ref,event,entries,
+    publicResult:{...pub,winners:[]},privateResult:priv,
+    FieldValue:field,nowFn:()=>at
+  }),/QUANTIDADE_GANHADORES_DIVERGENTE/);
+  assert.deepEqual(h.writes,[]);
+});
+
+test('horário de inscrição ainda aberto impede publicar resultado antecipado',async()=>{
+  const future={...event,drawAtTimestamp:new Date(at+1)};
+  const h=harness({currentEvent:future});
+  await assert.rejects(()=>apply(h,future),/EVENTO_NAO_ELEGIVEL/);
+  assert.deepEqual(h.writes,[]);
 });
 
 test('query de entries readback preserva horário original e dados cifrados',()=>{

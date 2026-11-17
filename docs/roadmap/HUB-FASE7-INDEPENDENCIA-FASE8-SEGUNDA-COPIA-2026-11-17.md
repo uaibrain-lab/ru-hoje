@@ -10,10 +10,15 @@ dias sem atividade. A Fase 7 agora possui uma segunda origem de agendamento:
 
 - Um gatilho: `30 11,16,21 * * *` (UTC), equivalente a 08h30, 13h30 e
   18h30 de Brasília, diariamente. Não há dependência de GitHub Actions.
-- No máximo duas consultas GET por execução: Service Worker público do
-  Firebase Hosting e endpoint oficial FUMP para **RU 6/data atual**.
-- Resposta oficialmente vazia da FUMP é válida; erro HTTP, JSON inválido
-  ou site indisponível geram evento com estado `DEGRADED`.
+- **Cinco GETs por execução**, em paralelo: Service Worker público do
+  Firebase Hosting e respostas oficiais da FUMP para os **quatro RUs (6, 1, 2, 5)**
+  na data atual. O volume é limitado a 15 GETs por dia nos três horários.
+  Resposta vazia continua sendo sucesso, não confirmação de fechamento.
+- Resposta oficialmente vazia da FUMP é válida; erro HTTP, JSON inválido,
+  data/restaurante divergente ou site indisponível são detectados. O relatório
+  diferencia FUMP `OK`, `PARTIAL` (um ou mais RUs com falha) e `ERROR`
+  (todos indisponíveis), registrando somente os IDs públicos e seus estados.
+  Falhas parciais ou gerais marcam a execução como degradada.
 - Não guarda cardápios, cookies, IDs de usuários, credenciais, resultados
   pessoais ou segredos. Não realiza sorteios nem escritas Firestore.
 - Com falha, o `scheduled()` lança erro para que a invocação fique marcada
@@ -97,3 +102,22 @@ que a v277 esteja publicada. Após deploy, verificar o histórico de Cron
 Triggers no painel Cloudflare e o conteúdo de Hosting. O requisito de
 autonomia permanente continua limitado por disponibilidade, cota gratuita
 e mudanças de políticas dos provedores.
+
+## Cópia local semanal opcional (não ativada automaticamente)
+
+A nova ferramenta `scripts/HUB-BACKUP-AGENDAR.ps1` permite consultar,
+instalar ou remover uma tarefa semanal do Agendador do Windows que executa
+`HUB-BACKUP-GIT-LOCAL.ps1`. Sem a opção explícita `-Acao Instalar`,
+**nada é agendado**. O agendamento usa a conta interativa sem elevação,
+domingo às 19h, com `StartWhenAvailable` para retomar tarefas perdidas
+quando o Windows voltar a executar o Agendador.
+
+Exemplo futuro, somente depois de escolher a unidade externa de backup:
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\scripts\HUB-BACKUP-AGENDAR.ps1" -Acao Instalar -DestinoSecundario "X:\Hub-UFMG"
+```
+
+Isso **não é backup automático em nuvem**: requer que o computador esteja
+ligado, a conta do Windows conectada, espaço disponível e um destino secundário
+realmente independente. Não copia dados sensíveis do Firestore e não cria
+nenhum agendamento sem autorização do operador.
