@@ -2,10 +2,8 @@
 name: Hub UFMG — sincronização FUMP redundante
 
 on:
-  schedule:
-    - cron: '23 10,14,18,22 * * 1-5'
-    - cron: '23 15,20 * * 6'
-    - cron: '23 19 * * 0'
+  # Cardapios atualizados sob demanda pelo navegador via Cloudflare Worker.
+  # Coleta administrativa permanece disponivel por workflow_dispatch.
   workflow_dispatch:
 
 permissions:
