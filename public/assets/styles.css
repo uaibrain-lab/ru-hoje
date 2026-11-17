@@ -804,32 +804,99 @@ dialog{background:var(--card);color:var(--ink);border-color:var(--line)}
 .meal-skeleton .loading-shimmer{width:100%;height:17px;min-height:17px;border-radius:7px}
 .meal-skeleton .loading-shimmer:first-child{width:52%;height:22px;min-height:22px}
 .meal-skeleton .loading-shimmer:last-child{width:76%}
-/* Mesma geometria para as duas categorias: evita a faixa lateral e a
-   borda superior/padding extra herdados de .menu-group + .menu-group. */
-.meal-contents .menu-group--main,
-.meal-contents .menu-group--vegetarian,
-.meal-contents .menu-group + .menu-group.menu-group--main,
-.meal-contents .menu-group + .menu-group.menu-group--vegetarian{
-  border:1px solid var(--group-accent-border);
+/* Hierarquia única em Cardápios: TODAS as categorias compartilham o mesmo
+   contorno, recuo, grade de título/emoji e alinhamento dos pratos.
+   Só a tonalidade do fundo diferencia proteínas e vegetarianos. */
+.meal-contents .menu-group{
+  --group-surface:var(--surface-subtle);
+  --group-border:var(--group-line);
+  box-sizing:border-box;
+  min-width:0;
+  margin:0;
+  padding:11px 13px;
+  border:1px solid var(--group-border);
   border-radius:13px;
-  padding:12px 13px;
-  margin-top:10px;
+  background:var(--group-surface);
+}
+/* O seletor de irmãos precisa redefinir a antiga borda/padding herdados,
+   sem sobrescrever os tokens de cor específicos de cada categoria. */
+.meal-contents .menu-group + .menu-group{
+  margin-top:8px;
+  border:1px solid var(--group-border);
+  padding:11px 13px;
 }
 .meal-contents .menu-group--main{
-  --group-accent-border:color-mix(in srgb,var(--purple) 22%,transparent);
-  background:var(--purpleSoft);
+  --group-surface:var(--purpleSoft);
+  --group-border:color-mix(in srgb,var(--purple) 24%,transparent);
 }
 .meal-contents .menu-group--vegetarian{
-  --group-accent-border:color-mix(in srgb,#24936b 22%,transparent);
-  background:color-mix(in srgb,var(--card) 91%,#24936b);
+  --group-surface:color-mix(in srgb,var(--card) 91%,#24936b);
+  --group-border:color-mix(in srgb,#24936b 24%,transparent);
 }
-.meal-contents .menu-group:first-child{margin-top:0;}
-.meal-contents .menu-group--main .menu-group-title,
-.meal-contents .menu-group--vegetarian .menu-group-title{font-size:12px;letter-spacing:.2px;font-weight:800;color:var(--ink)}
-.meal-contents .menu-group--main .dish-row>.dish-title,
-.meal-contents .menu-group--main .dish-trigger,
-.meal-contents .menu-group--vegetarian .dish-row>.dish-title,
-.meal-contents .menu-group--vegetarian .dish-trigger{font-weight:650}
+.meal-contents .menu-group-title{
+  display:grid;
+  grid-template-columns:20px minmax(0,1fr);
+  gap:8px;
+  align-items:center;
+  min-height:20px;
+  margin:0 0 5px;
+  font-size:12px;
+  font-weight:800;
+  line-height:1.35;
+  letter-spacing:.2px;
+  color:var(--section-muted);
+  overflow-wrap:anywhere;
+}
+.meal-contents .menu-group .category-emoji{
+  width:20px;
+  height:20px;
+  min-width:20px;
+  margin:0;
+  display:grid;
+  place-items:center;
+  font-size:18px;
+  line-height:1;
+}
+.meal-contents .dish-list{gap:4px}
+.meal-contents .dish-list li{
+  min-width:0;
+  font-size:15px;
+  line-height:1.4;
+  overflow-wrap:anywhere;
+  color:var(--ink);
+}
+.meal-contents .dish-row{
+  padding-left:15px;
+  column-gap:8px;
+  min-height:44px;
+  align-items:start;
+}
+.meal-contents .dish-row>.dish-title{
+  min-height:44px;
+  display:flex;
+  align-items:center;
+  overflow-wrap:anywhere;
+}
+.meal-contents .dish-row>.dish-trigger{
+  min-height:44px;
+  padding:7px 0;
+  display:flex;
+  align-items:center;
+  gap:4px;
+  line-height:1.4;
+  overflow-wrap:anywhere;
+}
+.meal-contents .dish-trigger>.dish-title{
+  display:block;min-width:0;flex:0 1 auto;
+}
+.meal-contents .dish-trigger .dish-chevron{
+  flex:none;margin-left:0;
+}
+.meal-contents .dish-row:not(:has(>.dish-trigger)):before{
+  margin-top:19.5px;
+}
+.meal-contents .menu-group--main .dish-list li,
+.meal-contents .menu-group--vegetarian .dish-list li{font-weight:680}
 .dish-trigger{min-height:44px}
 .dish-row:has(>.dish-trigger):before{margin-top:calc((44px - 5px)/2)}
 @media(max-width:850px){
@@ -958,10 +1025,8 @@ dialog{background:var(--card);color:var(--ink);border-color:var(--line)}
   #bandeco-main .meal-name h3{font-size:16px}
   #bandeco-main .meal-subtitle{margin-top:2px}
   #bandeco-main .meal-contents{margin-top:9px}
-  #bandeco-main .meal-contents .menu-group--main,
-  #bandeco-main .meal-contents .menu-group--vegetarian,
-  #bandeco-main .meal-contents .menu-group + .menu-group.menu-group--main,
-  #bandeco-main .meal-contents .menu-group + .menu-group.menu-group--vegetarian{
+  #bandeco-main .meal-contents .menu-group,
+  #bandeco-main .meal-contents .menu-group + .menu-group{
     padding:9px 11px;margin-top:8px;
   }
   #bandeco-main .meal-contents .menu-group:first-child{margin-top:0}
