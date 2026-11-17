@@ -19,3 +19,10 @@ region = "gcp:southamerica-east1"
 # Cache API local ao POP e independente da opcao abaixo.
 [cache]
 enabled = false
+
+# Monitor externo à infraestrutura GitHub, no mesmo Worker gratuito.
+# 08h30, 13h30, 18h30 Brasília (UTC-3), diariamente.
+# Um único gatilho -> usa 1 das 5 cotas gratuitas por conta.
+# Não publica resultados, não sorteia e não grava no Firestore.
+[triggers]
+crons = [ "30 11,16,21 * * *" ]
