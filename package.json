@@ -8,6 +8,7 @@
     "audit:phase0": "node scripts/hub-phase0-readonly-audit.mjs",
     "test": "node --test tests/*.test.mjs",
     "audit:categories": "node scripts/audit-dish-classification.mjs",
+    "audit:fump-window": "node scripts/fump-window-classification-sweep.mjs",
     "scrape": "node scripts/sync.mjs",
     "publish": "node scripts/publish.mjs",
     "serve": "node scripts/preview-local.mjs",
