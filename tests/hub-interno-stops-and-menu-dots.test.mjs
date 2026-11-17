@@ -1,44 +1,37 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {needsMenuDot} from '../public/assets/date-availability.js';
+import {isNonOperatingDay} from '../public/assets/date-availability.js';
 
 const iso='2026-11-17'; // terça-feira
 const saturday='2026-11-21';
 const sunday='2026-11-22';
 const read=p=>readFileSync(new URL(p,import.meta.url),'utf8');
 
-function fixture(ru,date,items) {
-  return {days:{[date]:{restaurants:{[ru]:{meals:{almoco:{items}}}}}}};
-}
-
-test('bolinha aparece antes de qualquer consulta em dia de atendimento regular',()=>{
+test('dias úteis não têm bolinha, mesmo quando a FUMP não publicou cardápio',()=>{
   for(const ru of ['setorial-i','setorial-ii','saude','direito','ica']) {
-    assert.equal(needsMenuDot(null,iso,ru),true,ru);
-    assert.equal(needsMenuDot({days:{}},iso,ru),true,ru);
+    assert.equal(isNonOperatingDay(iso,ru),false,ru);
+    assert.equal(isNonOperatingDay('2026-11-20',ru),false,ru);
   }
 });
 
-test('bolinha persiste em erro ou HTTP 200 sem pratos, até carregar menu real',()=>{
-  const snapshot={days:{}};
-  assert.equal(needsMenuDot(snapshot,iso,'setorial-i'),true);
-  assert.equal(needsMenuDot(fixture('setorial-i',iso,[]),iso,'setorial-i'),true);
-  assert.equal(needsMenuDot(snapshot,iso,'setorial-i',true),false);
-  assert.equal(needsMenuDot(fixture('setorial-i',iso,[{name:'Arroz'}]),iso,'setorial-i'),false);
-  assert.equal(needsMenuDot(fixture('saude',iso,[{name:'Arroz'}]),iso,'setorial-i'),true);
+test('sábado depende dos horários regulares de cada RU, não dos pratos',()=>{
+  for(const ru of ['setorial-i','saude','ica']) {
+    assert.equal(isNonOperatingDay(saturday,ru),false,ru+' atende aos sábados');
+  }
+  for(const ru of ['setorial-ii','direito']) {
+    assert.equal(isNonOperatingDay(saturday,ru),true,ru+' não atende regularmente aos sábados');
+  }
 });
 
-test('bolinhas consideram horários de atendimento por RU sem inventar dias de abertura',()=>{
-  assert.equal(needsMenuDot(null,saturday,'setorial-i'),true);
-  assert.equal(needsMenuDot(null,saturday,'saude'),true);
-  assert.equal(needsMenuDot(null,saturday,'ica'),true);
-  assert.equal(needsMenuDot(null,saturday,'setorial-ii'),false);
-  assert.equal(needsMenuDot(null,saturday,'direito'),false);
+test('domingo é marcado para todos os RUs; sem RU e data inválida não gera bolinha',()=>{
   for(const ru of ['setorial-i','setorial-ii','saude','direito','ica']) {
-    assert.equal(needsMenuDot(null,sunday,ru),false,ru);
+    assert.equal(isNonOperatingDay(sunday,ru),true,ru);
   }
-  assert.equal(needsMenuDot(null,iso,null),false);
-  assert.equal(needsMenuDot(null,iso,'ru-nao-existente'),false);
+  assert.equal(isNonOperatingDay(sunday,null),false);
+  assert.equal(isNonOperatingDay(sunday,'ru-nao-existente'),false);
+  assert.equal(isNonOperatingDay('2026-02-30','setorial-i'),false);
+  assert.equal(isNonOperatingDay('not-a-date','setorial-i'),false);
 });
 
 test('mapa mantém os 49 pontos com mesmo desenho e sem origem azul',()=>{
@@ -65,5 +58,7 @@ test('aviso verboso da FUMP foi retirado sem esconder o estado sem cardápio',()
   const app=read('../public/assets/app.js');
   assert.ok(!app.includes('A consulta à FUMP não retornou pratos nesta data. Isso não confirma que o RU esteja fechado.'));
   assert.ok(app.includes('list.append(renderNoMenu(ru,day))'));
-  assert.ok(app.includes('return needsMenuDot(null,iso,ruId,!!liveMenuFor(iso,ruId))'));
+  assert.ok(app.includes('return isNonOperatingDay(iso,ruId)'));
+  assert.ok(app.includes('sem atendimento regular previsto'));
+  assert.ok(!app.includes('sem cardápio carregado'));
 });
