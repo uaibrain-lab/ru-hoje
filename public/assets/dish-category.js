@@ -310,6 +310,10 @@ const VERIFIED_SOURCE_CORRECTIONS = Object.freeze({
   'soja refogada com legumes': 'vegetariana',
   // Confirmado pelo usuário: opção vegetariana mesmo quando o tipo FUMP variar.
   'quibe assado com lentilha': 'vegetariana',
+  // Confirmados pelo usuário; os nomes já existiam no histórico da FUMP
+  // como "Prato protéico 3", mas outros RUs podem fornecer tipos conflitantes.
+  'espinafre com ricota e abobrinha': 'vegetariana',
+  'hamburguer de grao de bico': 'vegetariana',
 });
 
 /**
