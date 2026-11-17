@@ -1,3 +1,5 @@
+import {hoursFor} from './hours.js';
+
 /**
  * Um dia tem cardápio quando há pelo menos um prato publicado em alguma refeição.
  * O cálculo respeita o RU favorito quando selecionado. Sem RU escolhido, verifica
@@ -26,4 +28,15 @@ export function isMissingMenu(data, iso, restaurantId = null) {
 export function dateChipLabel(isToday, missing) {
   if (isToday) return missing ? 'hoje ·' : 'hoje';
   return missing ? '·' : '';
+}
+
+/**
+ * O ponto na data significa "cardápio ainda não carregado", nunca RU fechado.
+ * Mostrar somente em dias de atendimento regular previstos no horário do RU.
+ * Um prato válido, seja da API ao vivo ou do snapshot, remove a bolinha.
+ * Feriados e atendimento excepcional não são inferidos pelo calendário.
+ */
+export function needsMenuDot(data, iso, restaurantId, hasLiveMenu = false) {
+  if (!restaurantId || hoursFor(restaurantId,iso).length === 0) return false;
+  return !hasLiveMenu && !hasMenuForDate(data,iso,restaurantId);
 }
