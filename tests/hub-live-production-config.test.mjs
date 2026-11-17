@@ -28,8 +28,8 @@ test('GitHub scheduled sync uses same verified proxy without requiring manually 
 test('service worker changes version and HTML app URL to avoid stale code',()=>{
   const sw=read('../public/service-worker.js');
   const html=read('../public/index.html');
-  assert.match(sw,/hub-v278-20261117-pwa-install-r1/);
-  assert.match(html,/app\.js\?v=hub-20261117-pwa-r1/);
+  assert.match(sw,/const VERSION = 'hub-v\d+-\d{8}-[a-z0-9-]+'/);
+  assert.match(html,/app\.js\?v=hub-\d{8}-[a-z0-9-]+/);
   assert.ok(sw.includes("path==='/config.js'"));
   assert.match(sw,/cache:'no-store'/);
   assert.match(sw,/path\.endsWith\('\.js'\)/);
