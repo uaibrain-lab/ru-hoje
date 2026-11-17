@@ -403,6 +403,20 @@ try {
           && frame.contentWindow.location.pathname==='/interno';
       }catch{return false;}
     },null,{timeout:20000});
+    // "readyState=complete" confirma o HTML, não o fim da inicialização
+    // do mapa. O documento pode terminar antes do script Leaflet construir
+    // as 49 paradas (especialmente no SW offline do Chromium em CI).
+    // Aguarde os três sinais funcionais sem diminuir a exigência do teste.
+    await busPage.waitForFunction(()=>{
+      const frame=document.getElementById('interno-frame');
+      try{
+        const doc=frame?.contentDocument;
+        return frame?.contentWindow?.L?.version==='1.9.4'
+          && doc?.querySelectorAll('path.interno-stop').length===49
+          && /Mapa-base indisponível/.test(
+            doc?.getElementById('map-basemap-notice')?.textContent||'');
+      }catch{return false;}
+    },null,{timeout:20000});
     const offlineMap=await busPage.evaluate(()=>{
       const frame=document.getElementById('interno-frame');
       const doc=frame?.contentDocument;
