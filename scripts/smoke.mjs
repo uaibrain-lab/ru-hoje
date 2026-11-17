@@ -247,6 +247,11 @@ try {
 
   // Regressão PWA: iframe do Interno com SW controlando a navegação.
   const busContext=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'allow'});
+  // O cenário testa o mapa (não o modal inicial do RU); pré-selecionar RU
+  // impede que um diálogo aberto após DOMContentLoaded bloqueie a aba Interno.
+  await busContext.addInitScript(()=>{
+    try{localStorage.setItem('ruhoje:restaurant:v1','setorial-i');}catch{}
+  });
   const busPage=await busContext.newPage();
   try{
     await busPage.goto(url,{waitUntil:'domcontentloaded'});
