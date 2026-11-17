@@ -105,6 +105,31 @@ test('quibe assado com lentilha é vegetariano mesmo com tipo genérico conflita
   assert.equal(parsed.meals.almoco.items[0].category,'vegetariana');
 });
 
+test('espinafre com ricota e hambúrguer de grão-de-bico são sempre opções vegetarianas',()=>{
+  const names=['Espinafre com ricota e abobrinha','Hambúrguer de grão-de-bico'];
+  for(const name of names){
+    for(const type of ['Prato protéico 1','Prato protéico 2','Prato protéico 3',
+      'Guarnição','Tipo de item não cadastrado','']){
+      assert.equal(categoryFromSourceType(type,name),'vegetariana',name+' / '+type);
+      assert.equal(publishedCategory('proteina',name,type),'vegetariana',name+' / '+type);
+    }
+    assert.equal(knownDishCategory(name),'vegetariana');
+  }
+  // Correção por nome exato: não estender a preparações parecidas.
+  assert.equal(categoryFromSourceType('Prato protéico 1',
+    'Hambúrguer de grão-de-bico com carne'),'proteina');
+  assert.equal(categoryFromSourceType('Prato protéico 1',
+    'Espinafre com ricota, abobrinha e frango'),'proteina');
+
+  const parsed=parseMenuJson({id:6,cardapios:[{data:'2026-11-17',refeicoes:[{
+    tipoRefeicao:'Almoço',pratos:names.map(descricaoPrato=>({
+      tipoPrato:'Prato protéico 1',descricaoPrato
+    }))
+  }]}]},{iso:'2026-11-17',sourceId:'6'});
+  assert.deepEqual(parsed.meals.almoco.items.map(item=>item.category),
+    ['vegetariana','vegetariana']);
+});
+
 test('o parser FUMP já devolve as categorias corrigidas para pratos conhecidos',()=>{
   const parsed=parseMenuJson({id:6,cardapios:[{data:'2026-11-17',refeicoes:[
     {tipoRefeicao:'Almoço',pratos:[
