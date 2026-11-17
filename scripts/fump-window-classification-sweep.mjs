@@ -5,6 +5,8 @@
  * Comando: node scripts/fump-window-classification-sweep.mjs
  */
 import {mkdir,writeFile} from 'node:fs/promises';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {categoryFromSourceType,knownDishCategory,publishedCategory} from '../public/assets/dish-category.js';
 
 export const SWEEP_SOURCES=Object.freeze([
@@ -161,12 +163,12 @@ export async function sweepWindow({
     names,requests:report.requests
   };
 }
-if(process.argv[1]&&new URL('file://'+process.argv[1]).href===import.meta.url){
+if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   const report=await sweepWindow({onResult:entry=>
     console.log('SWEEP_DAY',JSON.stringify(entry))});
-  const outfile=process.env.FUMP_SWEEP_REPORT_FILE||'audit-results/fump-window-classification.json';
+  const outfile='audit-results/fump-window-classification.json';
   await mkdir(new URL('../audit-results/',import.meta.url),{recursive:true});
-  await writeFile(new URL('../'+outfile,import.meta.url),JSON.stringify(report,null,2)+'\n');
+  await writeFile(new URL('../audit-results/fump-window-classification.json',import.meta.url),JSON.stringify(report,null,2)+'\n');
   console.log('FUMP_SWEEP_SUMMARY',JSON.stringify({
     from:report.dateStart,to:report.dateEnd,expected:report.expected,
     attempted:report.attempted,ok:report.ok,empty:report.empty,
