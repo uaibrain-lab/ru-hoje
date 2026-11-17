@@ -415,6 +415,55 @@ try {
   }finally{
     await busContext.close();
   }
+  // Regressão mobile-first: festa em tela pequena, abas no histórico e busca do Interno.
+  // A demonstração usa dados locais, sem depender de contas ou eventos reais.
+  const mobileContext=await browser.newContext({serviceWorkers:'block'});
+  await mobileContext.addInitScript(()=>{
+    try{localStorage.setItem('ruhoje:restaurant:v1','setorial-i');}catch{}
+  });
+  try{
+    for(const width of [375,390,412]){
+      const mobile=await mobileContext.newPage();
+      await mobile.setViewportSize({width,height:812});
+      await mobile.route('https://hub-fump-proxy.hubufmg.workers.dev/**',route=>route.fulfill({
+        status:200,contentType:'application/json',body:'{"id":6,"cardapios":[]}'
+      }));
+      await mobile.route('https://tile.openstreetmap.org/**',route=>route.abort());
+      await mobile.goto(url+'?festas-demo=1&aba=festas',{waitUntil:'domcontentloaded'});
+      await mobile.locator('.festas-page .festa-card--compact').waitFor({state:'visible'});
+      const layout=await mobile.evaluate(()=>{
+        const card=document.querySelector('.festas-page .festa-card--compact');
+        const action=card?.querySelector('.festa-action');
+        const title=card?.querySelector('.festa-card-title');
+        return {
+          viewport:window.innerWidth,
+          documentWidth:document.documentElement.scrollWidth,
+          cardRight:card?.getBoundingClientRect().right,
+          actionHeight:action?.getBoundingClientRect().height,
+          labelSize:parseFloat(getComputedStyle(action.querySelector('.festa-action-label')).fontSize),
+          titleSize:parseFloat(getComputedStyle(title).fontSize)
+        };
+      });
+      assert.ok(layout.documentWidth<=width+1,`Rolagem horizontal em ${width}px: ${JSON.stringify(layout)}`);
+      assert.ok(layout.cardRight<=width+1,`Card de Festas ultrapassa viewport de ${width}px`);
+      assert.ok(layout.actionHeight>=44,`Ação pequena em ${width}px: ${layout.actionHeight}px`);
+      assert.ok(layout.labelSize>=12,`Legenda pequena em ${width}px: ${layout.labelSize}px`);
+      assert.ok(layout.titleSize>=16,`Título pequeno em ${width}px: ${layout.titleSize}px`);
+      await mobile.locator('#tab-sobre').click();
+      assert.equal(new URL(mobile.url()).searchParams.get('aba'),'sobre');
+      await mobile.goBack();
+      await mobile.waitForFunction(()=>
+        document.querySelector('#tab-festas')?.getAttribute('aria-current')==='page');
+      await mobile.locator('#tab-interno').click();
+      const bus=mobile.frameLocator('#interno-frame');
+      await bus.locator('#q').waitFor({state:'visible',timeout:15000});
+      assert.equal(await bus.locator('#sheet').getAttribute('class')?.then(s=>s.includes('peek')),false,
+        'Busca do Interno deve abrir sem painel recolhido');
+      await mobile.close();
+    }
+  }finally{await mobileContext.close();}
+  console.log('E2E mobile aprovado: 375/390/412 px, cards de Festas, histórico e busca do Interno.');
+
   console.log('E2E Interno aprovado: Leaflet local, 49 pontos offline, mapa canônico e contingência sem tiles.');
 
   console.log('E2E aprovado: FUMP como fonte única, ausência de Firestore/localStorage antigo, prefetch D+1 e migração PWA.');
