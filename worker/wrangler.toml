@@ -4,3 +4,15 @@ name = "hub-fump-proxy"
 main = "fump-proxy.mjs"
 compatibility_date = "2026-11-16"
 workers_dev = true
+
+# Worker executa proximo da origem no Brasil; o API da FUMP foi confirmado
+# a partir do Brasil, mas respondeu 503 em acessos vindos de outros POPs.
+# O posicionamento pode ser revertido se a auditoria global nao melhorar.
+[placement]
+region = "gcp:southamerica-east1"
+
+# Caching de resposta do Worker na rede global com tiered cache.
+# So respostas 200 da FUMP com Cache-Control public sao elegiveis.
+# Respostas de erro seguem no-store e Vary: Origin separa CORS corretamente.
+[cache]
+enabled = true
