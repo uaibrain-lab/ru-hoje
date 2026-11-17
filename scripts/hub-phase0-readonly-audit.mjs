@@ -51,9 +51,10 @@ export function auditPhaseZero(read=localRead) {
       !/menuSyncRequests\/current|requestCommunityRefresh\(/.test(app),
       'Navegador consulta cardápios sem endpoint de gravação'),
     ok('FIRESTORE_MENU_DENY_WRITE',
-      /match \/publicMenus\/current\s*\{[^}]*allow list, create, update, delete: if false;/s.test(firestore) &&
+      /match \/publicMenus\/current\s*\{[^}]*allow read, write: if false;/s.test(firestore) &&
+      /match \/menuSyncState\/current\s*\{[^}]*allow read, write: if false;/s.test(firestore) &&
       /match \/menuSyncRequests\/current\s*\{[^}]*allow read, write: if false;/s.test(firestore),
-      'Coleções legadas de cardápios rejeitam escrita de cliente'),
+      'Snapshots legados de cardápio e estado de sync negam leitura e escrita públicas'),
     ok('MENU_AUTHORITATIVE_ONLY',
       app.includes('function menuFor(date, ruId) { return liveMenuFor(date,ruId); }') &&
       app.includes('state.liveMenus.delete(key)') &&
@@ -93,10 +94,11 @@ export function auditPhaseZero(read=localRead) {
     checks:results, passed:results.filter(x=>x.pass).length,
     failed:results.filter(x=>!x.pass).map(x=>x.id),
     observedTechnicalDebt:[
-      'Fase 1: Firestore/JSON e menu local foram retirados da exibição; revisar cache do Worker na Fase 2',
-      'Interno ainda carrega Leaflet externo e tiles OSM; contingência na Fase 5',
-      'Sorteios ainda dependem de GitHub Actions; migrar apenas após homologação da Fase 6',
-      'Fase 2: cardápios com cache Worker de 60 s, sem stale; testar status real e limites externos após o deploy'
+      'Fases 1-3: FUMP é autoridade única; memória de sessão e metadados de quota persistem, sem histórico de pratos',
+      'Fase 4: regras legadas agora negam leitura/escrita pública; aplicação dessas regras requer deploy Firestore separado da publicação Git',
+      'Fase 5: biblioteca Leaflet é local; tiles OSM permanecem externos com fallback vetorial sem mapa-base',
+      'Fase 6: sorteios ainda dependem de GitHub Actions e precisam de migração homologada sem disparos duplicados',
+      'Fases 7-8 parciais: health probe read-only e git bundle local; falta monitor independente e backup remoto de Firestore'
     ]
   };
 }

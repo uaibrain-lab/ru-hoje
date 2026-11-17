@@ -5,6 +5,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
+import {isNonOperatingDay} from '../public/assets/date-availability.js';
 const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..','public');
 const MIME={'.js':'text/javascript','.html':'text/html','.json':'application/json','.css':'text/css','.svg':'image/svg+xml','.png':'image/png','.webmanifest':'application/manifest+json'};
 const server=http.createServer(async(req,res)=>{
@@ -60,7 +61,11 @@ try {
   let interceptedRequests=0;
   let liveEnabled=false;
   let failOfficialToday=false;
-  const tomorrow=new Date(Date.parse(today+'T12:00:00Z')+86_400_000).toISOString().slice(0,10);
+  const futureOpen=Array.from({length:5},(_,i)=>{
+    return new Date(Date.parse(today+'T12:00:00Z')+(i+1)*86_400_000).toISOString().slice(0,10);
+  }).filter(day=>!isNonOperatingDay(day,'setorial-i')).slice(0,3);
+  assert.equal(futureOpen.length,3,'Teste requer três dias futuros de atendimento dentro de cinco dias');
+  const tomorrow=futureOpen[0]; // Primeira data futura COM atendimento.
   const relayRequests=[];
   // Testa a rota Cloudflare que é efetivamente usada no Hosting.
   const mockWorker=async route=> {
@@ -184,7 +189,8 @@ try {
   assert.ok(relayRequests.some(x=>x.id==='6'&&x.date===tomorrow),
     'Pré-carregamento não buscou o dia seguinte pelo proxy');
   const tomorrowBefore=relayRequests.filter(x=>x.id==='6'&&x.date===tomorrow).length;
-  await page.locator('.date-card').nth(1).click();
+  const firstOpenOffset=Math.round((Date.parse(tomorrow+'T12:00:00Z')-Date.parse(today+'T12:00:00Z'))/86_400_000);
+  await page.locator('.date-card').nth(firstOpenOffset).click();
   await page.getByText('Frango do Dia Seguinte',{exact:true}).waitFor({timeout:12000});
   assert.equal(relayRequests.filter(x=>x.id==='6'&&x.date===tomorrow).length,tomorrowBefore,
     'Clique em data já prefetched não deve duplicar requisição recente');
@@ -229,8 +235,8 @@ try {
       }
     }));
   },data);
-  const day3=new Date(Date.parse(today+'T12:00:00Z')+3*86_400_000).toISOString().slice(0,10);
-  const failedTomorrowPlusOne=new Date(Date.parse(today+'T12:00:00Z')+2*86_400_000).toISOString().slice(0,10);
+  const day3=futureOpen[2];
+  const failedTomorrowPlusOne=futureOpen[1];
   const observed=[];
   await passive.route('https://hub-fump-proxy.hubufmg.workers.dev/**',async route=>{
     const u=new URL(route.request().url());
@@ -281,9 +287,9 @@ try {
     'O teste deve simular erro na primeira sequência de pré-busca');
   assert.ok(observed.some(x=>x.id==='6' && x.date===day3),
     'Falha pontual bloqueou D+3');
-  // Mesmo sob HTTP 503, somente domingo indica falta de atendimento regular.
-  // Setorial I funciona de segunda a sábado.
-  const expectedNoService=new Date(failedTomorrowPlusOne+'T12:00:00Z').getUTCDay()===0;
+  // Não marcamos ausência de serviço em dias em que o RU funciona, mesmo
+  // quando a resposta oficial é 503.
+  const expectedNoService=false;
   assert.equal(await passive.locator('.date-card[data-iso="'+failedTomorrowPlusOne+'"]').getAttribute('data-no-regular-service'),String(expectedNoService));
   assert.deepEqual(passiveErrors,[],'Exceção JS no pré-carregamento sem cliques');
   await passive.close();
@@ -304,8 +310,8 @@ try {
   await pwaPage.waitForFunction(()=>!!navigator.serviceWorker.controller,null,{timeout:25000});
   await pwaPage.waitForTimeout(700);
   await pwaPage.evaluate(async()=>{
-    const c=await caches.open('hub-v276-20261117-fresh-menus-r1');
-    await c.put('/assets/app.js?v=hub-20261117-fresh-menus-r1',
+    const c=await caches.open('hub-v277-20261117-batch3-5-r1');
+    await c.put('/assets/app.js?v=hub-20261117-batch3-5-r1',
       new Response('throw new Error("STALE_CACHE_EXECUTED")',{
         headers:{'Content-Type':'text/javascript'}
       }));
@@ -331,6 +337,9 @@ try {
     try{localStorage.setItem('ruhoje:restaurant:v1','setorial-i');}catch{}
   });
   const busPage=await busContext.newPage();
+  // O CI não consulta tiles públicos do OSM. Simula falha do mapa-base sem
+  // impedir os 49 pontos vetoriais, itinerários, horários e uso offline.
+  await busPage.route('https://tile.openstreetmap.org/**',route=>route.abort());
   try{
     await busPage.goto(url,{waitUntil:'domcontentloaded'});
     await busPage.evaluate(()=>document.getElementById('restaurant-dialog')?.close());
@@ -380,10 +389,20 @@ try {
           && frame.contentWindow.location.pathname==='/interno';
       }catch{return false;}
     },null,{timeout:20000});
+    const offlineMap=await busPage.evaluate(()=>{
+      const frame=document.getElementById('interno-frame');
+      const doc=frame?.contentDocument;
+      return {leaflet:frame?.contentWindow?.L?.version,
+        stops:doc?.querySelectorAll('path.interno-stop').length,
+        notice:doc?.getElementById('map-basemap-notice')?.textContent};
+    });
+    assert.equal(offlineMap.leaflet,'1.9.4','Leaflet precisa vir do PWA local, sem CDN');
+    assert.equal(offlineMap.stops,49,'Mapa offline deve preservar as 49 paradas vetoriais');
+    assert.match(offlineMap.notice,/Mapa-base indisponível/);
   }finally{
     await busContext.close();
   }
-  console.log('E2E Interno aprovado: mapa canônico, SW ativo, rota antiga e contingência offline.');
+  console.log('E2E Interno aprovado: Leaflet local, 49 pontos offline, mapa canônico e contingência sem tiles.');
 
   console.log('E2E aprovado: FUMP como fonte única, ausência de Firestore/localStorage antigo, prefetch D+1 e migração PWA.');
 } finally {await browser?.close();await new Promise(resolve=>server.close(resolve));}

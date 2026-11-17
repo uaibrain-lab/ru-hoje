@@ -23,8 +23,8 @@ test('auditoria falha caso alguém habilite POST no Worker oficial',()=>{
 
 test('auditoria falha se regras permitirem gravações públicas de cardápios',()=>{
   const report=auditPhaseZero(path=>path==='firestore.rules'
-    ? read(path).replace('allow list, create, update, delete: if false;',
-      'allow list, create, update, delete: if true;')
+    ? read(path).replace('match /publicMenus/current {\n      allow read, write: if false;',
+      'match /publicMenus/current {\n      allow read, write: if true;')
     : read(path));
   assert.ok(report.failed.includes('FIRESTORE_MENU_DENY_WRITE'));
 });

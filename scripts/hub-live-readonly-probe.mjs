@@ -1,104 +1,83 @@
 /**
- * Audita somente leitura da implantação Hub UFMG.
- * Não requer Firebase Admin/WIF e não publica dados.
- * Não registra pratos nem informações de participantes.
+ * Auditoria on-demand read-only: Firebase Hosting + API oficial FUMP via Worker.
+ * Nao consulta Firestore, nao guarda pratos e nao altera estado do site.
+ * Sem dados pessoais, cookies, credenciais, Admin SDK ou escrita.
  */
-const TIMEZONE='America/Sao_Paulo';
+import {pathToFileURL} from 'node:url';
+import {resolve} from 'node:path';
+
 const ORIGIN='https://hubufmg.web.app';
-const DATA_URL='https://firestore.googleapis.com/v1/projects/hubufmg/databases/(default)/documents/publicMenus/current';
-const RUS=['setorial-i','setorial-ii','saude','direito','ica'];
-const today=Object.fromEntries(new Intl.DateTimeFormat('en-US',{
-  timeZone:TIMEZONE,year:'numeric',month:'2-digit',day:'2-digit'
-}).formatToParts(new Date()).map(x=>[x.type,x.value]));
-const iso=`${today.year}-${today.month}-${today.day}`;
+const PROXY='https://hub-fump-proxy.hubufmg.workers.dev';
+const IDS=['6','1','2','5'];
 
-async function retrieve(url,headers={}) {
-  const c=new AbortController();
-  const timer=setTimeout(()=>c.abort(),15000);
+export function isoBrasilia(now=new Date()) {
+  const parts=Object.fromEntries(new Intl.DateTimeFormat('en-US',{
+    timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'
+  }).formatToParts(now).map(x=>[x.type,x.value]));
+  return [parts.year,parts.month,parts.day].join('-');
+}
+
+async function check(url,{fetchFn=fetch,origin=false,timeoutMs=10000}={}) {
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),timeoutMs);
   try {
-    const r=await fetch(url,{signal:c.signal,cache:'no-store',headers});
-    const content=await r.text();
-    if (!r.ok) throw new Error('HTTP_'+r.status);
-    return {content,status:r.status};
-  } finally {clearTimeout(timer);}
+    const response=await fetchFn(url,{
+      method:'GET',credentials:'omit',cache:'no-store',
+      signal:controller.signal,
+      headers:origin?{Accept:'application/json',Origin:ORIGIN}:{Accept:'*/*'}
+    });
+    const body=await response.text();
+    const header=name=>response.headers?.get?.(name)||'';
+    return {
+      http:response.status,ok:response.ok,bytes:body.length,
+      cacheControl:header('cache-control'),fetchedAt:header('x-menu-fetched-at'),
+      body
+    };
+  }finally{clearTimeout(timer);}
 }
 
-async function main() {
-  const checks=[
-    ['site',ORIGIN+'/'],
-    ['app',ORIGIN+'/assets/app.js'],
-    ['live_module',ORIGIN+'/assets/fump-live.js'],
-    ['worker',ORIGIN+'/service-worker.js'],
-    ['firestore',DATA_URL]
-  ];
-  const result={dateBrasilia:iso,checkedAt:new Date().toISOString(),readOnly:true,checks:{},menu:{}};
-  let payload=null;
-  for(const [name,url] of checks){
-    try {
-      const {content,status}=await retrieve(url);
-      result.checks[name]={status:'ok',http:status,bytes:content.length};
-      if(name==='app'){
-        result.checks.app.liveFetchIncluded=content.includes('readLiveMenu');
-      } else if(name==='worker'){
-        result.checks.worker.version=content.match(/const VERSION\s*=\s*'([^']+)'/)?.[1]||null;
-      } else if(name==='firestore'){
-        const doc=JSON.parse(content);
-        result.checks.firestore.updatedAt=doc.updateTime||null;
-        payload=JSON.parse(doc.fields?.payload?.stringValue||'null');
-        result.checks.firestore.generatedAt=payload?.generatedAt||null;
-      }
-    }catch(e){
-      result.checks[name]={status:'error',code:String(e?.cause?.code||e?.name||e?.message||'UNKNOWN').slice(0,50)};
-    }
+export async function auditLive({fetchFn=fetch,now=new Date(),origin=ORIGIN,proxy=PROXY}={}) {
+  const iso=isoBrasilia(now);
+  const report={checkedAt:now.toISOString(),dateBrasilia:iso,readOnly:true,checks:{},menus:[]};
+  for(const [name,path] of [['site','/'],['app','/assets/app.js'],['pwa','/service-worker.js'],['interno','/interno']]){
+    try{
+      const r=await check(origin+path,{fetchFn});
+      report.checks[name]={status:r.ok?'ok':'error',http:r.http,bytes:r.bytes};
+      if(name==='pwa' && r.ok) report.checks[name].version=r.body.match(/const VERSION\s*=\s*'([^']+)'/)?.[1]||null;
+      if(name==='app' && r.ok) report.checks[name].officialOnly=
+        r.body.includes('function menuFor(date, ruId) { return liveMenuFor(date,ruId); }');
+    }catch(e){report.checks[name]={status:'error',code:String(e?.name||'NETWORK_ERROR').slice(0,50)};}
   }
-  for(const ru of RUS){
-    const found=payload?.days?.[iso]?.restaurants?.[ru];
-    result.menu[ru]={
-      fetchedAt:found?.fetchedAt||null,
-      meals:Object.fromEntries(
-        Object.entries(found?.meals||{}).map(([k,v])=>[k,Array.isArray(v?.items)?v.items.length:0])
-      )
-    };
+  for(const id of IDS){
+    const url=new URL('/api/menu',proxy);
+    url.searchParams.set('id',id);url.searchParams.set('data',iso);
+    try{
+      const r=await check(url.href,{fetchFn,origin:true});
+      if(!r.ok) {report.menus.push({id,status:'FETCH_ERROR',http:r.http});continue;}
+      const payload=JSON.parse(r.body);
+      if(String(payload?.id)!==id || !Array.isArray(payload?.cardapios))
+        throw new Error('INVALID_SCHEMA');
+      const collected=Date.parse(r.fetchedAt);
+      const age=(now.getTime()-collected)/1000;
+      const headersValid=Number.isFinite(age) && age>=-10 && age<=75 &&
+        !/stale-if-error/i.test(r.cacheControl);
+      // Disponibilidade e formato, sem nomes ou listas de pratos privados.
+      report.menus.push({
+        id,status:headersValid?(payload.cardapios.length?'VALID_RESPONSE':'NOT_PUBLISHED'):'INVALID_CACHE_TIMESTAMP',
+        http:r.http,ageSeconds:Number.isFinite(age)?Math.round(age):null
+      });
+    }catch(e){report.menus.push({id,status:'FETCH_ERROR',code:String(e?.message||e?.name||'UNKNOWN').slice(0,50)});}
   }
-  // Verificação externa real, sem writes: o proxy atende menus de hoje
-  // E dos próximos dias? Dados vazios não são interpretados como RU fechado.
-  const future=new Date(iso+'T12:00:00Z');
-  future.setUTCDate(future.getUTCDate()+1);
-  const tomorrow=future.toISOString().slice(0,10);
-  result.proxy={origin:'https://hub-fump-proxy.hubufmg.workers.dev',checks:[]};
-  for(const date of [iso,tomorrow]){
-    for(const id of ['6','1','2','5']){
-      const url=new URL('/api/menu',result.proxy.origin);
-      url.searchParams.set('id',id);
-      url.searchParams.set('data',date);
-      try{
-        const response=await retrieve(url.href,{Origin:ORIGIN,Accept:'application/json'});
-        const json=JSON.parse(response.content);
-        if(String(json?.id)!==id || !Array.isArray(json?.cardapios))
-          throw new Error('RU_OR_SCHEMA_MISMATCH');
-        let dishes=0;
-        for(const day of json.cardapios){
-          for(const meal of day?.refeicoes || []){
-            if(Array.isArray(meal?.pratos)) dishes+=meal.pratos.length;
-          }
-        }
-        result.proxy.checks.push({
-          date,sourceId:id,
-          status:dishes>0 ? 'VALID_MENU' : 'NOT_PUBLISHED',
-          dishes
-        });
-      }catch(error){
-        result.proxy.checks.push({
-          date,sourceId:id,status:'FETCH_ERROR',
-          code:String(error?.message||error?.name||'UNKNOWN').slice(0,60)
-        });
-      }
-    }
-  }
-  result.menuDates=Object.keys(payload?.days||{}).sort().slice(-10);
-  const blank=Object.values(result.menu).every(x=>Object.values(x.meals).every(count=>count===0));
-  result.hasMenuToday=!blank;
-  console.log('HUB_LIVE_READONLY_AUDIT='+JSON.stringify(result));
-  if(result.checks.firestore.status!=='ok') process.exitCode=2;
+  report.hostingOk=Object.values(report.checks).every(x=>x.status==='ok');
+  report.proxyOk=report.menus.some(x=>['VALID_RESPONSE','NOT_PUBLISHED'].includes(x.status));
+  report.degraded=!report.hostingOk || !report.proxyOk || report.menus.some(x=>x.status==='FETCH_ERROR');
+  return report;
 }
-await main();
+
+if(process.argv[1] && pathToFileURL(resolve(process.argv[1])).href===import.meta.url) {
+  const result=await auditLive();
+  console.log('HUB_LIVE_READONLY_AUDIT='+JSON.stringify(result));
+  // O site estático inoperante é problema do Hub. Falha de dados da FUMP
+  // apenas sinaliza degradação externa; não justifica gravar pratos antigos.
+  if(!result.hostingOk)process.exitCode=2;
+}

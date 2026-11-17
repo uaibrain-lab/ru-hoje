@@ -56,9 +56,11 @@ test('watchdog é somente manual e preserva limites para recuperação administr
   assert.match(load('scripts/hub-sync-incident.sh'), /gh issue create/);
 });
 
-test('rules negam pedido manual e mantêm o cardápio público', () => {
+test('Rules bloqueiam snapshots legados e pedidos públicos de cardápios', () => {
   const rules=load('firestore.rules');
-  assert.match(rules, /match \/publicMenus\/current \{\s+allow get: if true/);
-  assert.match(rules, /match \/menuSyncRequests\/current \{\s+allow read, write: if false;/);
+  for (const name of ['publicMenus/current','menuSyncState/current','menuSyncRequests/current']) {
+    const escaped=name.replaceAll('/','\\/');
+    assert.match(rules,new RegExp('match /'+escaped+'\\s*\\{\\s*allow read, write: if false;'));
+  }
   assert.doesNotMatch(rules, /request\.resource\.data\.requestedAt == request\.time/);
 });
