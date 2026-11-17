@@ -164,7 +164,8 @@ try {
   assert.equal(await page.getByText('Frango ao Vivo',{exact:true}).count(),0);
   assert.match(await page.locator('#connection-notice').innerText(),/Não foi possível consultar a FUMP/);
   failOfficialToday=false;
-  assert.deepEqual(errors,[],'Erros de console ou JavaScript durante teste ponta a ponta');
+  assert.deepEqual(errors.filter(error=>!/^Failed to load resource: the server responded with a status of 503 \(Service Unavailable\)$/.test(error)),[],
+    'Erros inesperados de JavaScript; HTTP 503 foi simulado deliberadamente');
 
 
   // Regressão realista: o cardápio de hoje tem HTTP 503, mas as próximas
