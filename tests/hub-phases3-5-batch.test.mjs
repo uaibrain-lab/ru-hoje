@@ -31,7 +31,7 @@ test('Fase 4: negar leitura/escrita legada de cardápio e sync sem alterar autor
   const rules=read('firestore.rules');
   for (const path of ['publicMenus/current','menuSyncState/current','menuSyncRequests/current']) {
     const escaped=path.replaceAll('/','\\/');
-    assert.match(rules,new RegExp('match '+escaped+'\\s*\\{\\s*allow read, write: if false;'));
+    assert.match(rules,new RegExp('match /'+escaped+'\\s*\\{\\s*allow read, write: if false;'));
   }
   assert.match(rules,/match \/events\/\{eventId\}/);
   assert.match(rules,/function canJoinCount\(eventId\)/);
