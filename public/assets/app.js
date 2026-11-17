@@ -315,7 +315,8 @@ function renderHours() {
   if (!ru) return;
   const status=currentOpening(ru.id);
   const approachingClose=status.state==='open' && status.minutesRemaining<=20;
-  $('hours-status').textContent=(approachingClose ? `Fecha em ${status.minutesRemaining} min · ${status.message.split(' · ')[1]}` : status.message) + (status.details?.toLowerCase().includes('café da manhã') ? ' · acesso restrito' : '');
+  const closingTime=status.message.match(/fecha às (.+)$/)?.[1];
+  $('hours-status').textContent=(approachingClose && closingTime ? `Fecha em ${status.minutesRemaining} min · até ${closingTime}` : status.message) + (status.details?.toLowerCase().includes('café da manhã') ? ' · acesso restrito' : '');
   $('hours-dot').className='hours-dot '+(status.state==='open'?'is-open':'is-closed');
   const list=$('hours-list');list.replaceChildren();
   for(const block of weeklySummary(ru.id)) {
@@ -497,7 +498,7 @@ function renderMenus() {
   const data = menuFor(day,state.selectedRu);
   const selectedKey=liveKey(day,state.selectedRu);
   const liveStatus=state.liveStatus.get(selectedKey);
-  const waitingForLive=navigator.onLine && !live && !liveStatus && !nonOperatingDayForDate(day,state.selectedRu);
+  const waitingForLive=navigator.onLine && !live && (!liveStatus || liveStatus.status==='VALID_MENU') && !nonOperatingDayForDate(day,state.selectedRu);
   if (!ru) {
     const msg=el('div','no-menu');
     msg.append(el('h3','','Primeiro, escolha seu RU'),
