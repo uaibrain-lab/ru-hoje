@@ -65,5 +65,5 @@ test('aviso verboso da FUMP foi retirado sem esconder o estado sem cardápio',()
   const app=read('../public/assets/app.js');
   assert.ok(!app.includes('A consulta à FUMP não retornou pratos nesta data. Isso não confirma que o RU esteja fechado.'));
   assert.ok(app.includes('list.append(renderNoMenu(ru,day))'));
-  assert.ok(app.includes('return needsMenuDot(state.data,iso,ruId,!!liveMenuFor(iso,ruId))'));
+  assert.ok(app.includes('return needsMenuDot(null,iso,ruId,!!liveMenuFor(iso,ruId))'));
 });

@@ -59,6 +59,7 @@ try {
   const page=await browser.newPage({viewport:{width:390,height:844},serviceWorkers:'block'});
   let interceptedRequests=0;
   let liveEnabled=false;
+  let failOfficialToday=false;
   const tomorrow=new Date(Date.parse(today+'T12:00:00Z')+86_400_000).toISOString().slice(0,10);
   const relayRequests=[];
   // Testa a rota Cloudflare que é efetivamente usada no Hosting.
@@ -67,6 +68,13 @@ try {
     const id = request.searchParams.get('id');
     const date = request.searchParams.get('data');
     relayRequests.push({id,date});
+    if (id==='6' && date===today && failOfficialToday) {
+      return route.fulfill({
+        status:503,contentType:'application/json',
+        headers:{'Access-Control-Allow-Origin':'*'},
+        body:'{"error":"UPSTREAM_CONNECT_FAILED"}'
+      });
+    }
     const future=id==='6' && date===tomorrow;
     const activeToday=liveEnabled && id==='6' && date===today;
     const name=future ? 'Frango do Dia Seguinte' : 'Frango ao Vivo';
@@ -75,7 +83,16 @@ try {
         {tipoPrato:'Prato protéico 1',descricaoPrato:name},
         {tipoPrato:'Acompanhamento 1',descricaoPrato:'Arroz Branco'}
       ]}]}]
-      : [];
+      : id==='6' && date===today && !liveEnabled
+      ? [{data:date,refeicoes:[
+        {tipoRefeicao:'Almoço',pratos:[{tipoPrato:'Prato protéico 1',descricaoPrato:'Frango grelhado'},{tipoPrato:'Acompanhamento 1',descricaoPrato:'Arroz Branco'}]},
+        {tipoRefeicao:'Café da manhã',pratos:[{tipoPrato:'Bebidas',descricaoPrato:'Café com leite'}]}
+      ]}]
+      : id==='1' && date===today
+      ? [{data:date,refeicoes:[
+        {tipoRefeicao:'Almoço',pratos:[{tipoPrato:'Prato protéico 1',descricaoPrato:'Proteína II'}]},
+        {tipoRefeicao:'Jantar',pratos:[{tipoPrato:'Prato protéico 1',descricaoPrato:'Sopa II'}]}
+      ]}] : [];
     await route.fulfill({
       status:200,contentType:'application/json',
       headers:{'Access-Control-Allow-Origin':'*','Cache-Control':'no-store'},
@@ -84,7 +101,7 @@ try {
   };
   await page.route('https://hub-fump-proxy.hubufmg.workers.dev/**',mockWorker);
   await page.route('https://firestore.googleapis.com/**',async route=> {
-    interceptedRequests++;
+    if (route.request().url().includes('/publicMenus/current')) interceptedRequests++;
     return route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*','cache-control':'no-store'},body:JSON.stringify({fields:{payload:{stringValue:JSON.stringify(data)}}})});
   });
   const errors=[];
@@ -94,7 +111,7 @@ try {
   assert.equal(await page.locator('#restaurant-dialog').evaluate(e=>e.open),true);
   await page.getByRole('button',{name:'RU Setorial I Campus Pampulha',exact:true}).click();
   await page.getByText('Frango grelhado',{exact:true}).waitFor({timeout:15000});
-  assert.ok(interceptedRequests>=1,'Nenhuma leitura simulada do Firestore foi interceptada');
+  assert.equal(interceptedRequests,0,'Aplicativo não pode consultar snapshot Firestore');
   assert.equal(await page.locator('.date-card').count(),15);
   assert.equal(await page.locator('.meal-card').count(),2);
   assert.deepEqual(await page.locator('.meal-card h3').allTextContents(),['Almoço','Café da manhã']);
@@ -115,21 +132,21 @@ try {
   assert.equal(await page.getByRole('link',{name:/Abrir resposta oficial deste RU\/data/i}).count(),0);
   assert.equal(await page.locator('.no-menu a[href*=":3003/"]').count(),0);
 
-  // Novos dados reais simulados chegam depois de a cópia Firestore já estar visível.
+  // Mudança oficial de última hora deve substituir a resposta anterior sem snapshots.
   liveEnabled = true;
   await page.locator('.date-card').first().click();
   await page.locator('#restaurant-trigger').click();
   await page.getByRole('button',{name:'RU Setorial I Campus Pampulha',exact:true}).click();
   await page.evaluate(()=>window.dispatchEvent(new Event('online')));
   await page.getByText('Frango ao Vivo',{exact:true}).waitFor({timeout:12000});
-  assert.match(await page.locator('#update-line').innerText(),/FUMP ao vivo/);
+  assert.match(await page.locator('#update-line').innerText(),/FUMP oficial/);
   // A próxima data é consultada em segundo plano sem clique explícito.
-  await page.waitForFunction(day=>{
-    try {
-      const entries=JSON.parse(localStorage.getItem('ruhoje:live-menus:v1')||'{}');
-      return entries[day+'|6']?.meals?.almoco?.items?.some(x=>x.name==='Frango do Dia Seguinte');
-    }catch{return false;}
-  },tomorrow,{timeout:25000});
+  // Pré-carregamento agora vive somente em memória, jamais em localStorage.
+  for (let attempt=0;attempt<60 && !relayRequests.some(x=>x.id==='6'&&x.date===tomorrow);attempt++) {
+    await page.waitForTimeout(300);
+  }
+  await page.waitForTimeout(250);
+  assert.equal(await page.evaluate(()=>localStorage.getItem('ruhoje:live-menus:v1')),null);
   assert.ok(relayRequests.some(x=>x.id==='6'&&x.date===tomorrow),
     'Pré-carregamento não buscou o dia seguinte pelo proxy');
   const tomorrowBefore=relayRequests.filter(x=>x.id==='6'&&x.date===tomorrow).length;
@@ -137,16 +154,35 @@ try {
   await page.getByText('Frango do Dia Seguinte',{exact:true}).waitFor({timeout:12000});
   assert.equal(relayRequests.filter(x=>x.id==='6'&&x.date===tomorrow).length,tomorrowBefore,
     'Clique em data já prefetched não deve duplicar requisição recente');
-  assert.deepEqual(errors,[],'Erros de console ou JavaScript durante teste ponta a ponta');
+  // A FUMP pode alterar o cardápio ou ficar indisponível depois de um
+  // resultado válido: jamais reaproveitar o prato anterior como se fosse atual.
+  await page.locator('.date-card').first().click();
+  await page.getByText('Frango ao Vivo',{exact:true}).waitFor({timeout:12000});
+  failOfficialToday=true;
+  await page.evaluate(()=>window.dispatchEvent(new Event('online')));
+  await page.getByText('Ainda sem cardápio por aqui').waitFor({timeout:17000});
+  assert.equal(await page.getByText('Frango ao Vivo',{exact:true}).count(),0);
+  assert.match(await page.locator('#connection-notice').innerText(),/Não foi possível consultar a FUMP/);
+  failOfficialToday=false;
+  assert.deepEqual(errors.filter(error=>!/^Failed to load resource: the server responded with a status of 503 \(Service Unavailable\)$/.test(error)),[],
+    'Erros inesperados de JavaScript; HTTP 503 foi simulado deliberadamente');
 
 
   // Regressão realista: o cardápio de hoje tem HTTP 503, mas as próximas
   // datas já estão publicadas. O visitante NÃO clica em nenhuma data futura.
   // Um erro pontual no D+2 também não pode impedir que o D+3 seja coletado.
   const passive=await browser.newPage({viewport:{width:390,height:844},serviceWorkers:'block'});
-  await passive.addInitScript(()=>{
+  await passive.addInitScript(stale=>{
     localStorage.setItem('ruhoje:restaurant:v1','setorial-i');
-  });
+    localStorage.setItem('ruhoje:menus:v1',JSON.stringify(stale));
+    localStorage.setItem('ruhoje:live-menus:v1',JSON.stringify({
+      [Object.keys(stale.days)[0]+'|6']:{
+        iso:Object.keys(stale.days)[0],sourceRestaurantId:'6',
+        fetchedAt:new Date().toISOString(),
+        meals:{almoco:{items:[{name:'Prato antigo e indevido'}]}}
+      }
+    }));
+  },data);
   const day3=new Date(Date.parse(today+'T12:00:00Z')+3*86_400_000).toISOString().slice(0,10);
   const failedTomorrowPlusOne=new Date(Date.parse(today+'T12:00:00Z')+2*86_400_000).toISOString().slice(0,10);
   const observed=[];
@@ -180,20 +216,17 @@ try {
   const passiveErrors=[];
   passive.on('pageerror',e=>passiveErrors.push(e.message));
   await passive.goto(url,{waitUntil:'domcontentloaded'});
-  await passive.getByText('Frango grelhado',{exact:true}).waitFor({timeout:15000});
-  await passive.waitForFunction(([d1,d3])=>{
-    const x1=document.querySelector('.date-card[data-iso="'+d1+'"]');
-    const x3=document.querySelector('.date-card[data-iso="'+d3+'"]');
-    // Sem cardápio consultado, a bolinha também fica ausente; por isso
-    // o teste só pode passar depois de verificar PRATOS REAIS no cache local.
-    let entries;
-    try {entries=JSON.parse(localStorage.getItem('ruhoje:live-menus:v1')||'{}');}
-    catch{return false;}
-    const haveMenu=iso=>entries[iso+'|6']?.meals?.almoco?.items?.some(item=>
-      String(item.name).includes('Cardápio Pré-Carregado'));
-    return haveMenu(d1) && haveMenu(d3) &&
-      x1?.dataset.missingMenu==='false' && x3?.dataset.missingMenu==='false';
-  },[tomorrow,day3],{timeout:40000});
+  await passive.getByText('Ainda sem cardápio por aqui').waitFor({timeout:15000});
+  await passive.waitForTimeout(250);
+  assert.equal(await passive.getByText('Prato antigo e indevido',{exact:true}).count(),0);
+  assert.equal(await passive.getByText('Frango grelhado',{exact:true}).count(),0);
+  assert.equal(await passive.evaluate(()=>localStorage.getItem('ruhoje:menus:v1')),null);
+  assert.equal(await passive.evaluate(()=>localStorage.getItem('ruhoje:live-menus:v1')),null);
+  for (let attempt=0;attempt<95 && !observed.some(x=>x.id==='6'&&x.date===day3);attempt++) {
+    await passive.waitForTimeout(350);
+  }
+  await passive.waitForTimeout(350);
+  assert.equal(await passive.evaluate(()=>localStorage.getItem('ruhoje:live-menus:v1')),null);
   assert.ok(observed.some(x=>x.id==='6' && x.date===today),
     'O teste deve simular falha da consulta do dia selecionado');
   assert.ok(observed.some(x=>x.id==='6' && x.date===tomorrow),
@@ -226,8 +259,8 @@ try {
   await pwaPage.waitForFunction(()=>!!navigator.serviceWorker.controller,null,{timeout:25000});
   await pwaPage.waitForTimeout(700);
   await pwaPage.evaluate(async()=>{
-    const c=await caches.open('hub-v273-20261117-uniform-stop-markers-r1');
-    await c.put('/assets/app.js?v=hub-20261117-uniform-stop-markers-r1',
+    const c=await caches.open('hub-v274-20261117-fump-only-r1');
+    await c.put('/assets/app.js?v=hub-20261117-fump-only-r1',
       new Response('throw new Error("STALE_CACHE_EXECUTED")',{
         headers:{'Content-Type':'text/javascript'}
       }));
@@ -297,5 +330,5 @@ try {
   }
   console.log('E2E Interno aprovado: mapa canônico, SW ativo, rota antiga e contingência offline.');
 
-  console.log('E2E aprovado: proxy Cloudflare, cache Firestore, prefetch de D+1 e migração do PWA sem limpar cache.');
+  console.log('E2E aprovado: FUMP como fonte única, ausência de Firestore/localStorage antigo, prefetch D+1 e migração PWA.');
 } finally {await browser?.close();await new Promise(resolve=>server.close(resolve));}

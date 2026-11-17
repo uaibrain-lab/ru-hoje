@@ -3,7 +3,7 @@
  * Cache permanece disponível offline, mas nunca congela uma versão antiga
  * de app.js, config.js ou seus imports após um deploy.
  */
-const VERSION = 'hub-v273-20261117-uniform-stop-markers-r1';
+const VERSION = 'hub-v274-20261117-fump-only-r1';
 const SHELL = [
   '/', '/index.html', '/interno', '/favicon.ico', '/config.js',
   '/assets/app.js', '/assets/fump-live.js', '/assets/fump-prefetch.js',
@@ -20,7 +20,7 @@ const SHELL = [
   '/assets/icons/icon-maskable-192.png',
   '/assets/icons/icon-maskable-512.png',
   '/assets/icons/apple-touch-icon.png', '/manifest.webmanifest',
-  '/data/cardapios.json', '/data/pratos-ingredientes.json'
+  '/data/pratos-ingredientes.json'
 ];
 const CORE = [
   '/', '/index.html', '/interno', '/config.js', '/assets/app.js',

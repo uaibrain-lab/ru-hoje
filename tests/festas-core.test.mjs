@@ -66,7 +66,7 @@ test('nenhum dado privado é entregue no HTML, dados FUMP preservados e demo só
   const festas=await fs.readFile(new URL('../public/assets/festas.js',import.meta.url),'utf8');
   assert.match(html,/id="admin-lock"/);assert.doesNotMatch(html,/id="admin-lock"[^>]*>Admin/);
   assert.match(html,/id="tab-menu"/);assert.match(html,/id="tab-festas"/);
-  assert.match(app,/fetchMenus\(\)/);assert.match(festas,/\['localhost','127\.0\.0\.1'\]/);
+  assert.match(app,/readLiveMenu\(/);assert.doesNotMatch(app,/fetchMenus\(/);assert.match(festas,/\['localhost','127\.0\.0\.1'\]/);
   assert.match(html,/id="signup-marketing" type="checkbox"/);
   assert.match(html,/id="signup-event-terms" type="checkbox"/);
   assert.match(html,/id="signup-continue"/);

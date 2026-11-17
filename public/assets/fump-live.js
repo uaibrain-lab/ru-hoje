@@ -1,7 +1,8 @@
 /**
  * Leitura pública direta FUMP por navegador. Não escreve no Firebase.
- * Se CORS não permitir a origem do Hub, devolve FETCH_ERROR e preserva
- * o snapshot Firestore/cache exibido. Nunca usa mode:'no-cors'.
+ * Se CORS não permitir a origem do Hub, devolve FETCH_ERROR: o app não
+ * usa snapshots de Firestore/JSON nem cardápios locais como substituto.
+ * Nunca usa mode:'no-cors'.
  */
 import {parseMenuJson} from './fump-parse.js';
 
