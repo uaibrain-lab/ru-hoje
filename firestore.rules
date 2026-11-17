@@ -90,17 +90,16 @@ service cloud.firestore {
         && existsAfter(entryPath(eventId,request.auth.uid))
         && getAfter(entryPath(eventId,request.auth.uid)).data.createdAt == request.time;
     }
-    // Leitura antiga do cardápio nunca depende de login.
+    // FUMP oficial e a unica fonte operacional de cardapios.
+    // Bloquear inclusive leitura dos snapshots antigos evita divulga-los como
+    // referencia publica; Admin SDK segue disponivel para auditoria/backup.
     match /publicMenus/current {
-      allow get: if true;
-      allow list, create, update, delete: if false;
+      allow read, write: if false;
     }
-    // Estado sanitizado, escrito apenas pelo publicador QA privado.
+    // Estado tecnico e pedidos de sincronizacao legados sao privados.
     match /menuSyncState/current {
-      allow get: if true;
-      allow list, create, update, delete: if false;
+      allow read, write: if false;
     }
-    // O usuário não pode solicitar atualização: cardápios exclusivamente agendados.
     match /menuSyncRequests/current {
       allow read, write: if false;
     }
