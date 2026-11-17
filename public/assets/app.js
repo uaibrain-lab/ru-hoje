@@ -314,7 +314,8 @@ function renderHours() {
   root.hidden=!ru;
   if (!ru) return;
   const status=currentOpening(ru.id);
-  $('hours-status').textContent=status.message + (status.details?.toLowerCase().includes('café da manhã') ? ' · acesso restrito' : '');
+  const approachingClose=status.state==='open' && status.minutesRemaining<=20;
+  $('hours-status').textContent=(approachingClose ? `Fecha em ${status.minutesRemaining} min · ${status.message.split(' · ')[1]}` : status.message) + (status.details?.toLowerCase().includes('café da manhã') ? ' · acesso restrito' : '');
   $('hours-dot').className='hours-dot '+(status.state==='open'?'is-open':'is-closed');
   const list=$('hours-list');list.replaceChildren();
   for(const block of weeklySummary(ru.id)) {
