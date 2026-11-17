@@ -5,6 +5,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
+import {isNonOperatingDay} from '../public/assets/date-availability.js';
 const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..','public');
 const MIME={'.js':'text/javascript','.html':'text/html','.json':'application/json','.css':'text/css','.svg':'image/svg+xml','.png':'image/png','.webmanifest':'application/manifest+json'};
 const server=http.createServer(async(req,res)=>{
@@ -60,7 +61,11 @@ try {
   let interceptedRequests=0;
   let liveEnabled=false;
   let failOfficialToday=false;
-  const tomorrow=new Date(Date.parse(today+'T12:00:00Z')+86_400_000).toISOString().slice(0,10);
+  const futureOpen=Array.from({length:5},(_,i)=>{
+    return new Date(Date.parse(today+'T12:00:00Z')+(i+1)*86_400_000).toISOString().slice(0,10);
+  }).filter(day=>!isNonOperatingDay(day,'setorial-i')).slice(0,3);
+  assert.equal(futureOpen.length,3,'Teste requer três dias futuros de atendimento dentro de cinco dias');
+  const tomorrow=futureOpen[0]; // Primeira data futura COM atendimento.
   const relayRequests=[];
   // Testa a rota Cloudflare que é efetivamente usada no Hosting.
   const mockWorker=async route=> {
@@ -184,7 +189,8 @@ try {
   assert.ok(relayRequests.some(x=>x.id==='6'&&x.date===tomorrow),
     'Pré-carregamento não buscou o dia seguinte pelo proxy');
   const tomorrowBefore=relayRequests.filter(x=>x.id==='6'&&x.date===tomorrow).length;
-  await page.locator('.date-card').nth(1).click();
+  const firstOpenOffset=Math.round((Date.parse(tomorrow+'T12:00:00Z')-Date.parse(today+'T12:00:00Z'))/86_400_000);
+  await page.locator('.date-card').nth(firstOpenOffset).click();
   await page.getByText('Frango do Dia Seguinte',{exact:true}).waitFor({timeout:12000});
   assert.equal(relayRequests.filter(x=>x.id==='6'&&x.date===tomorrow).length,tomorrowBefore,
     'Clique em data já prefetched não deve duplicar requisição recente');
@@ -229,8 +235,8 @@ try {
       }
     }));
   },data);
-  const day3=new Date(Date.parse(today+'T12:00:00Z')+3*86_400_000).toISOString().slice(0,10);
-  const failedTomorrowPlusOne=new Date(Date.parse(today+'T12:00:00Z')+2*86_400_000).toISOString().slice(0,10);
+  const day3=futureOpen[2];
+  const failedTomorrowPlusOne=futureOpen[1];
   const observed=[];
   await passive.route('https://hub-fump-proxy.hubufmg.workers.dev/**',async route=>{
     const u=new URL(route.request().url());
@@ -281,9 +287,9 @@ try {
     'O teste deve simular erro na primeira sequência de pré-busca');
   assert.ok(observed.some(x=>x.id==='6' && x.date===day3),
     'Falha pontual bloqueou D+3');
-  // Mesmo sob HTTP 503, somente domingo indica falta de atendimento regular.
-  // Setorial I funciona de segunda a sábado.
-  const expectedNoService=new Date(failedTomorrowPlusOne+'T12:00:00Z').getUTCDay()===0;
+  // Não marcamos ausência de serviço em dias em que o RU funciona, mesmo
+  // quando a resposta oficial é 503.
+  const expectedNoService=false;
   assert.equal(await passive.locator('.date-card[data-iso="'+failedTomorrowPlusOne+'"]').getAttribute('data-no-regular-service'),String(expectedNoService));
   assert.deepEqual(passiveErrors,[],'Exceção JS no pré-carregamento sem cliques');
   await passive.close();
