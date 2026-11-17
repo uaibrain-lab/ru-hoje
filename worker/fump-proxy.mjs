@@ -5,6 +5,8 @@
  * O proxy remove a limitação CORS do navegador, mas a infraestrutura Cloudflare
  * ainda precisa conseguir alcançar a FUMP (teste real obrigatório).
  */
+import {runIndependentScheduled} from './hub-independent-monitor.mjs';
+
 const API_ORIGIN = 'https://fump.ufmg.br:3003';
 const ALLOWED_ORIGINS = new Set([
   'https://hubufmg.web.app',
@@ -204,5 +206,10 @@ export async function handleRequest(request,{
 export default {
   fetch(request, env, ctx) {
     return handleRequest(request,{ctx});
+  },
+  // Independente do GitHub Actions. Somente GET ao Hosting e à FUMP,
+  // nenhum sorteio, mutação no Firestore ou registro de cardápio.
+  async scheduled(_controller,_env,_ctx) {
+    return runIndependentScheduled();
   }
 };
