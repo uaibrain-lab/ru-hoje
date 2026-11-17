@@ -1,7 +1,7 @@
 // OCUPA_RU_P3_CLIENT_FIX
 import {currentOpening, weeklySummary} from './hours.js';
 import {publishedCategory} from './dish-category.js';
-import {hasMenuForDate, dateChipLabel} from './date-availability.js';
+import {needsMenuDot, dateChipLabel} from './date-availability.js';
 import {readLiveMenu, sourceForRu, isValidLiveEntry, validISO} from './fump-live.js';
 import {buildPrefetchPlan, canRunBackgroundFetch, recentlyChecked, PREFETCH_LIMIT_PER_DAY, PREFETCH_MIN_GAP_MS} from './fump-prefetch.js';
 const SOURCE_URL = 'https://fump.ufmg.br/cardapio-do-dia/';
@@ -57,18 +57,11 @@ function liveMenuFor(date, ruId) {
 }
 function menuFor(date, ruId) { return liveMenuFor(date,ruId) || state.data?.days?.[date]?.restaurants?.[ruId] || null; }
 /**
- * O marcador de ausência exige uma resposta positiva de "não publicado" para
- * este RU/data. Falha de rede e ausência no snapshot não provam falta de cardápio.
+ * O marcador sinaliza data com serviço regular, porém sem cardápio carregado.
+ * Uma falha de rede não o oculta; ele some quando os pratos são validados.
  */
 function missingMenuForDate(iso,ruId) {
-  if (!sourceForRu(ruId)) return false;
-  if (liveMenuFor(iso,ruId) || hasMenuForDate(state.data,iso,ruId)) return false;
-  const key=liveKey(iso,ruId);
-  const current=state.liveStatus.get(key)?.status;
-  if (current==='NOT_PUBLISHED') return true;
-  if (current==='FETCH_ERROR' || current==='PARSE_ERROR') return false;
-  return recentlyChecked(state.prefetchChecks.get(key))
-    && state.prefetchChecks.get(key).status==='NOT_PUBLISHED';
+  return needsMenuDot(state.data,iso,ruId,!!liveMenuFor(iso,ruId));
 }
 function hydrateLiveMenus() {
   try {
@@ -367,7 +360,7 @@ function renderDates({ scroll = false } = {}) {
     card.dataset.weekend = String(isWeekend);
     card.dataset.missingMenu = String(withoutMenu);
     card.setAttribute('aria-pressed', String(iso === state.selectedDate));
-    card.setAttribute('aria-label', `${friendlyDate(iso, {weekday:'long',day:'numeric',month:'long'})}${iso === today ? ', hoje' : ''}${withoutMenu ? ', sem cardápio disponível no aplicativo' : ''}`);
+    card.setAttribute('aria-label', `${friendlyDate(iso, {weekday:'long',day:'numeric',month:'long'})}${iso === today ? ', hoje' : ''}${withoutMenu ? ', sem cardápio carregado' : ''}`);
     card.append(el('span','weekday',friendlyDate(iso,{weekday:'short'}).replace('.','')),
       el('span','daynum',String(date.getUTCDate()).padStart(2,'0')),
       el('span','daylabel',dateChipLabel(iso === today, withoutMenu)));
@@ -559,10 +552,8 @@ function renderMenus() {
     } else if (liveStatus?.status === 'PARSE_ERROR') {
       $('connection-notice').textContent = 'A FUMP respondeu em formato inesperado. Os pratos não foram publicados para evitar informação incorreta.';
       $('connection-notice').hidden = false;
-    } else if (liveStatus?.status === 'NOT_PUBLISHED') {
-      $('connection-notice').textContent = 'A consulta à FUMP não retornou pratos nesta data. Isso não confirma que o RU esteja fechado.';
-      $('connection-notice').hidden = false;
-    } else if (!state.data?.days?.[day]?.restaurants?.[state.selectedRu]) {
+    } else if (liveStatus?.status !== 'NOT_PUBLISHED' &&
+               !state.data?.days?.[day]?.restaurants?.[state.selectedRu]) {
       $('connection-notice').textContent = 'Ainda não há cardápio validado neste aplicativo para a data escolhida.';
       $('connection-notice').hidden = false;
     }
