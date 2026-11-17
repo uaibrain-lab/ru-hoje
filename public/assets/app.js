@@ -622,6 +622,10 @@ function setupPwaUpdates() {
   window.addEventListener('pageshow',event=>{if(event.persisted) update();});
 }
 
+function isMenuActive(){
+  const initialTab=new URLSearchParams(window.location.search).get('aba');
+  return !$('bandeco-main')?.hidden && !['interno','festas','sobre'].includes(initialTab);
+}
 function boot() {
   initTheme();
   const savedRu = readStore(STORAGE_RU);
@@ -631,16 +635,25 @@ function boot() {
   hydratePrefetchMeta();
   initDialog();
   renderRestaurant(); renderDates({scroll:true}); renderMenus();
-  loadIngredientCatalog().then(() => renderMenus());
+  const prepareMenu=()=>{
+    if(!isMenuActive())return;
+    loadIngredientCatalog().then(()=>{if(isMenuActive())renderMenus();});
+    renderMenus();
+    refreshLive({force:!liveMenuFor(state.selectedDate,state.selectedRu)});
+    startPrefetch(state.selectedRu,state.selectedDate);
+  };
+  if(isMenuActive())loadIngredientCatalog().then(()=>{if(isMenuActive())renderMenus();});
+  window.addEventListener('hub:menu:activated',prepareMenu);
+  window.addEventListener('hub:menu:deactivated',cancelPrefetch);
   $('today-button').addEventListener('click',()=> {cancelPrefetch();state.selectedDate=sPauloParts().iso;renderDates({scroll:true});renderMenus();refreshLive({force:!liveMenuFor(state.selectedDate,state.selectedRu)});startPrefetch(state.selectedRu,state.selectedDate);});
-  window.addEventListener('online',()=>{refreshLive({force:true});startPrefetch(state.selectedRu,state.selectedDate);});
-  window.addEventListener('offline',()=>{cancelPrefetch();renderMenus();});
+  window.addEventListener('online',()=>{if(isMenuActive()){refreshLive({force:true});startPrefetch(state.selectedRu,state.selectedDate);}});
+  window.addEventListener('offline',()=>{cancelPrefetch();if(isMenuActive())renderMenus();});
   window.addEventListener('storage',event=>{
     if (event.key===STORAGE_PREFETCH) hydratePrefetchMeta();
   });
   document.addEventListener('visibilitychange',()=> {
     if (document.hidden) cancelPrefetch();
-    else {maybeTick();refreshLive();startPrefetch(state.selectedRu,state.selectedDate);}
+    else {maybeTick();if(isMenuActive()){refreshLive();startPrefetch(state.selectedRu,state.selectedDate);}}
   });
   let previousToday = sPauloParts().iso;
   let previousMealPeriod = null;
@@ -650,18 +663,22 @@ function boot() {
     if (clock.iso !== previousToday) {
       if (state.selectedDate === previousToday) state.selectedDate = clock.iso;
       cancelPrefetch();
-      previousToday = clock.iso; renderDates({scroll:true}); renderMenus(); refreshLive({force:true}); startPrefetch(state.selectedRu,state.selectedDate);
-    } else if (previousMealPeriod !== currentPeriod) renderMenus();
+      previousToday = clock.iso; renderDates({scroll:true}); if(isMenuActive()){renderMenus();refreshLive({force:true});startPrefetch(state.selectedRu,state.selectedDate);}
+    } else if (previousMealPeriod !== currentPeriod && isMenuActive()) renderMenus();
     renderHours();
-    if (!document.hidden) refreshLive();
+    if (!document.hidden && isMenuActive()) refreshLive();
     previousMealPeriod = currentPeriod;
   }
   setInterval(maybeTick,60_000); maybeTick();
-  refreshLive();
-  // Não aguardar resultado de hoje: os dias futuros podem estar publicados
-  // mesmo quando o RU/data atual responde 503 ou não contém pratos.
-  startPrefetch(state.selectedRu,state.selectedDate);
-  if (!state.selectedRu) {requestAnimationFrame(() => openDialog());}
+  if(isMenuActive()){
+    refreshLive();
+    // Dias futuros podem estar publicados mesmo que o dia atual esteja vazio.
+    startPrefetch(state.selectedRu,state.selectedDate);
+  }
+  // Links diretos para Festas/Interno/Sobre não exigem selecionar RU.
+  if (!state.selectedRu && isMenuActive()) {requestAnimationFrame(() => {
+    if(isMenuActive() && !state.selectedRu)openDialog();
+  });}
   setupPwaUpdates();
 }
 boot();
