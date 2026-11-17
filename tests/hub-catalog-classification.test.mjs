@@ -8,10 +8,10 @@ import {parseMenuJson} from '../public/assets/fump-parse.js';
 
 const ingredients=JSON.parse(readFileSync(new URL('../public/data/pratos-ingredientes.json',import.meta.url),'utf8'));
 const history=JSON.parse(readFileSync(new URL('../public/data/cardapios.json',import.meta.url),'utf8'));
-const officialTypes=['Prato protéico 1','Prato protéico 3','Guarnição','Entrada 1','Tipo de item não cadastrado',''];
+const missingTypes=['Tipo de item não cadastrado',''];
 const validCategories=new Set(['acompanhamento','guarnicao','vegetariana','proteina','molho','salada','sobremesa','bebida']);
 
-test('todos os 126 pratos do catálogo de ingredientes possuem categoria fixa revisada',()=>{
+test('todos os 126 pratos do catálogo de ingredientes têm fallback de categoria auditado',()=>{
   assert.equal(ingredients.count,126,'Detectar acréscimos ao catálogo que exigem revisão');
   assert.equal(ingredients.dishes.length,ingredients.count);
   const groups={};
@@ -19,11 +19,10 @@ test('todos os 126 pratos do catálogo de ingredientes possuem categoria fixa re
     const expected=knownDishCategory(dish.name);
     assert.ok(validCategories.has(expected),'Faltou classificar '+dish.name);
     groups[expected]=(groups[expected]||0)+1;
-    for(const type of officialTypes){
-      // A receita catalogada é conhecida: o rótulo do tipo genérico
-      // (inclusive "Prato protéico 1") não deve deslocar a seção.
+    for(const type of missingTypes){
+      // Fonte FUMP sem tipo reconhecível: aplicar o catálogo ao nome exato.
       assert.equal(categoryFromSourceType(type,dish.name),expected,dish.name+' / '+type);
-      assert.equal(publishedCategory('proteina',dish.name,type),expected,dish.name+' / '+type+' (render)');
+      assert.equal(publishedCategory('',dish.name,type),expected,dish.name+' / '+type+' (render)');
     }
   }
   assert.deepEqual(groups,{
@@ -56,7 +55,7 @@ test('o histórico inclui mais 76 nomes além do catálogo de ingredientes, sem 
   assert.equal(historyOnly,76,'Nenhum nome do histórico pode ficar sem categoria');
 });
 
-test('histórico é fallback, e não substitui classificação oficial atual para pratos variáveis',()=>{
+test('histórico é fallback, sem suplantar classificações oficiais atuais de pratos variáveis',()=>{
   assert.equal(knownDishCategory('Charuto de repolho'),'vegetariana');
   assert.equal(categoryFromSourceType('Prato protéico 1','Charuto de repolho'),'proteina');
   assert.equal(publishedCategory('vegetariana','Charuto de repolho','Prato protéico 1'),'proteina');
@@ -69,8 +68,19 @@ test('histórico é fallback, e não substitui classificação oficial atual par
   assert.equal(categoryFromSourceType('Tipo de item não cadastrado','Salada de legumes'),'guarnicao');
 });
 
+test('tipo oficial atual prevalece para outros nomes, mesmo conhecidos',()=>{
+  assert.equal(categoryFromSourceType('Prato protéico 1','Assado de Grão-de-Bico'),'proteina');
+  assert.equal(publishedCategory('proteina','Assado de Grão-de-Bico','Prato protéico 1'),'proteina');
+  assert.equal(categoryFromSourceType('Entrada 2','Frango Xadrez'),'salada');
+  assert.equal(categoryFromSourceType('Prato protéico 3','Carne de porco frita'),'vegetariana');
+  assert.equal(publishedCategory('guarnicao','Quibe de Cenoura'),'guarnicao');
+  // A exceção comprovada do bife de milho permanece válida.
+  assert.equal(categoryFromSourceType('Prato protéico 1','Bife de milho'),'vegetariana');
+});
+
 test('nomes exatos corrigem erros conhecidos e não contaminam nomes parecidos',()=>{
   assert.equal(knownDishCategory('SALADA SÍRIA'),'salada');
+  assert.equal(categoryFromSourceType('Tipo de item não cadastrado','Salada Síria'),'salada');
   assert.equal(knownDishCategory('Bife de milho'),'vegetariana');
   assert.equal(categoryFromSourceType('Prato protéico 1','Bife de milho'),'vegetariana');
   assert.equal(categoryFromSourceType('Prato protéico 1','Soja refogada com legumes'),'vegetariana');
@@ -87,7 +97,7 @@ test('o parser FUMP já devolve as categorias corrigidas para pratos conhecidos'
     {tipoRefeicao:'Almoço',pratos:[
       {tipoPrato:'Prato protéico 1',descricaoPrato:'Bife de milho'},
       {tipoPrato:'Prato protéico 1',descricaoPrato:'Charuto de repolho'},
-      {tipoPrato:'Prato protéico 1',descricaoPrato:'Strogonoff de soja'},
+      {tipoPrato:'Tipo de item não cadastrado',descricaoPrato:'Strogonoff de soja'},
       {tipoPrato:'Tipo de item não cadastrado',descricaoPrato:'Molho de manjericão'},
       {tipoPrato:'Prato protéico 1',descricaoPrato:'Frango grelhado'}
     ]}
