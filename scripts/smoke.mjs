@@ -134,8 +134,8 @@ try {
   }
   assert.equal(await page.locator('.date-card[data-missing-menu]').count(),0,
     'Atributo legado de ausência de cardápio não deve continuar no calendário');
-  assert.equal(await page.locator('.meal-card').count(),2);
-  assert.deepEqual(await page.locator('.meal-card h3').allTextContents(),['Almoço','Café da manhã']);
+  assert.equal(await page.locator('.meal-card').count(),1);
+  assert.deepEqual(await page.locator('.meal-card h3').allTextContents(),['Almoço']);
   assert.equal(await page.locator('.meal-card').filter({hasText:'Sopa indevida'}).count(),0);
   await page.reload({waitUntil:'networkidle'});
   assert.equal(await page.locator('#current-restaurant').innerText(),'RU Setorial I');
@@ -156,7 +156,7 @@ try {
   assert.deepEqual(await page.locator('.meal-card h3').allTextContents(),expectedSetorialIIOrder);
   assert.equal(await page.locator('.meal-card').filter({hasText:'Café indevido'}).count(),0);
   await page.locator('.date-card').last().click();
-  await page.getByText('Ainda sem cardápio por aqui').waitFor();
+  await page.getByText('Cardápio ainda não divulgado').waitFor();
   // O endpoint técnico JSON da FUMP não é oferecido como link ao visitante.
   assert.equal(await page.getByRole('link',{name:/Abrir resposta oficial deste RU\/data/i}).count(),0);
   assert.equal(await page.locator('.no-menu a[href*=":3003/"]').count(),0);
@@ -208,7 +208,7 @@ try {
     Date.now=()=>window.__realDateNow()+65_000;
     window.dispatchEvent(new Event('online'));
   });
-  await page.getByText('Ainda sem cardápio por aqui').waitFor({timeout:17000});
+  await page.getByText('Consulta indisponível').waitFor({timeout:17000});
   await page.evaluate(()=>{
     Date.now=window.__realDateNow;
     delete window.__realDateNow;
@@ -268,7 +268,7 @@ try {
   const passiveErrors=[];
   passive.on('pageerror',e=>passiveErrors.push(e.message));
   await passive.goto(url,{waitUntil:'domcontentloaded'});
-  await passive.getByText('Ainda sem cardápio por aqui').waitFor({timeout:15000});
+  await passive.getByText('Consulta indisponível').waitFor({timeout:15000});
   await passive.waitForTimeout(250);
   assert.equal(await passive.getByText('Prato antigo e indevido',{exact:true}).count(),0);
   assert.equal(await passive.getByText('Frango grelhado',{exact:true}).count(),0);
