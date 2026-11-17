@@ -55,10 +55,10 @@ test('o histórico inclui mais 76 nomes além do catálogo de ingredientes, sem 
   assert.equal(historyOnly,76,'Nenhum nome do histórico pode ficar sem categoria');
 });
 
-test('histórico é fallback, sem suplantar classificações oficiais atuais de pratos variáveis',()=>{
+test('pratos principais/vegetarianos catalogados prevalecem; demais categorias seguem FUMP',()=>{
   assert.equal(knownDishCategory('Charuto de repolho'),'vegetariana');
-  assert.equal(categoryFromSourceType('Prato protéico 1','Charuto de repolho'),'proteina');
-  assert.equal(publishedCategory('vegetariana','Charuto de repolho','Prato protéico 1'),'proteina');
+  assert.equal(categoryFromSourceType('Prato protéico 1','Charuto de repolho'),'vegetariana');
+  assert.equal(publishedCategory('vegetariana','Charuto de repolho','Prato protéico 1'),'vegetariana');
   assert.equal(categoryFromSourceType('Prato protéico 3','Charuto de repolho'),'vegetariana');
   assert.equal(categoryFromSourceType('Tipo de item não cadastrado','Charuto de repolho'),'vegetariana');
   assert.equal(publishedCategory('outros','Molho de manjericão','Tipo de item não cadastrado'),'molho');
@@ -68,11 +68,11 @@ test('histórico é fallback, sem suplantar classificações oficiais atuais de 
   assert.equal(categoryFromSourceType('Tipo de item não cadastrado','Salada de legumes'),'guarnicao');
 });
 
-test('tipo oficial atual prevalece para outros nomes, mesmo conhecidos',()=>{
-  assert.equal(categoryFromSourceType('Prato protéico 1','Assado de Grão-de-Bico'),'proteina');
-  assert.equal(publishedCategory('proteina','Assado de Grão-de-Bico','Prato protéico 1'),'proteina');
-  assert.equal(categoryFromSourceType('Entrada 2','Frango Xadrez'),'salada');
-  assert.equal(categoryFromSourceType('Prato protéico 3','Carne de porco frita'),'vegetariana');
+test('a FUMP continua prioritária para grupos auxiliares e pratos desconhecidos',()=>{
+  assert.equal(categoryFromSourceType('Prato protéico 1','Assado de Grão-de-Bico'),'vegetariana');
+  assert.equal(publishedCategory('proteina','Assado de Grão-de-Bico','Prato protéico 1'),'vegetariana');
+  assert.equal(categoryFromSourceType('Entrada 2','Frango Xadrez'),'proteina');
+  assert.equal(categoryFromSourceType('Prato protéico 3','Carne de porco frita'),'proteina');
   assert.equal(publishedCategory('guarnicao','Quibe de Cenoura'),'vegetariana'); // exceção comprovada em 19/11/2026
   // A exceção comprovada do bife de milho permanece válida.
   assert.equal(categoryFromSourceType('Prato protéico 1','Bife de milho'),'vegetariana');
@@ -141,5 +141,5 @@ test('o parser FUMP já devolve as categorias corrigidas para pratos conhecidos'
     ]}
   ]}]},{iso:'2026-11-17',sourceId:'6'});
   assert.deepEqual(parsed.meals.almoco.items.map(x=>x.category),
-    ['vegetariana','proteina','vegetariana','molho','proteina']);
+    ['vegetariana','vegetariana','vegetariana','molho','proteina']);
 });
