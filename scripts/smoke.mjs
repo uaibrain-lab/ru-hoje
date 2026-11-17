@@ -95,7 +95,12 @@ try {
       ]}] : [];
     await route.fulfill({
       status:200,contentType:'application/json',
-      headers:{'Access-Control-Allow-Origin':'*','Cache-Control':'no-store'},
+      headers:{
+        'Access-Control-Allow-Origin':'*',
+        'Access-Control-Expose-Headers':'X-Menu-Fetched-At, CF-Cache-Status',
+        'X-Menu-Fetched-At':new Date().toISOString(),
+        'Cache-Control':'no-store'
+      },
       body:JSON.stringify({id:Number(id),cardapios})
     });
   };
