@@ -92,6 +92,19 @@ test('nomes exatos corrigem erros conhecidos e não contaminam nomes parecidos',
   assert.equal(categoryFromSourceType('Acompanhamento 1','Prato desconhecido'),'acompanhamento');
 });
 
+test('quibe assado com lentilha é vegetariano mesmo com tipo genérico conflitante',()=>{
+  for(const type of ['Prato protéico 1','Prato protéico 2','Prato protéico 3','Tipo de item não cadastrado','Guarnição','']){
+    assert.equal(categoryFromSourceType(type,'Quibe assado com lentilha'),'vegetariana',type);
+    assert.equal(publishedCategory('proteina','Quibe assado com lentilha',type),'vegetariana',type);
+  }
+  assert.equal(publishedCategory('proteina',' QUIBE ASSADO COM LENTILHA '),'vegetariana');
+  assert.equal(categoryFromSourceType('Prato protéico 1','Quibe assado com carne'),'proteina');
+  const parsed=parseMenuJson({id:6,cardapios:[{data:'2026-11-17',refeicoes:[
+    {tipoRefeicao:'Almoço',pratos:[{tipoPrato:'Prato protéico 1',descricaoPrato:'Quibe assado com lentilha'}]}
+  ]}]},{iso:'2026-11-17',sourceId:'6'});
+  assert.equal(parsed.meals.almoco.items[0].category,'vegetariana');
+});
+
 test('o parser FUMP já devolve as categorias corrigidas para pratos conhecidos',()=>{
   const parsed=parseMenuJson({id:6,cardapios:[{data:'2026-11-17',refeicoes:[
     {tipoRefeicao:'Almoço',pratos:[
