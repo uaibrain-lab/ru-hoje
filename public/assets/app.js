@@ -194,10 +194,11 @@ async function refreshLive({force = false, ruId = state.selectedRu, iso = state.
         && state.selectedRu===ruId && state.selectedDate===iso) {
       startPrefetch(ruId,iso);
     }
-    return result;
+    return status===result.status ? result : {...result,status,error:'WORKER_STALE_RESPONSE'};
   }).catch(error => {
     state.liveStatus.set(key,{status:'FETCH_ERROR',at:new Date().toISOString()});
     state.liveMenus.delete(key);
+    if (sourceForRu(state.selectedRu)===sourceForRu(ruId)) renderDates();
     recordPrefetchCheck(key,'FETCH_ERROR');
     if (key===liveKey(state.selectedDate||sPauloParts().iso,state.selectedRu)) renderMenus();
     console.warn('Falha na consulta oficial FUMP',error?.name || 'ERROR');
