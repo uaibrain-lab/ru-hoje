@@ -331,6 +331,9 @@ try {
     try{localStorage.setItem('ruhoje:restaurant:v1','setorial-i');}catch{}
   });
   const busPage=await busContext.newPage();
+  // O CI não consulta tiles públicos do OSM. Simula falha do mapa-base sem
+  // impedir os 49 pontos vetoriais, itinerários, horários e uso offline.
+  await busPage.route('https://tile.openstreetmap.org/**',route=>route.abort());
   try{
     await busPage.goto(url,{waitUntil:'domcontentloaded'});
     await busPage.evaluate(()=>document.getElementById('restaurant-dialog')?.close());
@@ -380,10 +383,20 @@ try {
           && frame.contentWindow.location.pathname==='/interno';
       }catch{return false;}
     },null,{timeout:20000});
+    const offlineMap=await busPage.evaluate(()=>{
+      const frame=document.getElementById('interno-frame');
+      const doc=frame?.contentDocument;
+      return {leaflet:frame?.contentWindow?.L?.version,
+        stops:doc?.querySelectorAll('path.interno-stop').length,
+        notice:doc?.getElementById('map-basemap-notice')?.textContent};
+    });
+    assert.equal(offlineMap.leaflet,'1.9.4','Leaflet precisa vir do PWA local, sem CDN');
+    assert.equal(offlineMap.stops,49,'Mapa offline deve preservar as 49 paradas vetoriais');
+    assert.match(offlineMap.notice,/Mapa-base indisponível/);
   }finally{
     await busContext.close();
   }
-  console.log('E2E Interno aprovado: mapa canônico, SW ativo, rota antiga e contingência offline.');
+  console.log('E2E Interno aprovado: Leaflet local, 49 pontos offline, mapa canônico e contingência sem tiles.');
 
   console.log('E2E aprovado: FUMP como fonte única, ausência de Firestore/localStorage antigo, prefetch D+1 e migração PWA.');
 } finally {await browser?.close();await new Promise(resolve=>server.close(resolve));}
