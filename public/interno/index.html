@@ -387,7 +387,15 @@ el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
   else if(d.home!==undefined){hist=[];view={t:'home'};tab='pontos';apply()}});
 el.addEventListener('input',e=>{if(e.target.id==='q'){q=e.target.value;document.getElementById('list').innerHTML=stopsList()}});
 document.getElementById('loc').addEventListener('click',locate);
-setInterval(()=>{if(document.activeElement&&document.activeElement.id==='q')return;const s=el.scrollTop;render();el.scrollTop=s},30000);
+// Atualizar horários apenas quando necessários, preservando foco, busca e popovers.
+setInterval(()=>{
+  if(document.hidden || (window.frameElement && !window.frameElement.getClientRects().length))return;
+  if(el.contains(document.activeElement))return;
+  if(view.t==='home' && tab==='pontos' && !fav.some(id=>S[id]))return;
+  const scroll=el.scrollTop;
+  render();
+  el.scrollTop=scroll;
+},30000);
 for(const id of ['grab','sheet-toggle'])document.getElementById(id).addEventListener('click',()=>setSheetState(sh.classList.contains('peek')?'mid':sh.classList.contains('full')?'peek':'full'));
 for(const t of ['pontos','linhas'])document.getElementById('quick-'+t).addEventListener('click',()=>pickQuickTab(t));
 // Deslizar sobre a cabecalho abre/fecha; rolagem da lista e gestos no mapa continuam nativos.
