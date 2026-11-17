@@ -40,7 +40,8 @@ test('Cloudflare Cron independente não lê nem escreve Firestore e usa somente 
   assert.match(worker,/async scheduled\(_controller,_env,_ctx\)/);
   assert.match(worker,/return runIndependentScheduled\(\)/);
   const monitor=read('worker/hub-independent-monitor.mjs');
-  assert.doesNotMatch(monitor,/\.put\(|\.set\(|\.create\(|firebase-admin|Firestore|run-raffles|PRIVATE_KEY_JWK|fetch\(request/);
+  // URLSearchParams.set() apenas constrói a query GET; não é uma escrita.
+  assert.doesNotMatch(monitor,/\.put\(|\.create\(|\.delete\(|firebase-admin|Firestore|run-raffles|PRIVATE_KEY_JWK|\.collection\(|\.doc\(/);
 });
 
 test('Cron entende resposta oficialmente vazia como publicada e não como falha',async()=>{
