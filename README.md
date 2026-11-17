@@ -14,6 +14,14 @@ Abra **http://127.0.0.1:8080/**. Teste o Interno em **http://127.0.0.1:8080/?aba
 
 O servidor resolve as URLs limpas do Firebase e encaminha somente `GET /api/menu` e `GET /api/restaurants` ao Worker oficial, usando valores fixos e validados. A resposta preserva o carimbo da FUMP e nunca cria pratos, altera o Worker ou grava no Firebase. A configuração do proxy local é incluída na resposta de `config.js` em memória, sem modificar o arquivo publicado. Por segurança, só escuta em `127.0.0.1`: para usar em um telefone físico é necessário montar um canal seguro de prévia separado. A seção Festas em modo real pode depender de autorizações do Firebase; prefira `festas-demo=1` para testar o layout.
 
+## Classificação consistente dos pratos
+
+O módulo `public/assets/dish-category.js` centraliza as categorias visuais do cardápio. O índice abrange **202 nomes distintos** presentes no conjunto dos **126 pratos do catálogo de ingredientes** e dos **142 nomes observados no histórico** (66 em comum). Parte dos nomes possui aliases ou correções pontuais adicionais.
+
+Ordem de classificação: **(1)** categoria revisada para um nome exato do catálogo de receitas ou de uma correção confirmada, **(2)** tipo oficial atual da FUMP para os demais pratos, **(3)** classificação histórica apenas quando o tipo atual é ausente/desconhecido e **(4)** regras conservadoras para pratos ainda não catalogados. Assim, por exemplo, "bife de milho" e "strogonoff de soja" são opções vegetarianas em ambos Setoriais, mas "charuto de repolho" pode ter outra categoria se a FUMP informar um tipo diferente numa receita atual. Não inferir vegetarianismo de uma palavra isolada nem tratar categoria de exibição como garantia de ingredientes/alergênicos.
+
+O arquivo `public/data/cardapios.json` é **somente uma evidência histórica**: não é usado para preencher cardápios atuais. A aplicação continua exigindo confirmação da FUMP via Worker. As verificações em `tests/hub-catalog-classification.test.mjs` detectam pratos conhecidos sem categoria e protegem a precedência entre o catálogo e o tipo oficial.
+
 **Nota:** instruções de versões e workflows antigos mais abaixo neste README são históricas e podem não refletir a produção atual.
 
 ## Estado comprovado
