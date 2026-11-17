@@ -49,12 +49,12 @@ export function buildProxyMenuUrl(ruId, iso, proxyBase) {
   return endpoint.href;
 }
 
-async function fetchOnce(url, fetchFn, timeoutMs) {
+async function fetchOnce(url, fetchFn, timeoutMs, cacheMode='no-store') {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(),timeoutMs);
   try {
     const response = await fetchFn(url, {
-      method:'GET',mode:'cors',credentials:'omit',cache:'no-store',
+      method:'GET',mode:'cors',credentials:'omit',cache:cacheMode,
       signal:controller.signal, headers:{Accept:'application/json'},redirect:'error'
     });
     const status = Number(response.status || 0);
@@ -70,7 +70,14 @@ async function fetchOnce(url, fetchFn, timeoutMs) {
     if (ct && !/json/i.test(ct)) throw new Error('FUMP_LIVE_NOT_JSON');
     const body = await response.text();
     if (!body || body.length > 2_000_000) throw new Error('FUMP_LIVE_BAD_BODY');
-    try { return JSON.parse(body); }
+    try {
+      return {
+        body:JSON.parse(body),
+        // Esta data é gerada na origem Worker ao obter dados oficiais.
+        upstreamFetchedAt:response.headers?.get?.('x-menu-fetched-at') || null,
+        cacheStatus:String(response.headers?.get?.('cf-cache-status') || '').toUpperCase()
+      };
+    }
     catch { throw new Error('FUMP_LIVE_INVALID_JSON'); }
   } finally {
     clearTimeout(timer);
@@ -98,9 +105,14 @@ export async function readLiveMenu(ruId, iso, {
     throw new Error('FUMP_LIVE_INVALID_ATTEMPTS');
   }
   let response;
+  let sourceFetchedAt=null;
+  let cacheStatus='';
   for (let attempt=1;attempt<=maxAttempts;attempt++) {
     try {
-      response = await fetchOnce(url,fetchFn,timeoutMs);
+      const incoming=await fetchOnce(url,fetchFn,timeoutMs,proxyUrl ? 'default' : 'no-store');
+      response=incoming.body;
+      sourceFetchedAt=incoming.upstreamFetchedAt;
+      cacheStatus=incoming.cacheStatus;
       break;
     } catch (error) {
       if (!transient(error) || attempt===maxAttempts) {
@@ -118,8 +130,11 @@ export async function readLiveMenu(ruId, iso, {
     }
     // Quando o JSON não traz data explícita, a consulta é atribuída à data
     // solicitada nos dois parâmetros oficiais. Não aceitar qualquer data divergente.
-    const fetchedAt = nowFn().toISOString();
-    return {status:'VALID_MENU',ruId,iso,sourceId,fetchedAt,
+    const stamped=sourceFetchedAt && Date.parse(sourceFetchedAt);
+    const stampedNow=nowFn();
+    const fetchedAt=Number.isFinite(stamped) && stamped <= stampedNow.getTime()+600000
+      ? new Date(stamped).toISOString() : stampedNow.toISOString();
+    return {status:'VALID_MENU',ruId,iso,sourceId,fetchedAt,cacheStatus,
       dateEvidence:meta.checkedDates ? 'response' : 'request',
       meals:Object.fromEntries(Object.entries(meals).map(([key,v]) => [
         key,{...v,fetchedAt}
