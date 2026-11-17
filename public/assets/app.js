@@ -82,6 +82,9 @@ function persistPrefetchMeta() {
 function hydratePrefetchMeta() {
   // Migração conservadora: preservar contagem antiga para não zerar o orçamento
   // do mesmo dia; descartar registros de consultas antigas armazenados no cliente.
+  // IMPORTANTE: o storage event chama esta função entre abas; nunca regravar
+  // a cada evento, senão duas abas entram em loop de mensagens.
+  let migrated=false;
   for(const key of [LEGACY_PREFETCH_META,STORAGE_PREFETCH]) {
     try {
       const raw=JSON.parse(readStore(key)||'null');
@@ -93,8 +96,13 @@ function hydratePrefetchMeta() {
       };
     }catch { /* metadados adulterados ou bloqueados nunca viram dados oficiais */ }
   }
-  try {localStorage.removeItem(LEGACY_PREFETCH_META);}catch{}
-  persistPrefetchMeta();
+  try {
+    if(localStorage.getItem(LEGACY_PREFETCH_META)!==null) {
+      localStorage.removeItem(LEGACY_PREFETCH_META);
+      migrated=true;
+    }
+  }catch{}
+  if(migrated) persistPrefetchMeta();
 }
 function recordPrefetchCheck(key,status) {
   state.prefetchChecks.set(key,{status,at:Date.now()});
