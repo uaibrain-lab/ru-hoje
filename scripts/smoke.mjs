@@ -178,7 +178,15 @@ try {
   await passive.waitForFunction(([d1,d3])=>{
     const x1=document.querySelector('.date-card[data-iso="'+d1+'"]');
     const x3=document.querySelector('.date-card[data-iso="'+d3+'"]');
-    return x1?.dataset.missingMenu==='false' && x3?.dataset.missingMenu==='false';
+    // Sem cardápio consultado, a bolinha também fica ausente; por isso
+    // o teste só pode passar depois de verificar PRATOS REAIS no cache local.
+    let entries;
+    try {entries=JSON.parse(localStorage.getItem('ruhoje:live-menus:v1')||'{}');}
+    catch{return false;}
+    const haveMenu=iso=>entries[iso+'|6']?.meals?.almoco?.items?.some(item=>
+      String(item.name).includes('Cardápio Pré-Carregado'));
+    return haveMenu(d1) && haveMenu(d3) &&
+      x1?.dataset.missingMenu==='false' && x3?.dataset.missingMenu==='false';
   },[tomorrow,day3],{timeout:40000});
   assert.ok(observed.some(x=>x.id==='6' && x.date===today),
     'O teste deve simular falha da consulta do dia selecionado');
