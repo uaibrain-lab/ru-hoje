@@ -495,7 +495,9 @@ try {
     return new Response(JSON.stringify({id:Number(id),cardapios:[{
       data:date,refeicoes:[{tipoRefeicao:'Almoço',pratos:[{
         tipoPrato:'Prato protéico 1',descricaoPrato:`Prato fonte ${id} em ${date}`
-      }]}]
+      },...(['1','6'].includes(id)?[{
+        tipoPrato:id==='6'?'Prato protéico 1':'Prato protéico 3',descricaoPrato:'Bife de milho'
+      }]:[])]}]
     }]}),{status:200,headers:{
       'Content-Type':'application/json','X-Menu-Fetched-At':new Date().toISOString()
     }});
@@ -519,6 +521,11 @@ try {
       await preview.getByRole('button',{name:label,exact:true}).click();
       await preview.getByText(`Prato fonte ${id} em ${today}`,{exact:true}).waitFor({timeout:12000});
       assert.equal(await preview.locator('.meal-card').count(),1);
+      if(['1','6'].includes(id)){
+        assert.equal(await preview.locator('.menu-group--vegetarian').getByText('Bife de milho',{exact:true}).count(),1,
+          `Bife de milho precisa ser vegetariano no RU fonte ${id}`);
+        assert.equal(await preview.locator('.menu-group--main').getByText('Bife de milho',{exact:true}).count(),0);
+      }
     }
     const nextDay=new Date(Date.parse(today+'T12:00:00Z')+86400000).toISOString().slice(0,10);
     await preview.locator(`.date-card[data-iso="${nextDay}"]`).click();
