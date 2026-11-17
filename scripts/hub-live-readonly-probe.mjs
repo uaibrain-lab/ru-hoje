@@ -12,11 +12,11 @@ const today=Object.fromEntries(new Intl.DateTimeFormat('en-US',{
 }).formatToParts(new Date()).map(x=>[x.type,x.value]));
 const iso=`${today.year}-${today.month}-${today.day}`;
 
-async function retrieve(url) {
+async function retrieve(url,headers={}) {
   const c=new AbortController();
   const timer=setTimeout(()=>c.abort(),15000);
   try {
-    const r=await fetch(url,{signal:c.signal,cache:'no-store'});
+    const r=await fetch(url,{signal:c.signal,cache:'no-store',headers});
     const content=await r.text();
     if (!r.ok) throw new Error('HTTP_'+r.status);
     return {content,status:r.status};
@@ -72,7 +72,7 @@ async function main() {
       url.searchParams.set('id',id);
       url.searchParams.set('data',date);
       try{
-        const response=await retrieve(url.href);
+        const response=await retrieve(url.href,{Origin:ORIGIN,Accept:'application/json'});
         const json=JSON.parse(response.content);
         if(String(json?.id)!==id || !Array.isArray(json?.cardapios))
           throw new Error('RU_OR_SCHEMA_MISMATCH');
