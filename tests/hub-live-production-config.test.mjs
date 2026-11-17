@@ -61,4 +61,12 @@ test('atualizacao FUMP por acesso nao requer cron GitHub nem exibe ausencia sem 
     assert.ok(yaml.includes('workflow_dispatch:'),'Diagnóstico manual indisponível: '+filename);
   }
   assert.match(read('../.github/workflows/hub-production-cardapios.yml'),/HUB_HOSTING_AUTO_DEPLOY_ENABLED/);
+  const workerCfg=read('../worker/wrangler.toml');
+  assert.match(workerCfg,/\[placement\]\s*region = "gcp:southamerica-east1"/);
+  assert.match(workerCfg,/\[cache\]\s*enabled = true/);
+  // Vary: Origin precisa continuar presente para evitar cache CORS incorreto.
+  const worker=read('../worker/fump-proxy.mjs');
+  assert.ok(worker.includes("'Vary':'Origin'"));
+  assert.ok(worker.includes("'Cache-Control',cacheSeconds ?"));
+
 });
