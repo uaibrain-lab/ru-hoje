@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readFileSync,existsSync} from 'node:fs';
 import {due} from '../scripts/raffle-engine.mjs';
 import {assertPreparedRaffleResult,entriesSnapshotHash} from '../scripts/raffle-publication-guard.mjs';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
@@ -31,14 +31,13 @@ test('resultado preparado de verdade deve ter ganhador e hash do snapshot',()=>{
     publicResult:{...pub,winners:[]},privateResult:priv}),/QUANTIDADE_GANHADORES_DIVERGENTE/);
 });
 
-test('backup semanal é opt-in, não eleva permissão e não coleta credenciais',()=>{
-  const script=read('scripts/HUB-BACKUP-AGENDAR.ps1');
-  assert.match(script,/ValidateSet\('Consultar','Instalar','Remover'\)/);
-  assert.match(script,/\$Acao='Consultar'/);
-  assert.match(script,/New-ScheduledTaskTrigger -Weekly -DaysOfWeek Sunday -At '19:00'/);
-  assert.match(script,/New-ScheduledTaskSettingsSet -StartWhenAvailable/);
-  assert.match(script,/New-ScheduledTaskPrincipal -UserId \$identity -LogonType Interactive -RunLevel Limited/);
-  assert.match(script,/HUB-BACKUP-GIT-LOCAL\.ps1/);
-  assert.match(script,/DESTINO_SECUNDARIO_DEVE_SER_ABSOLUTO/);
-  assert.doesNotMatch(script,/firebase-admin|firestore:export|run-raffles-production|PRIVATE_KEY_JWK|runas|System32\\certutil/i);
+test('nenhuma tarefa recorrente de backup; cópia Git fica sob demanda',()=>{
+  assert.equal(existsSync(new URL('../scripts/HUB-BACKUP-AGENDAR.ps1',import.meta.url)),false);
+  const deploy=read('scripts/HUB-BATCH-DEPLOY-VERIFICAR.ps1');
+  const manual=read('scripts/HUB-BACKUP-GIT-LOCAL.ps1');
+  assert.match(deploy,/if\(\$env:HUB_BACKUP_BEFORE_DEPLOY -eq "true"\)/);
+  assert.match(deploy,/HUB-BACKUP-GIT-LOCAL\.ps1/);
+  assert.match(manual,/bundle create \$bundle --all/);
+  assert.doesNotMatch(deploy,/New-ScheduledTaskTrigger|Register-ScheduledTask/);
+
 });

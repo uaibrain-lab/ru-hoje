@@ -69,7 +69,7 @@ Worker v276 já está publicado; este lote não muda nem republica o Worker.**
 
 - scripts/HUB-BACKUP-GIT-LOCAL.ps1 cria e verifica um git bundle completo e
   hash SHA-256 em Documents/Hub-UFMG-Backups.
-- O deploy unificado executa esse script **antes da publicação**.
+- O snapshot Git é **manual/opcional**; por padrão o deploy não executa backup de código já versionado no GitHub.
 - Recuperação do repositório: git clone "caminho\Hub-UFMG-data.bundle" "destino".
 - **Limite**: esse pacote preserva código e histórico Git; não guarda dados
   Firestore de participantes, credenciais ou configurações secretas de provedores,
@@ -95,10 +95,10 @@ Na máquina Windows autenticada, após a PR aprovada e mesclada:
 }
 ~~~
 
-A publicação única faz backup local, audita contratos de segurança, publica
+A publicação única audita contratos de segurança, publica o Worker atualizado,
 Firebase Hosting **e** Firestore Rules e verifica a v277 pública, app atualizado,
-módulo Interno e arquivos locais do Leaflet. **Não executa sorteios** e não
-publica Worker. Não foi possível aplicar alterações diretamente ao Firebase
+módulo Interno e arquivos locais do Leaflet. **Não executa sorteios**;
+o snapshot Git local só ocorre se explicitamente solicitado. Não foi possível aplicar alterações diretamente ao Firebase
 pelo GitHub; a implantação requer CLI local com autenticação.
 
 ## Etapas ainda pendentes
