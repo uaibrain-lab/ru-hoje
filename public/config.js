@@ -2,8 +2,7 @@
 // Não coloque chaves privadas ou credenciais de serviço neste arquivo.
 window.RU_CONFIG = Object.freeze({
   firebaseProjectId: "hubufmg",
-  // Opcional: URL HTTP(S) de um JSON público atualizado por outro coletor.
-  publicFeedUrl: "",
+  // Cardápios vêm exclusivamente da API oficial via Worker read-only.
   // Preencher com a origem HTTPS do Worker depois de testar o acesso real à FUMP.
   // Exemplo: "https://hub-fump-proxy.<sua-conta>.workers.dev"
   fumpProxyUrl: "https://hub-fump-proxy.hubufmg.workers.dev"
