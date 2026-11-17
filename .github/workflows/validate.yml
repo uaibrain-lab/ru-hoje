@@ -2,7 +2,7 @@ name: Validar projeto
 on:
   workflow_dispatch:
   push:
-    branches: [main, ux/mobile-first-batch-20261117]
+    branches: [main]
   pull_request:
 permissions:
   contents: read
