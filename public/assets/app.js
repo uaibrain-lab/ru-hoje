@@ -120,11 +120,11 @@ function startPrefetch(ruId,iso) {
   const plan=buildPrefetchPlan(ruId,iso,{
     maxDate:addDays(sPauloParts().iso,14),
     // Somente as próximas datas do RU escolhido, sem buscar todos os RUs.
-    futureDays:3,
+    futureDays:5,
     otherFutureDays:0,
-    limit:3
+    limit:5
   }).filter(task=>sourceForRu(task.ruId)===sourceForRu(ruId)
-    && !isNonOperatingDay(task.iso,ruId));
+    && !isNonOperatingDay(task.iso,ruId)).slice(0,3);
   if (!plan.length) return;
   const generation=++state.prefetchGeneration;
   state.prefetchActiveKey=activeKey;
