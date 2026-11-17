@@ -491,7 +491,7 @@ try {
     localRequests.push({id,date});
     assert.equal(u.origin,'https://hub-fump-proxy.hubufmg.workers.dev');
     assert.ok(['1','2','5','6'].includes(id));
-    assert.ok(/^\\d{4}-\\d{2}-\\d{2}$/.test(date));
+    assert.ok(/^\d{4}-\d{2}-\d{2}$/.test(date));
     return new Response(JSON.stringify({id:Number(id),cardapios:[{
       data:date,refeicoes:[{tipoRefeicao:'Almoço',pratos:[{
         tipoPrato:'Prato protéico 1',descricaoPrato:`Prato fonte ${id} em ${date}`
