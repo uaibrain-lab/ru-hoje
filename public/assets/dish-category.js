@@ -308,6 +308,8 @@ export function unregisteredCategory(name) {
 const VERIFIED_SOURCE_CORRECTIONS = Object.freeze({
   'bife de milho': 'vegetariana',
   'soja refogada com legumes': 'vegetariana',
+  // Confirmado pelo usuário: opção vegetariana mesmo quando o tipo FUMP variar.
+  'quibe assado com lentilha': 'vegetariana',
 });
 
 /**
