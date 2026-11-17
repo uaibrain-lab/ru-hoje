@@ -57,10 +57,11 @@ try {
         throw "WORKER_HTTP_$status - Hosting nao foi publicado"
     }
     if ($cors -ne "https://hubufmg.web.app") { throw "CORS_INCORRETO" }
-    if ($cc -notmatch '(?i)(?:^|,)\s*max-age\s*=\s*(\d+)(?:\s*,|$)') {
+    $maxAge=[regex]::Match($cc,'(?i)(?:^|,)\s*max-age\s*=\s*(\d+)(?:\s*,|$)')
+    if (-not $maxAge.Success) {
         throw "CACHE_CONTROL_SEM_MAX_AGE: $cc"
     }
-    $seconds = [int]$Matches[1]
+    $seconds = [int]$maxAge.Groups[1].Value
     if ($seconds -lt 0 -or $seconds -gt 60 -or $cc -match '(?i)(?:^|,)\s*stale-if-error\b') {
         throw "CACHE_CONTROL_ANTIGO: $cc"
     }
