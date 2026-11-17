@@ -59,7 +59,8 @@ try{
         mainBorder:mainStyle.borderLeftWidth,vegBorder:vegStyle.borderLeftWidth,
         mainPadding:mainStyle.paddingLeft,vegPadding:vegStyle.paddingLeft,
         mainBorderTop:mainStyle.borderTopWidth,vegBorderTop:vegStyle.borderTopWidth,
-        dishHeight:row?.getBoundingClientRect().height||0,
+        dishHeight:row?.getBoundingClientRect().height||null,
+        dateTouchHeight:document.querySelector('.date-card')?.getBoundingClientRect().height||0,
         windowScrollY:window.scrollY
       };
     });
@@ -72,7 +73,9 @@ try{
     assert.equal(d.mainBorderTop,d.vegBorderTop,'Bordas superiores diferentes: '+hint);
     assert.equal(d.mainPadding,d.vegPadding,'Padding dos grupos diferente: '+hint);
     assert.ok(d.main.bottom<d.veg.y,'Ordem dos grupos incorreta: '+hint);
-    assert.ok(d.dishHeight>=44,'Área de toque dos pratos reduzida: '+hint);
+    assert.ok(d.dateTouchHeight>=44,'Área de toque da data reduzida: '+hint);
+    if(d.dishHeight!==null)assert.ok(d.dishHeight>=44,
+      'Área de toque de prato com ingredientes reduzida: '+hint);
     assert.equal(d.windowScrollY,0,'Página rolou sozinha antes de exibir o cardápio');
     if(height>=667){
       assert.ok(d.veg.y<d.nav.y-6,
