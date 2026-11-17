@@ -1,10 +1,11 @@
 /**
- * Correções conservadoras para dados oficiais da FUMP sem tipo cadastrado
- * e snapshots legados que não distinguiam prato protéico 3 (vegetariano).
+ * Categorias conhecidas do Hub UFMG, combinando o catálogo histórico de
+ * ingredientes do ICA e correções pontuais verificadas em cardápios FUMP.
  *
- * Evidência: FUMP, 20/10/2026, API JSON IDs 1, 2, 5, 6.
- * Nunca inferir indiscriminadamente proteína por palavras como "bife"
- * ("Bife de milho" é vegetariano) ou "bolinho".
+ * A categoria de um nome EXATO catalogado prevalece sobre os tipos genéricos
+ * do endpoint. Para nomes desconhecidos, usa-se o tipo oficial recebido.
+ * Nunca inferir por palavras isoladas como "bife", "milho" ou "bolinho".
+ * Não confundir classificação de exibição com certificação nutricional.
  */
 const normal = value => String(value ?? '')
   .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -151,7 +152,8 @@ const ICA_CATALOG = Object.freeze({
   'salada diferente': 'salada',
   'salada fantasia': 'salada',
   'salada provencal': 'salada',
-  'salada seria': 'salada',
+  'salada siria': 'salada',
+  'salada seria': 'salada', // grafia legada; PDF de ingredientes: Salada Síria
   'salada tropical': 'salada',
   'salpicao de cenoura': 'salada',
   'tabule': 'salada',
@@ -187,14 +189,29 @@ const VERIFIED_VEGETARIAN_LEGACY = new Set([
   'assado de grao de bico',
 ]);
 
+// Única tabela de categorias para nomes exatos. O PDF de ingredientes não
+// traz o tipo FUMP de cada prato: a taxonomia foi revisada separadamente.
+// Inclui os 126 pratos do catálogo, aliases conhecidos e correções verificadas.
+const KNOWN_DISH_CATEGORIES = Object.freeze({
+  ...ICA_CATALOG,
+  ...UNREGISTERED_OVERRIDES,
+  ...Object.fromEntries([...VERIFIED_VEGETARIAN_LEGACY].map(name=>[name,'vegetariana'])),
+});
+
+export function knownDishCategory(name) {
+  return KNOWN_DISH_CATEGORIES[normal(name)] || '';
+}
+
 export function unregisteredCategory(name) {
+  const known=knownDishCategory(name);
+  if(known) return known;
   const key = normal(name);
-  // A FUMP pode enviar strogonoff sem tipo cadastrado. O prato continua
-  // sendo principal; somente a variante explicitamente vegana é vegetariana.
+  // Fallback para strogonoff ainda não catalogado, sem arriscar inferência
+  // sobre receitas específicas de diferentes restaurantes.
   if (/\bstrogonoff\b/.test(key)) {
     return /\b(?:vegano|vegetariano)\b/.test(key) ? 'vegetariana' : 'proteina';
   }
-  return UNREGISTERED_OVERRIDES[key] || ICA_CATALOG[key] || '';
+  return '';
 }
 
 /**
@@ -204,9 +221,10 @@ export function unregisteredCategory(name) {
  * Retorno vazio: a fonte não deu uma classificação conhecida.
  */
 export function categoryFromSourceType(sourceType, name = '') {
-  // Correção pontual confirmada em ambos os Setoriais: a FUMP pode cadastrar
-  // o bife de milho com posições protéicas distintas entre restaurantes.
-  if (normal(name) === 'bife de milho') return 'vegetariana';
+  // O tipo de item pode variar entre RUs. Para pratos já catalogados
+  // (incluindo bife de milho), usar a categoria editorial confirmada.
+  const known=knownDishCategory(name);
+  if(known) return known;
   const t = normal(sourceType);
   if (t.includes('entrada')) return 'salada';
   if (t.includes('sobremesa')) return 'sobremesa';
@@ -226,35 +244,21 @@ export function categoryFromSourceType(sourceType, name = '') {
  * Nunca escreve ou altera dados remotamente.
  */
 export function publishedCategory(category, name, sourceType = '') {
-  const original = normal(sourceType);
-  // Correções nominais confirmadas para casos em que o tipo da FUMP veio
-  // ausente ou inconsistente com a natureza do prato.
-  const nameKey = normal(name);
-  if (nameKey === 'bife de milho' || nameKey === 'soja refogada com legumes') return 'vegetariana';
-  if (nameKey === 'frango ao molho de tomate') return 'proteina';
-  // Em uma resposta antiga sem tipo oficial, preservar categoria legada
-  // exceto para os nomes que sabemos terem sido classificados incorretamente.
-  if (original && original !== 'tipo de item nao cadastrado') {
-    const official = categoryFromSourceType(sourceType, name);
-    if (official) return official;
+  const known=knownDishCategory(name);
+  if(known) return known;
+  const original=normal(sourceType);
+  if(original && original!=='tipo de item nao cadastrado') {
+    const official=categoryFromSourceType(sourceType,name);
+    if(official) return official;
   }
-  const saved = normal(category);
-  if (!saved || saved === 'outros' || saved === 'tipo de item nao cadastrado') {
-    return (original === '' || original === 'tipo de item nao cadastrado')
-      ? (ICA_CATALOG[nameKey] || unregisteredCategory(name) || saved)
-      : saved;
+  const saved=normal(category);
+  if(!saved || saved==='outros' || saved==='tipo de item nao cadastrado') {
+    return unregisteredCategory(name) || saved;
   }
-  // O catálogo pode corrigir somente categorias legadas claramente conflitantes;
-  // nunca substitui uma categoria legada diferente sem evidência suficiente.
-  if ((original === '' || original === 'tipo de item nao cadastrado') &&
-      ((saved === 'proteina' && ICA_CATALOG[nameKey] === 'vegetariana') ||
-       (saved === 'molho' && ICA_CATALOG[nameKey] === 'proteina'))) {
-    return ICA_CATALOG[nameKey];
-  }
-  // Somente para dados legados sem tipo original: indicação vegetariana explícita
-  // no nome ou nomes já confirmados. Nunca sobrepor a categoria de outra família.
-  if (saved === 'proteina' && (VERIFIED_VEGETARIAN_LEGACY.has(normal(name)) ||
-      /\b(?:vegetarian[oa]s?|vegan[oa]s?)\b/.test(normal(name)))) {
+  // Para categorias legadas sem evidência mais forte, reconhecer apenas
+  // a indicação explícita de vegetariano/vegano no nome desconhecido.
+  if((original==='' || original==='tipo de item nao cadastrado') &&
+      saved==='proteina' && /\b(?:vegetarian[oa]s?|vegan[oa]s?)\b/.test(normal(name))) {
     return 'vegetariana';
   }
   return category;
