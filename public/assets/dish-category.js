@@ -204,6 +204,9 @@ export function unregisteredCategory(name) {
  * Retorno vazio: a fonte não deu uma classificação conhecida.
  */
 export function categoryFromSourceType(sourceType, name = '') {
+  // Correção pontual confirmada em ambos os Setoriais: a FUMP pode cadastrar
+  // o bife de milho com posições protéicas distintas entre restaurantes.
+  if (normal(name) === 'bife de milho') return 'vegetariana';
   const t = normal(sourceType);
   if (t.includes('entrada')) return 'salada';
   if (t.includes('sobremesa')) return 'sobremesa';
@@ -227,7 +230,7 @@ export function publishedCategory(category, name, sourceType = '') {
   // Correções nominais confirmadas para casos em que o tipo da FUMP veio
   // ausente ou inconsistente com a natureza do prato.
   const nameKey = normal(name);
-  if (nameKey === 'soja refogada com legumes') return 'vegetariana';
+  if (nameKey === 'bife de milho' || nameKey === 'soja refogada com legumes') return 'vegetariana';
   if (nameKey === 'frango ao molho de tomate') return 'proteina';
   // Em uma resposta antiga sem tipo oficial, preservar categoria legada
   // exceto para os nomes que sabemos terem sido classificados incorretamente.
