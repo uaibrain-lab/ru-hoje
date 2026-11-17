@@ -211,6 +211,12 @@ async function refreshLive({force = false, ruId = state.selectedRu, iso = state.
     return {status:'FETCH_ERROR'};
   }).finally(() => state.livePending.delete(key));
   state.livePending.set(key,task);
+  // Ao repetir uma consulta com dado ausente/expirado, não manter o estado de
+  // erro ou ausência anterior enquanto a FUMP ainda está respondendo.
+  if(key===liveKey(state.selectedDate||sPauloParts().iso,state.selectedRu) && !liveMenuFor(iso,ruId)){
+    state.liveStatus.delete(key);
+    renderMenus();
+  }
   return task;
 }
 function el(tag, className, text) { const e = document.createElement(tag); if (className) e.className = className; if (text !== undefined) e.textContent = text; return e; }
@@ -498,7 +504,8 @@ function renderMenus() {
   const data = menuFor(day,state.selectedRu);
   const selectedKey=liveKey(day,state.selectedRu);
   const liveStatus=state.liveStatus.get(selectedKey);
-  const waitingForLive=navigator.onLine && !live && (!liveStatus || liveStatus.status==='VALID_MENU') && !nonOperatingDayForDate(day,state.selectedRu);
+  const waitingForLive=navigator.onLine && !live && !liveStatus &&
+    (state.livePending.has(selectedKey) || !nonOperatingDayForDate(day,state.selectedRu));
   if (!ru) {
     const msg=el('div','no-menu');
     msg.append(el('h3','','Primeiro, escolha seu RU'),
