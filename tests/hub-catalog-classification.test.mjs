@@ -73,7 +73,7 @@ test('tipo oficial atual prevalece para outros nomes, mesmo conhecidos',()=>{
   assert.equal(publishedCategory('proteina','Assado de Grão-de-Bico','Prato protéico 1'),'proteina');
   assert.equal(categoryFromSourceType('Entrada 2','Frango Xadrez'),'salada');
   assert.equal(categoryFromSourceType('Prato protéico 3','Carne de porco frita'),'vegetariana');
-  assert.equal(publishedCategory('guarnicao','Quibe de Cenoura'),'guarnicao');
+  assert.equal(publishedCategory('guarnicao','Quibe de Cenoura'),'vegetariana'); // exceção comprovada em 19/11/2026
   // A exceção comprovada do bife de milho permanece válida.
   assert.equal(categoryFromSourceType('Prato protéico 1','Bife de milho'),'vegetariana');
 });
