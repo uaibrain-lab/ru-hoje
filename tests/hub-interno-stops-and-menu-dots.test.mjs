@@ -41,7 +41,7 @@ test('bolinhas consideram horários de atendimento por RU sem inventar dias de a
   assert.equal(needsMenuDot(null,iso,'ru-nao-existente'),false);
 });
 
-test('mapa preserva os IDs originais e destaca a Escola de Música com aro azul sem bola preta',()=>{
+test('mapa mantém os 49 pontos com mesmo desenho e sem origem azul',()=>{
   const page=read('../public/interno/index.html');
   const start=page.indexOf('const D=');
   const end=page.indexOf(';\nconst S=',start);
@@ -51,10 +51,13 @@ test('mapa preserva os IDs originais e destaca a Escola de Música com aro azul 
   assert.equal(origin.idParada,'P01');
   assert.equal(origin.categoria,'Ponto de Origem/Destino');
   assert.equal(data.paradas.length,49);
-  assert.ok(page.includes("className:origin?'interno-stop-origin':'interno-stop-regular'"));
+  assert.ok(page.includes("className:'interno-stop'"));
+  assert.ok(page.includes("radius:7,"));
+  assert.ok(page.includes("color:'#334155',"));
   assert.ok(page.includes("fillColor:'#ffffff'"));
-  assert.ok(page.includes("color:origin?'#2386d1':'#334155'"));
-  assert.ok(!page.includes("fillColor:o?(dk?'#fff':'#101828')"));
+  assert.ok(!page.includes("radius:origin?10:7"));
+  assert.ok(!page.includes("color:origin?'#2386d1'"));
+  assert.ok(!page.includes("className:origin?'interno-stop-origin'"));
   assert.ok(page.includes(".on('click',()=>go({t:'stop',id:p.idParada}))"));
 });
 
