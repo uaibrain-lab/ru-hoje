@@ -113,6 +113,17 @@ try {
   await page.getByText('Frango grelhado',{exact:true}).waitFor({timeout:15000});
   assert.equal(interceptedRequests,0,'Aplicativo não pode consultar snapshot Firestore');
   assert.equal(await page.locator('.date-card').count(),15);
+  // O indicador deve representar atendimento REGULAR, não cardápio publicado.
+  const dotSchedule=await page.locator('.date-card').evaluateAll(cards=>cards.map(card=>({
+    date:card.dataset.iso, noService:card.dataset.noRegularService
+  })));
+  assert.ok(dotSchedule.some(({date})=>new Date(date+'T12:00:00Z').getUTCDay()===0));
+  for(const {date,noService} of dotSchedule) {
+    const weekday=new Date(date+'T12:00:00Z').getUTCDay();
+    assert.equal(noService,String(weekday===0),'Setorial I: apenas domingo tem bolinha');
+  }
+  assert.equal(await page.locator('.date-card[data-missing-menu]').count(),0,
+    'Atributo legado de ausência de cardápio não deve continuar no calendário');
   assert.equal(await page.locator('.meal-card').count(),2);
   assert.deepEqual(await page.locator('.meal-card h3').allTextContents(),['Almoço','Café da manhã']);
   assert.equal(await page.locator('.meal-card').filter({hasText:'Sopa indevida'}).count(),0);
@@ -122,6 +133,14 @@ try {
   await page.getByRole('button',{name:'RU Setorial I Campus Pampulha',exact:true}).click();
   await page.getByRole('button',{name:'RU Setorial II Campus Pampulha',exact:true}).click();
   await page.getByText('Sopa II',{exact:true}).waitFor({timeout:15000});
+  const setorialII=await page.locator('.date-card').evaluateAll(cards=>cards.map(card=>({
+    date:card.dataset.iso,noService:card.dataset.noRegularService
+  })));
+  for(const {date,noService} of setorialII) {
+    const weekday=new Date(date+'T12:00:00Z').getUTCDay();
+    assert.equal(noService,String(weekday===0||weekday===6),
+      'Setorial II: sábado e domingo têm bolinha');
+  }
   const clockParts = Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date()).filter(p=>p.type==='hour'||p.type==='minute').map(p=>[p.type,Number(p.value)]));
   const expectedSetorialIIOrder = (clockParts.hour * 60 + clockParts.minute) >= 870 ? ['Jantar','Almoço'] : ['Almoço','Jantar'];
   assert.deepEqual(await page.locator('.meal-card h3').allTextContents(),expectedSetorialIIOrder);
@@ -235,14 +254,13 @@ try {
     'O teste deve simular erro na primeira sequência de pré-busca');
   assert.ok(observed.some(x=>x.id==='6' && x.date===day3),
     'Falha pontual bloqueou D+3');
-  // Falha HTTP 503 continua mostrando a bolinha em dias de atendimento
-  // regular, porque o cardápio ainda nao foi carregado, sem afirmar fechamento.
-  const expectedMissing=[0,6].includes(new Date(failedTomorrowPlusOne+'T12:00:00Z').getUTCDay())
-    ? new Date(failedTomorrowPlusOne+'T12:00:00Z').getUTCDay()===6 : true; // Setorial I atende sábado.
-  assert.equal(await passive.locator('.date-card[data-iso="'+failedTomorrowPlusOne+'"]').getAttribute('data-missing-menu'),String(expectedMissing));
+  // Mesmo sob HTTP 503, somente domingo indica falta de atendimento regular.
+  // Setorial I funciona de segunda a sábado.
+  const expectedNoService=new Date(failedTomorrowPlusOne+'T12:00:00Z').getUTCDay()===0;
+  assert.equal(await passive.locator('.date-card[data-iso="'+failedTomorrowPlusOne+'"]').getAttribute('data-no-regular-service'),String(expectedNoService));
   assert.deepEqual(passiveErrors,[],'Exceção JS no pré-carregamento sem cliques');
   await passive.close();
-  // A bolinha desapareceu em D+1 e D+3 sem visita manual a nenhuma data.
+  // Pré-carregamento da FUMP e bolinhas por horário são independentes.
 
   // Um PWA instalado NÃO pode continuar executando app.js ou config.js
   // inválidos que tenham sido preservados pelo cache anterior ao deploy.
@@ -259,8 +277,8 @@ try {
   await pwaPage.waitForFunction(()=>!!navigator.serviceWorker.controller,null,{timeout:25000});
   await pwaPage.waitForTimeout(700);
   await pwaPage.evaluate(async()=>{
-    const c=await caches.open('hub-v274-20261117-fump-only-r1');
-    await c.put('/assets/app.js?v=hub-20261117-fump-only-r1',
+    const c=await caches.open('hub-v275-20261117-no-service-dots-r1');
+    await c.put('/assets/app.js?v=hub-20261117-no-service-dots-r1',
       new Response('throw new Error("STALE_CACHE_EXECUTED")',{
         headers:{'Content-Type':'text/javascript'}
       }));

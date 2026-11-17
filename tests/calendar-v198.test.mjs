@@ -51,7 +51,7 @@ test('frontend inclui domingos, atualiza os pontos quando chegam dados e muda o 
   const sw=fs.readFileSync(new URL('../public/service-worker.js',import.meta.url),'utf8');
   assert.match(app,/for \(let offset = 0; offset < 15; offset\+\+\)/);
   assert.doesNotMatch(app,/getUTCDay\(\) === 0\) continue/);
-  assert.match(app,/missingMenuForDate\(iso,state\.selectedRu\)/);
+  assert.match(app,/nonOperatingDayForDate\(iso,state\.selectedRu\)/);
   assert.match(app,/renderRestaurant\(\);\s*renderDates\(\);\s*renderMenus\(\);/);
   assert.doesNotMatch(app,/STORAGE_DATA|STORAGE_LIVE|publicMenus\/current|\/data\/cardapios\.json/);
   assert.match(sw,/\/assets\/date-availability\.js/);

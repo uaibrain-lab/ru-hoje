@@ -22,8 +22,11 @@ nem o estado do Firestore e não desativa funcionalidades de festas/sorteios.**
 6. Respostas marcadas `CF-Cache-Status: STALE` são rejeitadas para exibição
    como menu atual (e o usuário recebe indisponibilidade). O TTL positivo
    existente do Worker ainda é 240 segundos — sua revisão é Fase 2.
-7. O estado sem pratos **não significa RU fechado**. Os indicadores de dias
-   sem cardápio continuam usando os horários regulares conhecidos.
+7. O estado sem pratos **não significa RU fechado**. Desde a versão v275,
+   as bolinhas do calendário identificam **somente dias sem atendimento regular
+   previsto** para o RU selecionado, sem depender da existência de cardápio.
+   Sábados sem funcionamento regular: Setorial II e Direito; domingos: todos.
+   Horários excepcionais e feriados não são inferidos automaticamente.
 8. O PWA continua armazenando arquivos de aplicativo e dados estáticos do
    Interno; nenhum backup de itinerários foi apagado.
 
