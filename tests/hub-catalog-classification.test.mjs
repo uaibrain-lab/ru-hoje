@@ -32,7 +32,7 @@ test('todos os 126 pratos do catálogo de ingredientes possuem categoria fixa re
   });
 });
 
-test('o histórico inclui mais 71 nomes além do catálogo de ingredientes, sem deixar lacunas',()=>{
+test('o histórico inclui mais 76 nomes além do catálogo de ingredientes, sem deixar lacunas',()=>{
   const normalize=name=>String(name||'').normalize('NFD')
     .replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()
     .replace(/[\u2010-\u2015-]/g,' ').replace(/\s+/g,' ');
@@ -53,7 +53,7 @@ test('o histórico inclui mais 71 nomes além do catálogo de ingredientes, sem 
     assert.ok(validCategories.has(knownDishCategory(displayName)),displayName+' ausente da classificação');
     if(!fromIngredients.has(name))historyOnly++;
   }
-  assert.equal(historyOnly,71,'Nenhum nome do histórico pode ficar sem categoria');
+  assert.equal(historyOnly,76,'Nenhum nome do histórico pode ficar sem categoria');
 });
 
 test('histórico é fallback, e não substitui classificação oficial atual para pratos variáveis',()=>{
