@@ -3,7 +3,7 @@
  * Cache permanece disponível offline, mas nunca congela uma versão antiga
  * de app.js, config.js ou seus imports após um deploy.
  */
-const VERSION = 'hub-v271-20261117-interno-navigation-r1';
+const VERSION = 'hub-v272-20261117-interno-markers-menu-dots-r1';
 const SHELL = [
   '/', '/index.html', '/interno', '/favicon.ico', '/config.js',
   '/assets/app.js', '/assets/fump-live.js', '/assets/fump-prefetch.js',

@@ -202,8 +202,11 @@ try {
     'O teste deve simular erro na primeira sequência de pré-busca');
   assert.ok(observed.some(x=>x.id==='6' && x.date===day3),
     'Falha pontual bloqueou D+3');
-  // Falha HTTP 503 significa disponibilidade desconhecida, nunca "sem cardápio".
-  assert.equal(await passive.locator('.date-card[data-iso="'+failedTomorrowPlusOne+'"]').getAttribute('data-missing-menu'),'false');
+  // Falha HTTP 503 continua mostrando a bolinha em dias de atendimento
+  // regular, porque o cardápio ainda nao foi carregado, sem afirmar fechamento.
+  const expectedMissing=[0,6].includes(new Date(failedTomorrowPlusOne+'T12:00:00Z').getUTCDay())
+    ? new Date(failedTomorrowPlusOne+'T12:00:00Z').getUTCDay()===6 : true; // Setorial I atende sábado.
+  assert.equal(await passive.locator('.date-card[data-iso="'+failedTomorrowPlusOne+'"]').getAttribute('data-missing-menu'),String(expectedMissing));
   assert.deepEqual(passiveErrors,[],'Exceção JS no pré-carregamento sem cliques');
   await passive.close();
   // A bolinha desapareceu em D+1 e D+3 sem visita manual a nenhuma data.
@@ -223,8 +226,8 @@ try {
   await pwaPage.waitForFunction(()=>!!navigator.serviceWorker.controller,null,{timeout:25000});
   await pwaPage.waitForTimeout(700);
   await pwaPage.evaluate(async()=>{
-    const c=await caches.open('hub-v271-20261117-interno-navigation-r1');
-    await c.put('/assets/app.js?v=hub-20261117-interno-navigation-r1',
+    const c=await caches.open('hub-v272-20261117-interno-markers-menu-dots-r1');
+    await c.put('/assets/app.js?v=hub-20261117-interno-markers-menu-dots-r1',
       new Response('throw new Error("STALE_CACHE_EXECUTED")',{
         headers:{'Content-Type':'text/javascript'}
       }));
@@ -251,6 +254,13 @@ try {
     await busPage.locator('#tab-interno').click();
     const bus=busPage.frameLocator('#interno-frame');
     await bus.locator('#sheet').waitFor({timeout:20000});
+    // Escola de Música (Ida): ponto de origem, nunca círculo preto sólido.
+    const originMarker=bus.locator('path.interno-stop-origin');
+    await originMarker.first().waitFor({timeout:20000});
+    assert.equal(await originMarker.count(),1,'Apenas a Escola de Música (Ida) é origem/destino');
+    assert.equal(await originMarker.first().getAttribute('fill'),'#ffffff');
+    assert.equal(await originMarker.first().getAttribute('stroke'),'#2386d1');
+    assert.ok(await bus.locator('path.interno-stop-regular').count()>=40);
     assert.match(await bus.locator('body').evaluate(()=>document.title),/Interno/);
     await busPage.waitForFunction(()=>!!navigator.serviceWorker.controller,null,{timeout:20000});
     await busPage.reload({waitUntil:'domcontentloaded'});

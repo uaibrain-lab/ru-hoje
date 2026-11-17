@@ -28,8 +28,8 @@ test('GitHub scheduled sync uses same verified proxy without requiring manually 
 test('service worker changes version and HTML app URL to avoid stale code',()=>{
   const sw=read('../public/service-worker.js');
   const html=read('../public/index.html');
-  assert.match(sw,/hub-v271-20261117-interno-navigation-r1/);
-  assert.match(html,/app\.js\?v=hub-20261117-interno-navigation-r1/);
+  assert.match(sw,/hub-v272-20261117-interno-markers-menu-dots-r1/);
+  assert.match(html,/app\.js\?v=hub-20261117-interno-markers-menu-dots-r1/);
   assert.ok(sw.includes("path==='/config.js'"));
   assert.match(sw,/cache:'no-store'/);
   assert.match(sw,/path\.endsWith\('\.js'\)/);
@@ -47,8 +47,8 @@ test('service worker changes version and HTML app URL to avoid stale code',()=>{
 test('atualizacao FUMP por acesso nao requer cron GitHub nem exibe ausencia sem verificacao',()=>{
   const core=read('../public/assets/app.js');
   assert.match(core,/function missingMenuForDate\(iso,ruId\)/);
-  assert.match(core,/current==='NOT_PUBLISHED'/);
-  assert.match(core,/status==='NOT_PUBLISHED'/);
+  assert.match(core,/return needsMenuDot\(state\.data,iso,ruId,!!liveMenuFor\(iso,ruId\)\)/);
+  assert.ok(!core.includes('A consulta à FUMP não retornou pratos nesta data. Isso não confirma que o RU esteja fechado.'));
   assert.match(core,/if \(!force && now-\(state\.liveChecks\.get\(key\) \|\| 0\) < 4\*60_000\) return \{status:'SKIPPED'\}/);
   assert.match(core,/refreshLive\(\{force:true\}\)/);
   const wf=[
