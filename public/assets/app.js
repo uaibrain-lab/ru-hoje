@@ -677,7 +677,7 @@ function initTheme() {
  */
 function setupPwaUpdates() {
   if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
-  const releaseKey='ruhoje:sw-refresh:hub-v270-20261116-demand-ready-r1';
+  const releaseKey='ruhoje:sw-refresh:hub-v271-20261117-interno-navigation-r1';
   const hadController=!!navigator.serviceWorker.controller;
   let reloadRequested=false;
   let reloading=false;
