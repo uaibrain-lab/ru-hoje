@@ -8,7 +8,8 @@ const SOURCE_URL = 'https://fump.ufmg.br/cardapio-do-dia/';
 const STORAGE_RU = 'ruhoje:restaurant:v1';
 const STORAGE_PREFERS_CAFE = 'ruhoje:prefers-cafe:v1';
 const LEGACY_MENU_KEYS = ['ruhoje:menus:v1','ruhoje:live-menus:v1'];
-const STORAGE_PREFETCH = 'ruhoje:prefetch-checks:v2';
+const STORAGE_PREFETCH = 'ruhoje:prefetch-quota:v3';
+const LEGACY_PREFETCH_META = 'ruhoje:prefetch-checks:v2';
 const TIMEZONE = 'America/Sao_Paulo';
 const INGREDIENT_CATALOG_URL = '/data/pratos-ingredientes.json';
 const RU_LIST = [
@@ -73,38 +74,30 @@ function prefetchAllowed() {
     connection:navigator.connection || null
   });
 }
+// Persistir apenas o contador diário necessário à proteção da cota gratuita.
+// Status de consultas são temporários e nunca sobrevivem ao fechamento da aba.
 function persistPrefetchMeta() {
-  const first = addDays(sPauloParts().iso,-1);
-  const last = addDays(sPauloParts().iso,14);
-  const checks = [...state.prefetchChecks.entries()]
-    .filter(([key,value]) => {
-      const day = key.split('|')[0];
-      return day>=first && day<=last && Number.isFinite(value?.at);
-    }).slice(-72);
-  writeStore(STORAGE_PREFETCH, JSON.stringify({
-    checks:Object.fromEntries(checks),
-    quota:state.prefetchQuota
-  }));
+  writeStore(STORAGE_PREFETCH,JSON.stringify(state.prefetchQuota));
 }
 function hydratePrefetchMeta() {
-  try {
-    const raw = JSON.parse(readStore(STORAGE_PREFETCH) || 'null');
-    if (!raw || typeof raw!=='object' || !raw.checks || typeof raw.checks!=='object') return;
-    for (const [key,value] of Object.entries(raw.checks).slice(-72)) {
-      if (key.length===12 && key[10]==='|' && validISO(key.slice(0,10)) && ['1','2','5','6'].includes(key.slice(11)) &&
-          typeof value?.status === 'string' && Number.isFinite(value.at)) {
-        state.prefetchChecks.set(key,{at:value.at,status:value.status});
-      }
-    }
-    if (raw.quota?.date===sPauloParts().iso && Number.isInteger(raw.quota.count)) {
-      const localCount=state.prefetchQuota.date===raw.quota.date ? state.prefetchQuota.count : 0;
-      state.prefetchQuota={date:raw.quota.date,count:Math.max(0,localCount,raw.quota.count)};
-    }
-  } catch { /* cache opcional e sem permissões especiais */ }
+  // Migração conservadora: preservar contagem antiga para não zerar o orçamento
+  // do mesmo dia; descartar registros de consultas antigas armazenados no cliente.
+  for(const key of [LEGACY_PREFETCH_META,STORAGE_PREFETCH]) {
+    try {
+      const raw=JSON.parse(readStore(key)||'null');
+      const quota=key===LEGACY_PREFETCH_META ? raw?.quota : raw;
+      if(quota?.date!==sPauloParts().iso || !Number.isInteger(quota?.count)) continue;
+      state.prefetchQuota={
+        date:quota.date,
+        count:Math.min(PREFETCH_LIMIT_PER_DAY,Math.max(state.prefetchQuota.count,0,quota.count))
+      };
+    }catch { /* metadados adulterados ou bloqueados nunca viram dados oficiais */ }
+  }
+  try {localStorage.removeItem(LEGACY_PREFETCH_META);}catch{}
+  persistPrefetchMeta();
 }
 function recordPrefetchCheck(key,status) {
   state.prefetchChecks.set(key,{status,at:Date.now()});
-  persistPrefetchMeta();
 }
 function cancelPrefetch() {
   state.prefetchGeneration++;
@@ -118,8 +111,12 @@ function startPrefetch(ruId,iso) {
   if (state.prefetchActiveKey===activeKey) return;
   const plan=buildPrefetchPlan(ruId,iso,{
     maxDate:addDays(sPauloParts().iso,14),
-    limit:PREFETCH_LIMIT_PER_DAY
-  });
+    // Somente as próximas datas do RU escolhido, sem buscar todos os RUs.
+    futureDays:3,
+    otherFutureDays:0,
+    limit:3
+  }).filter(task=>sourceForRu(task.ruId)===sourceForRu(ruId)
+    && !isNonOperatingDay(task.iso,ruId));
   if (!plan.length) return;
   const generation=++state.prefetchGeneration;
   state.prefetchActiveKey=activeKey;
