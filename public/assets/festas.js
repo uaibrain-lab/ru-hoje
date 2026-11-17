@@ -68,14 +68,16 @@ function switchTab(tab,historyMode='push'){
   }
   if(tab==='festas')void refreshEvents();else stopPublicEventsListener();
   if(tab==='interno')notifyInternoShown();
-  if(changed)window.dispatchEvent(new Event(tab==='menu'?'hub:menu:activated':'hub:menu:deactivated'));
   if(changed && historyMode==='push'){
     const url=new URL(window.location.href);
     if(tab==='menu')url.searchParams.delete('aba');
     else url.searchParams.set('aba',tab);
     window.history.pushState({hubTab:tab},'',url);
   }
-  if(changed)window.scrollTo(0,0);
+  if(changed){
+    window.dispatchEvent(new Event(tab==='menu'?'hub:menu:activated':'hub:menu:deactivated'));
+    window.scrollTo(0,0);
+  }
 }
 function notifyInternoShown(){
   const page=$('interno-page'),iframe=$('interno-frame');
