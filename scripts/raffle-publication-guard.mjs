@@ -50,6 +50,52 @@ export function assertRaffleSnapshotUnchanged({
   return true;
 }
 
+/**
+ * Conferência de resultado preparado ANTES da escrita. Hash igual não basta:
+ * rejeitar pool elegível vazio, ganhadores ausentes, UIDs duplicados,
+ * sorteio incompleto e divergência entre conteúdo público e privado.
+ */
+export function assertPreparedRaffleResult({event,entries,publicResult,privateResult}) {
+  const count=entries.length;
+  const eligible=publicResult?.eligibleCount;
+  if(!Number.isInteger(eligible)||eligible<1||eligible>count ||
+     publicResult?.status!=='published' ||
+     publicResult?.schemaVersion!==2 || privateResult?.schemaVersion!==2 ||
+     privateResult?.eligibleCount!==eligible ||
+     publicResult?.participantCount!==count ||
+     privateResult?.attemptedEntries!==count ||
+     !Number.isInteger(privateResult?.invalidEntryCount) ||
+     privateResult.invalidEntryCount<0 ||
+     !Array.isArray(publicResult?.winners) ||
+     !Array.isArray(publicResult?.alternates) ||
+     !Array.isArray(privateResult?.winnerUids) ||
+     !Array.isArray(privateResult?.alternateUids))
+    throw new Error('RESULTADO_PREPARADO_INCONSISTENTE');
+
+  const winners=publicResult.winners.length;
+  const alternates=publicResult.alternates.length;
+  const expectedWinners=Math.min(event.winnerCount,eligible);
+  const expectedAlternates=Math.min(event.alternateCount,eligible-expectedWinners);
+  if(winners!==expectedWinners || alternates!==expectedAlternates ||
+     winners!==privateResult.winnerUids.length ||
+     alternates!==privateResult.alternateUids.length)
+    throw new Error('QUANTIDADE_GANHADORES_DIVERGENTE');
+
+  const eligibleIds=new Set(entries.map(row=>row.uid));
+  const chosen=[...privateResult.winnerUids,...privateResult.alternateUids];
+  if(chosen.some(uid=>typeof uid!=='string'||!eligibleIds.has(uid)) ||
+     chosen.length!==new Set(chosen).size ||
+     [...publicResult.winners,...publicResult.alternates].some(row=>
+       typeof row?.mask!=='string'||!row.mask.trim()))
+    throw new Error('GANHADORES_INVALIDOS_OU_DUPLICADOS');
+
+  const hash=entriesSnapshotHash(entries);
+  if(publicResult.entriesSnapshotSha256!==hash ||
+     privateResult.entriesSnapshotSha256!==hash)
+    throw new Error('HASH_DO_RESULTADO_INCONSISTENTE');
+  return true;
+}
+
 /** Usar somente com Admin SDK autorizado e Firestore transaction real.
  * Todas as leituras são realizadas ANTES das três escritas.
  * A consulta transacional de entries bloqueia/revalida as inscrições,
@@ -75,6 +121,9 @@ export async function publishRaffleAtomically({
     assertRaffleSnapshotUnchanged({
       initialEvent:event,latestEvent:latest.data(),
       initialEntries:entries,latestEntries:entriesNow,now:nowFn()
+    });
+    assertPreparedRaffleResult({
+      event:latest.data(),entries:entriesNow,publicResult,privateResult
     });
     tx.create(resultRef,{...publicResult,publishedAt:FieldValue.serverTimestamp()});
     tx.create(privateRef,{...privateResult,createdAt:FieldValue.serverTimestamp()});
