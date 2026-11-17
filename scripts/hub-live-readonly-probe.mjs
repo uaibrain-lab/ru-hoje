@@ -74,10 +74,27 @@ export async function auditLive({fetchFn=fetch,now=new Date(),origin=ORIGIN,prox
   return report;
 }
 
+/**
+ * Avaliação operacional do health check, sem permitir que uma indisponibilidade
+ * isolada se transforme em incidente de hospedagem ou em cardápio antigo.
+ */
+export function classifyLiveHealth(report) {
+  if(!report?.hostingOk)return 'HOSTING_DOWN';
+  const valid=(report.menus||[]).filter(x=>['VALID_RESPONSE','NOT_PUBLISHED'].includes(x.status)).length;
+  const errors=(report.menus||[]).filter(x=>!['VALID_RESPONSE','NOT_PUBLISHED'].includes(x.status)).length;
+  if(valid===0 || errors>=3)return 'PROXY_OUTAGE';
+  if(errors>0)return 'PARTIAL_UPSTREAM';
+  return 'OK';
+}
+
 if(process.argv[1] && pathToFileURL(resolve(process.argv[1])).href===import.meta.url) {
   const result=await auditLive();
   console.log('HUB_LIVE_READONLY_AUDIT='+JSON.stringify(result));
   // O site estático inoperante é problema do Hub. Falha de dados da FUMP
   // apenas sinaliza degradação externa; não justifica gravar pratos antigos.
+  const health=classifyLiveHealth(result);
+  console.log('HUB_HEALTH_STATUS='+health);
   if(!result.hostingOk)process.exitCode=2;
+  else if(process.env.HUB_HEALTH_STRICT==='true' && health==='PROXY_OUTAGE')
+    process.exitCode=3;
 }
