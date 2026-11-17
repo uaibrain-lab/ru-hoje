@@ -8,6 +8,9 @@ message="A sincronizacao automatica do Hub UFMG falhou ou atrasou."
 if [[ "$label" == "sorteios-agendados" ]]; then
   title="Hub UFMG - alerta sorteios automaticos"
   message="A execucao automatica dos sorteios do Hub UFMG atrasou ou falhou."
+elif [[ "$label" == "saude-site" ]]; then
+  title="Hub UFMG - alerta indisponibilidade do site ou API FUMP"
+  message="A verificacao somente leitura do site e da API FUMP encontrou indisponibilidade generalizada."
 fi
 repo="${GITHUB_REPOSITORY:?}"
 url="${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"

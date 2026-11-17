@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {auditLive,isoBrasilia} from '../scripts/hub-live-readonly-probe.mjs';
+import {auditLive,isoBrasilia,classifyLiveHealth} from '../scripts/hub-live-readonly-probe.mjs';
 
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const now=new Date('2026-11-17T13:00:00.000Z');
@@ -56,4 +56,27 @@ test('Fase 8 (primeira camada): backup local verificável e sem segredos',()=>{
   assert.match(script,/Get-FileHash -LiteralPath \$bundle -Algorithm SHA256/);
   assert.match(read('scripts/HUB-BATCH-DEPLOY-VERIFICAR.ps1'),/HUB-BACKUP-GIT-LOCAL\.ps1/);
   assert.doesNotMatch(script,/firebase deploy|wrangler deploy|firestore:export/);
+});
+
+test('monitor agendado classifica falhas isoladas, queda geral e Hosting sem falsos pratos',()=>{
+  const rows={hostingOk:true,menus:[
+    {id:'6',status:'VALID_RESPONSE'},{id:'1',status:'NOT_PUBLISHED'},
+    {id:'2',status:'VALID_RESPONSE'},{id:'5',status:'FETCH_ERROR'}
+  ]};
+  assert.equal(classifyLiveHealth(rows),'PARTIAL_UPSTREAM');
+  assert.equal(classifyLiveHealth({...rows,menus:rows.menus.map(x=>({...x,status:'FETCH_ERROR'}))}),'PROXY_OUTAGE');
+  assert.equal(classifyLiveHealth({...rows,hostingOk:false}),'HOSTING_DOWN');
+  assert.equal(classifyLiveHealth({...rows,menus:rows.menus.map(x=>({...x,status:'VALID_RESPONSE'}))}),'OK');
+});
+
+test('checagem agendada não dispara writes nem exige credenciais pessoais',()=>{
+  const workflow=read('.github/workflows/hub-live-readonly-probe.yml');
+  assert.match(workflow,/cron: '30 10,15,20 \* \* 1-6'/);
+  assert.match(workflow,/HUB_HEALTH_STRICT: 'true'/);
+  assert.match(workflow,/hub-sync-incident\.sh/);
+  assert.match(workflow,/persist-credentials: false/);
+  assert.doesNotMatch(workflow,/id-token: write|PRIVATE_KEY_JWK|firebase-admin|wrangler deploy/);
+  const script=read('scripts/hub-live-readonly-probe.mjs');
+  assert.match(script,/if\(process\.env\.HUB_HEALTH_STRICT==='true' && health==='PROXY_OUTAGE'\)/);
+  assert.doesNotMatch(script,/firestore\.googleapis\.com|publicMenus\/current|firebase-admin|\.doc\(/);
 });
