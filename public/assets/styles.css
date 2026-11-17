@@ -807,8 +807,7 @@ dialog{background:var(--card);color:var(--ink);border-color:var(--line)}
 /* Hierarquia única em Cardápios: TODAS as categorias compartilham o mesmo
    contorno, recuo, grade de título/emoji e alinhamento dos pratos.
    Só a tonalidade do fundo diferencia proteínas e vegetarianos. */
-.meal-contents .menu-group,
-.meal-contents .menu-group + .menu-group{
+.meal-contents .menu-group{
   --group-surface:var(--surface-subtle);
   --group-border:var(--group-line);
   box-sizing:border-box;
@@ -819,7 +818,13 @@ dialog{background:var(--card);color:var(--ink);border-color:var(--line)}
   border-radius:13px;
   background:var(--group-surface);
 }
-.meal-contents .menu-group + .menu-group{margin-top:8px}
+/* O seletor de irmãos precisa redefinir a antiga borda/padding herdados,
+   sem sobrescrever os tokens de cor específicos de cada categoria. */
+.meal-contents .menu-group + .menu-group{
+  margin-top:8px;
+  border:1px solid var(--group-border);
+  padding:11px 13px;
+}
 .meal-contents .menu-group--main{
   --group-surface:var(--purpleSoft);
   --group-border:color-mix(in srgb,var(--purple) 24%,transparent);
