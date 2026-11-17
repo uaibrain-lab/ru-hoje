@@ -3,9 +3,9 @@
  * Cache permanece disponível offline, mas nunca congela uma versão antiga
  * de app.js, config.js ou seus imports após um deploy.
  */
-const VERSION = 'hub-v270-20261116-demand-ready-r1';
+const VERSION = 'hub-v271-20261117-interno-navigation-r1';
 const SHELL = [
-  '/', '/index.html', '/interno/index.html', '/favicon.ico', '/config.js',
+  '/', '/index.html', '/interno', '/favicon.ico', '/config.js',
   '/assets/app.js', '/assets/fump-live.js', '/assets/fump-prefetch.js',
   '/assets/fump-parse.js', '/assets/dish-category.js',
   '/assets/date-availability.js', '/assets/festas.js',
@@ -23,7 +23,7 @@ const SHELL = [
   '/data/cardapios.json', '/data/pratos-ingredientes.json'
 ];
 const CORE = [
-  '/', '/index.html', '/config.js', '/assets/app.js',
+  '/', '/index.html', '/interno', '/config.js', '/assets/app.js',
   '/assets/fump-live.js', '/assets/fump-parse.js',
   '/assets/fump-prefetch.js', '/assets/dish-category.js',
   '/assets/date-availability.js', '/assets/hours.js', '/assets/styles.css'
@@ -70,6 +70,15 @@ self.addEventListener('fetch', event => {
   if(event.request.method!=='GET') return;
   const url=new URL(event.request.url);
   if(url.origin!==self.location.origin) return; // Nunca armazenar respostas da FUMP/Firestore.
+
+  // Firebase Hosting cleanUrls redireciona /interno/index.html para /interno.
+  // A navegacao interceptada pelo SW antigo recebia um redirect opaco e
+  // terminava em chrome-error://chromewebdata (mapa completamente branco).
+  // Links legados passam pela rota canonica sem exigir limpeza de cache.
+  if(url.pathname==='/interno/index.html' && event.request.mode==='navigate') {
+    event.respondWith(Response.redirect(new URL('/interno',self.location.origin).href,302));
+    return;
+  }
 
   event.respondWith((async()=>{
     const request=event.request;

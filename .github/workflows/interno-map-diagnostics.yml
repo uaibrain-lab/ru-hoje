@@ -1,0 +1,25 @@
+name: Diagnostico Interno mapa producao (somente leitura)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/diagnose-interno-production.mjs'
+      - 'public/interno/index.html'
+      - 'public/index.html'
+      - 'public/service-worker.js'
+      - '.github/workflows/interno-map-diagnostics.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/diagnose-interno-production.mjs
