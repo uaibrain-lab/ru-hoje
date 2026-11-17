@@ -139,7 +139,17 @@ async function optimizePoster(file){
     throw new Error('Imagem muito detalhada para o limite gratuito. Experimente uma imagem menor.');
   }finally{image.close?.();}
 }
-function renderEvents(){const root=$('festas-list');root.replaceChildren();
+// A grade só precisa ser reconstruída quando o estado visual das inscrições muda.
+function publicRaffleFingerprint(){
+  const now=Date.now();
+  return state.events.filter(e=>e.raffleStatus==='open').map(e=>{
+    const deadline=DEMO?Date.parse(`${e.drawAt||''}:00-03:00`):drawAtMs(e);
+    return `${e.id}:${Number.isFinite(deadline)?Number(now>=deadline):'sem-data'}`;
+  }).join('|');
+}
+function renderEvents(){
+  state.publicRaffleFingerprint=publicRaffleFingerprint();
+  const root=$('festas-list');root.replaceChildren();
   if(!state.events.length){root.append(make('p','festas-empty','Nenhuma festa publicada no momento.'));return;}
   for(const e of state.events){
     const card=make('article','festa-card festa-card--compact');
@@ -725,6 +735,8 @@ function init(){
   });
   setEditorVisible(false);$('signup-switch-participant')?.addEventListener('click',openParticipantSwitchPrompt);$('participant-switch-cancel')?.addEventListener('click',closeParticipantSwitchPrompt);$('participant-switch-cancel-x')?.addEventListener('click',closeParticipantSwitchPrompt);$('participant-switch-continue')?.addEventListener('click',()=>switchParticipant());
   if(DEMO)setInterval(demoScheduler,1000);
-  else {setInterval(()=>{if(publicEventsActive())renderEvents();},15000);document.addEventListener('visibilitychange',()=>{if(document.hidden)stopPublicEventsListener();else if(publicEventsActive())void refreshEvents();});}
+  else {setInterval(()=>{
+    if(publicEventsActive() && state.publicRaffleFingerprint!==publicRaffleFingerprint())renderEvents();
+  },15000);document.addEventListener('visibilitychange',()=>{if(document.hidden)stopPublicEventsListener();else if(publicEventsActive())void refreshEvents();});}
 }
 init();
