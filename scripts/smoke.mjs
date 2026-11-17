@@ -9,8 +9,14 @@ const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..','publi
 const MIME={'.js':'text/javascript','.html':'text/html','.json':'application/json','.css':'text/css','.svg':'image/svg+xml','.png':'image/png','.webmanifest':'application/manifest+json'};
 const server=http.createServer(async(req,res)=>{
   const pathname=new URL(req.url,'http://localhost').pathname;
+  // Reproduz o redirect de cleanUrls do Firebase Hosting.
+  if(pathname==='/interno/index.html') {
+    res.writeHead(301,{Location:'/interno'});
+    res.end();
+    return;
+  }
   if(pathname==='/config.js') {res.writeHead(200,{'Content-Type':'text/javascript'});res.end('window.RU_CONFIG={firebaseProjectId:"teste-ruhoje",fumpProxyUrl:"https://hub-fump-proxy.hubufmg.workers.dev"};');return;}
-  const destination=path.resolve(ROOT,'.'+pathname,(pathname==='/'?'index.html':''));
+  const destination=path.resolve(ROOT,'.'+(pathname==='/interno'?'/interno/index.html':pathname),(pathname==='/'?'index.html':''));
   if(!destination.startsWith(ROOT+path.sep)) {res.writeHead(403);res.end();return;}
   try {const content=await fs.readFile(destination);res.writeHead(200,{'Content-Type':MIME[path.extname(destination)]||'application/octet-stream'});res.end(content);}
   catch {res.writeHead(404);res.end('Não encontrado');}
@@ -235,6 +241,41 @@ try {
   await pwaPage.getByText('Frango ao Vivo',{exact:true}).waitFor({timeout:12000});
   assert.deepEqual(pwaErrors,[],'PWA executou JavaScript obsoleto do CacheStorage');
   await pwaPage.close();
+
+  // Regressão PWA: iframe do Interno com SW controlando a navegação.
+  const busContext=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'allow'});
+  const busPage=await busContext.newPage();
+  try{
+    await busPage.goto(url,{waitUntil:'domcontentloaded'});
+    await busPage.evaluate(()=>document.getElementById('restaurant-dialog')?.close());
+    await busPage.locator('#tab-interno').click();
+    const bus=busPage.frameLocator('#interno-frame');
+    await bus.locator('#sheet').waitFor({timeout:20000});
+    assert.match(await bus.locator('body').evaluate(()=>document.title),/Interno/);
+    await busPage.waitForFunction(()=>!!navigator.serviceWorker.controller,null,{timeout:20000});
+    await busPage.reload({waitUntil:'domcontentloaded'});
+    await busPage.evaluate(()=>document.getElementById('restaurant-dialog')?.close());
+    await busPage.locator('#tab-interno').click();
+    await bus.locator('#sheet').waitFor({timeout:20000});
+    assert.match(await bus.locator('body').evaluate(()=>location.pathname),/^\\/interno$/);
+    // Links ainda armazenados em HTML antigo também devem abrir o mapa.
+    await busPage.locator('#interno-frame').evaluate(frame=>{
+      frame.src='/interno/index.html?legacy=1';
+    });
+    await bus.locator('#sheet').waitFor({timeout:20000});
+    assert.match(await bus.locator('body').evaluate(()=>document.title),/Interno/);
+    assert.match(await bus.locator('body').innerText(),/Pontos|Linhas|Ponto perto de mim/);
+    // Se ficar offline, o shell canônico já foi armazenado na instalação do SW.
+    await busContext.setOffline(true);
+    await busPage.locator('#interno-frame').evaluate(frame=>{
+      frame.src='/interno/index.html?offline=1';
+    });
+    await bus.locator('#sheet').waitFor({timeout:20000});
+    assert.match(await bus.locator('body').evaluate(()=>document.title),/Interno/);
+  }finally{
+    await busContext.close();
+  }
+  console.log('E2E Interno aprovado: mapa canônico, SW ativo, rota antiga e contingência offline.');
 
   console.log('E2E aprovado: proxy Cloudflare, cache Firestore, prefetch de D+1 e migração do PWA sem limpar cache.');
 } finally {await browser?.close();await new Promise(resolve=>server.close(resolve));}
