@@ -457,7 +457,7 @@ try {
       await mobile.locator('#tab-interno').click();
       const bus=mobile.frameLocator('#interno-frame');
       await bus.locator('#q').waitFor({state:'visible',timeout:15000});
-      assert.equal(await bus.locator('#sheet').getAttribute('class')?.then(s=>s.includes('peek')),false,
+      assert.equal(await bus.locator('#sheet').evaluate(e=>e.classList.contains('peek')),false,
         'Busca do Interno deve abrir sem painel recolhido');
       await mobile.close();
     }
