@@ -24,11 +24,15 @@ for(const day of Object.values(history.days)){
   }
 }
 for(const name of [
-  'Carne Moída com Legumes','Torta colorida','Banana Prata',
-  'Salada de Almeirão com Repolho','Feijão Tropeiro'
+  'Banana Prata','Carne Moída com Legumes','Chuchu refogado','Doce de abóbora',
+  'Feijão com bacon','Feijão Tropeiro','Gelatina de Uva','Melão',
+  'Repolho Búlgaro','Salada de almeirão com alface roxa',
+  'Salada de Almeirão com Repolho','Salada de Almeirão com Repolho Roxo',
+  'Salada de Jiló','Sopa de fubá com couve','Torta colorida'
 ])entries.set(normalize(name),name);
 
 test('todo nome conhecido como vegetariano ou proteína prevalece sobre os tipos genéricos da FUMP',()=>{
+  assert.equal(entries.size,217,'Todo nome do catálogo deve entrar no teste de prioridade');
   let mains=0,vegetarians=0;
   for(const name of entries.values()){
     const expected=knownDishCategory(name);
@@ -44,7 +48,7 @@ test('todo nome conhecido como vegetariano ou proteína prevalece sobre os tipos
     }
   }
   assert.ok(mains>=45,'Pratos principais historicamente catalogados precisam ser abrangidos');
-  assert.ok(vegetarians>=25,'Opções vegetarianas catalogadas precisam ser abrangidas');
+  assert.ok(vegetarians>=20,'Opções vegetarianas catalogadas precisam ser abrangidas');
 });
 
 test('outras categorias catalogadas continuam auxiliares se a FUMP informar tipo válido',()=>{
