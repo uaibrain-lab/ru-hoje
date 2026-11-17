@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createPreviewServer} from '../scripts/preview-local.mjs';
-import {buildProxyMenuUrl} from '../public/assets/fump-live.js';
+import {buildProxyMenuUrl,readLiveMenu} from '../public/assets/fump-live.js';
 
 async function withPreview(fetchFn,action){
   const server=createPreviewServer({fetchFn});
@@ -83,6 +83,32 @@ test('HTTP proxy é permitido apenas na própria origem local, nunca por terceir
     globalThis.location={hostname:'hubufmg.web.app',origin:'https://hubufmg.web.app',protocol:'https:'};
     assert.throws(()=>buildProxyMenuUrl('setorial-i','2026-11-17','http://127.0.0.1:8080'),/FUMP_PROXY_URL_INVALID/);
     assert.match(buildProxyMenuUrl('setorial-i','2026-11-17','https://hub-fump-proxy.hubufmg.workers.dev'),/^https:/);
+  }finally{
+    if(old===undefined)delete globalThis.location;
+    else globalThis.location=old;
+  }
+});
+
+test('cardápio oficial chega ao aplicativo pelo servidor local com data verificada',async()=>{
+  const clockParts=Object.fromEntries(new Intl.DateTimeFormat('en-US',{
+    timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'
+  }).formatToParts(new Date()).map(x=>[x.type,x.value]));
+  const iso=clockParts.year+'-'+clockParts.month+'-'+clockParts.day;
+  const timestamp=new Date().toISOString();
+  const fakeWorker=async()=>new Response(JSON.stringify({
+    id:6,cardapios:[{data:iso,refeicoes:[
+      {tipoRefeicao:'Almoço',pratos:[{tipoPrato:'Prato protéico 1',descricaoPrato:'Frango da FUMP para teste'}]}
+    ]}]
+  }),{status:200,headers:{'content-type':'application/json','x-menu-fetched-at':timestamp}});
+  const old=globalThis.location;
+  try{
+    await withPreview(fakeWorker,async origin=>{
+      globalThis.location={hostname:'127.0.0.1',origin,protocol:'http:'};
+      const result=await readLiveMenu('setorial-i',iso,{proxyUrl:origin,maxAttempts:1});
+      assert.equal(result.status,'VALID_MENU');
+      assert.equal(result.fetchedAt,timestamp);
+      assert.ok(result.meals.almoco.items.some(x=>x.name==='Frango da FUMP para teste'));
+    });
   }finally{
     if(old===undefined)delete globalThis.location;
     else globalThis.location=old;
