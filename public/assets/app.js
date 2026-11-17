@@ -322,12 +322,12 @@ function renderHours() {
   const status=currentOpening(ru.id);
   const approachingClose=status.state==='open' && status.minutesRemaining<=20;
   const closingTime=status.message.match(/fecha às (.+)$/)?.[1];
-  $('hours-status').textContent=(approachingClose && closingTime ? `Fecha em ${status.minutesRemaining} min · até ${closingTime}` : status.message) + (status.details?.toLowerCase().includes('café da manhã') ? ' · acesso restrito' : '');
+  $('hours-status').textContent=(approachingClose && closingTime ? `Fecha em ${status.minutesRemaining} min · até ${closingTime}` : status.message) + (status.details?.toLowerCase().includes('café da manhã') ? ' · Exclusivo pra FUMP I, II e III' : '');
   $('hours-dot').className='hours-dot '+(status.state==='open'?'is-open':'is-closed');
   const list=$('hours-list');list.replaceChildren();
   for(const block of weeklySummary(ru.id)) {
     const row=el('div','hours-row');
-    row.append(el('strong','',block.day),el('span','',block.services.map(service => service.startsWith('Café da manhã') ? `${service} (acesso restrito)` : service).join(' · ')||'Não atende'));
+    row.append(el('strong','',block.day),el('span','',block.services.map(service => service.startsWith('Café da manhã') ? `${service} (Exclusivo pra FUMP I, II e III)` : service).join(' · ')||'Não atende'));
     list.append(row);
   }
 }
@@ -405,7 +405,7 @@ function renderMealCard(mealId, payload, isFeatured, ru) {
   const ic = el('span','meal-icon');
   ic.innerHTML = iconSVG(info.icon);
   const title = el('div');
-  title.append(el('h3', '', info.title), el('div','meal-subtitle',mealId === 'cafe' ? 'Para estudantes com benefício elegível' : ru.region));
+  title.append(el('h3', '', info.title), el('div','meal-subtitle',mealId === 'cafe' ? 'Exclusivo pra FUMP I, II e III' : ru.region));
   titleWrap.append(ic,title);
   head.append(titleWrap);
   card.append(head);
