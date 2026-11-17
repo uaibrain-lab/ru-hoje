@@ -254,13 +254,18 @@ try {
     await busPage.locator('#tab-interno').click();
     const bus=busPage.frameLocator('#interno-frame');
     await bus.locator('#sheet').waitFor({timeout:20000});
-    // Escola de Música (Ida): ponto de origem, nunca círculo preto sólido.
-    const originMarker=bus.locator('path.interno-stop-origin');
-    await originMarker.first().waitFor({timeout:20000});
-    assert.equal(await originMarker.count(),1,'Apenas a Escola de Música (Ida) é origem/destino');
-    assert.equal(await originMarker.first().getAttribute('fill'),'#ffffff');
-    assert.equal(await originMarker.first().getAttribute('stroke'),'#2386d1');
-    assert.ok(await bus.locator('path.interno-stop-regular').count()>=40);
+    // Todos os 49 pontos, inclusive Escola de Música (Ida), são iguais.
+    const stopMarkers=bus.locator('path.interno-stop');
+    await stopMarkers.first().waitFor({timeout:20000});
+    assert.equal(await stopMarkers.count(),49,'Todas as 49 paradas têm o mesmo estilo');
+    const styles=await stopMarkers.evaluateAll(nodes=>nodes.map(node=>({
+      fill:node.getAttribute('fill'),
+      stroke:node.getAttribute('stroke'),
+      width:node.getAttribute('stroke-width')
+    })));
+    assert.deepEqual([...new Set(styles.map(x=>JSON.stringify(x)))],
+      [JSON.stringify({fill:'#ffffff',stroke:'#334155',width:'2.5'})],
+      'Os marcadores não podem ter aro azul nem variar o contorno');
     assert.match(await bus.locator('body').evaluate(()=>document.title),/Interno/);
     await busPage.waitForFunction(()=>!!navigator.serviceWorker.controller,null,{timeout:20000});
     await busPage.reload({waitUntil:'domcontentloaded'});
