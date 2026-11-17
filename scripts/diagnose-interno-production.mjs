@@ -35,7 +35,27 @@ try{
           frameRect:iframe?.getBoundingClientRect().toJSON()
         };
       },{timeout:12000});
-      console.log(JSON.stringify({name,frameInfo,network:network.slice(0,18),errors:errors.slice(0,8)}));
+      console.log(JSON.stringify({name,mode:'fresh',frameInfo,network:network.slice(0,18),errors:errors.slice(0,8)}));
+      // Diagnostica o caso PWA instalado: um Service Worker ativo passa a
+      // controlar a pagina inicial e a navegacao do iframe.
+      await page.waitForFunction(()=>!!navigator.serviceWorker.controller,null,{timeout:15000});
+      await page.reload({waitUntil:'domcontentloaded',timeout:22000});
+      await page.evaluate(()=>document.getElementById('restaurant-dialog')?.close());
+      await page.locator('#tab-interno').click({timeout:12000});
+      await page.waitForTimeout(3500);
+      const controlled=await page.frameLocator('#interno-frame').locator('body').evaluate(body=>{
+        const tiles=[...body.querySelectorAll('img.leaflet-tile')];
+        return {
+          url:location.href,hasLeaflet:!!window.L,
+          isMap:body.querySelector('#map')?.classList.contains('leaflet-container'),
+          noMap:body.classList.contains('no-map'),
+          tileCount:tiles.length,
+          loaded:tiles.filter(img=>img.complete&&img.naturalWidth>0).length,
+          broken:tiles.filter(img=>img.complete&&img.naturalWidth===0).length,
+          body:body.innerText.slice(0,180)
+        };
+      },{timeout:16000});
+      console.log(JSON.stringify({name,mode:'controlled',controller:await page.evaluate(()=>navigator.serviceWorker.controller?.scriptURL||null),controlled,errors:errors.slice(-6),network:network.slice(-12)}));
     }catch(e){
       console.log(JSON.stringify({name,failed:String(e.message).slice(0,500),url:page.url(),iframeSrc:await page.locator('#interno-frame').getAttribute('src').catch(()=>''),network:network.slice(0,20),errors:errors.slice(0,9)}));
     }
