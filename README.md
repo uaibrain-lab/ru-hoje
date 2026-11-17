@@ -2,6 +2,20 @@
 
 Projeto independente do UaiBrain. Principal uso: smartphones. Interface PWA, cache offline e favorita o último RU usado.
 
+## Prévia local do Hub (sem publicar)
+
+O servidor HTTP genérico do Python não atende \`/interno\` com \`cleanUrls\` nem supera o CORS do Worker da FUMP. Use o servidor de prévia do projeto, **Node.js 22+**, na pasta do repositório/branch:
+
+\`\`\`powershell
+node scripts/preview-local.mjs
+\`\`\`
+
+Abra **http://127.0.0.1:8080/**. Teste o Interno em **http://127.0.0.1:8080/?aba=interno** e as Festas fictícias em **http://127.0.0.1:8080/?aba=festas&festas-demo=1**. Pressione Ctrl+C para encerrar.
+
+O servidor resolve as URLs limpas do Firebase e encaminha somente \`GET /api/menu\` e \`GET /api/restaurants\` ao Worker oficial, usando valores fixos e validados. A resposta preserva o carimbo da FUMP e nunca cria pratos, altera o Worker ou grava no Firebase. A configuração do proxy local é incluída na resposta de \`config.js\` em memória, sem modificar o arquivo publicado. Por segurança, só escuta em \`127.0.0.1\`: para usar em um telefone físico é necessário montar um canal seguro de prévia separado. A seção Festas em modo real pode depender de autorizações do Firebase; prefira \`festas-demo=1\` para testar o layout.
+
+**Nota:** instruções de versões e workflows antigos mais abaixo neste README são históricas e podem não refletir a produção atual.
+
 ## Estado comprovado
 
 - `npm test`: 9/9 testes de parser e mesclagem aprovados neste ambiente.
