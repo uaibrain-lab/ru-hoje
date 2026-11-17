@@ -71,12 +71,12 @@ test('monitor agendado classifica falhas isoladas, queda geral e Hosting sem fal
 
 test('checagem agendada não dispara writes nem exige credenciais pessoais',()=>{
   const workflow=read('.github/workflows/hub-live-readonly-probe.yml');
-  assert.match(workflow,/cron: '30 10,15,20 \\* \\* 1-6'/);
+  assert.match(workflow,/cron: '30 10,15,20 \* \* 1-6'/);
   assert.match(workflow,/HUB_HEALTH_STRICT: 'true'/);
-  assert.match(workflow,/hub-sync-incident\\.sh/);
+  assert.match(workflow,/hub-sync-incident\.sh/);
   assert.match(workflow,/persist-credentials: false/);
   assert.doesNotMatch(workflow,/id-token: write|PRIVATE_KEY_JWK|firebase-admin|wrangler deploy/);
   const script=read('scripts/hub-live-readonly-probe.mjs');
-  assert.match(script,/if\\(process\\.env\\.HUB_HEALTH_STRICT==='true' && health==='PROXY_OUTAGE'\\)/);
-  assert.doesNotMatch(script,/firestore\\.googleapis\\.com|publicMenus\\/current|firebase-admin|\\.doc\\(/);
+  assert.match(script,/if\(process\.env\.HUB_HEALTH_STRICT==='true' && health==='PROXY_OUTAGE'\)/);
+  assert.doesNotMatch(script,/firestore\.googleapis\.com|publicMenus\/current|firebase-admin|\.doc\(/);
 });
