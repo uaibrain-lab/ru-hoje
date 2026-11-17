@@ -25,6 +25,8 @@ const SHELL = [
 ];
 const CORE = [
   '/', '/index.html', '/interno', '/config.js', '/assets/app.js',
+  // Mapa offline é parte essencial: instalação só é ativada com JS/CSS Leaflet.
+  '/assets/vendor/leaflet-1.9.4.js', '/assets/vendor/leaflet-1.9.4.css',
   '/assets/fump-live.js', '/assets/fump-parse.js',
   '/assets/fump-prefetch.js', '/assets/dish-category.js',
   '/assets/date-availability.js', '/assets/hours.js', '/assets/styles.css'
