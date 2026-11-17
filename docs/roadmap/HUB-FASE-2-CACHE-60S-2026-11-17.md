@@ -21,6 +21,22 @@ A Fase 2 reduz a reutilização das respostas oficiais:
 | Clique em data/RU ainda sem menu | podia repetir imediatamente | intervalo mínimo **30 s** |
 | Cardápio em memória do visitante | sem idade máxima | **70 s** desde coleta oficial (60 s + margem de 10 s) |
 
+**Correção operacional posterior ao primeiro deploy:** `worker/wrangler.toml`
+agora usa `[cache] enabled = false`, desativando a camada de Workers
+Caching automático. O código `worker/fump-proxy.mjs` continua controlando
+`caches.default` independentemente (Cache API por POP). Isso impede que uma
+resposta do cache automático seja entregue antes de o Worker aplicar a regra
+de idade da coleta. A escolha troca o cache automático global por um cache
+temporário local a cada data center, adequado à frequência curta de 60 s.
+
+O procedimento de deploy e diagnóstico recomendado passou a ser
+`scripts/HUB-FASE2-DEPLOY-VERIFICAR.ps1`. Ele imprime o cabeçalho
+`Cache-Control` realmente recebido, verifica CORS, hora da coleta e idade,
+e **interrompe antes do Hosting** se o Worker não estiver respondendo
+corretamente. Não use uma checagem sobre todo o corpo HTTP para procurar
+`stale-if-error`; a validação deve examinar especificamente o cabeçalho
+`Cache-Control`.
+
 Nenhum HIT pode reiniciar o tempo de validade: o Worker preserva a hora da coleta
 original via `X-Menu-Fetched-At` e devolve somente o TTL restante. A UI recusa
 timestamps ausentes, inválidos, muito antigos ou de relógio muito à frente, além

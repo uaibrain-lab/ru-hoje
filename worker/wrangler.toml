@@ -11,8 +11,11 @@ workers_dev = true
 [placement]
 region = "gcp:southamerica-east1"
 
-# Caching de resposta do Worker na rede global com tiered cache.
-# So respostas 200 da FUMP com Cache-Control public sao elegiveis.
-# Respostas de erro seguem no-store e Vary: Origin separa CORS corretamente.
+# Somente UM cache de cardápios: caches.default em worker/fump-proxy.mjs.
+# O cache automatico do Worker e independente da Cache API. Dois caches
+# em sequencia poderiam ampliar a idade efetiva do menu apos HITs.
+# Continua usando a Cache API com TTL de 60 s (positivo), 15 s (vazio),
+# sem fallback stale-if-error e com validação de timestamp em cada leitura.
+# Cache API local ao POP e independente da opcao abaixo.
 [cache]
-enabled = true
+enabled = false

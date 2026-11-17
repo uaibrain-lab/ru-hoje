@@ -51,3 +51,13 @@ test('Bolinhas indicam apenas dias de RU sem atendimento regular, independente d
   assert.equal(isNonOperatingDay('2026-11-21','setorial-i'),false);
   assert.equal(isNonOperatingDay('2026-11-21','setorial-ii'),true);
 });
+
+
+test('Fase 2: cache automático da Cloudflare desligado para evitar dupla camada de HIT',()=>{
+  const config=source('worker/wrangler.toml');
+  const worker=source('worker/fump-proxy.mjs');
+  assert.match(config,/\[cache\]\s*enabled = false/);
+  assert.match(worker,/cache=globalThis\.caches\?\.default/);
+  assert.match(worker,/await cache\.match\(cacheKey\)/);
+  assert.match(worker,/X-Menu-Fetched-At/);
+});
