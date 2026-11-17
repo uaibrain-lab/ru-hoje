@@ -3,10 +3,11 @@
  * Cache permanece disponível offline, mas nunca congela uma versão antiga
  * de app.js, config.js ou seus imports após um deploy.
  */
-const VERSION = 'hub-v276-20261117-fresh-menus-r1';
+const VERSION = 'hub-v277-20261117-batch3-5-r1';
 const SHELL = [
   '/', '/index.html', '/interno', '/favicon.ico', '/config.js',
-  '/assets/app.js', '/assets/fump-live.js', '/assets/fump-prefetch.js',
+  '/assets/app.js', '/assets/vendor/leaflet-1.9.4.js',
+  '/assets/vendor/leaflet-1.9.4.css', '/assets/fump-live.js', '/assets/fump-prefetch.js',
   '/assets/fump-parse.js', '/assets/dish-category.js',
   '/assets/date-availability.js', '/assets/festas.js',
   '/assets/festas-core.js', '/assets/festas-backend.js',
