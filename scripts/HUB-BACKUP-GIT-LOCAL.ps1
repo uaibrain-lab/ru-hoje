@@ -19,6 +19,10 @@ if($LASTEXITCODE -ne 0){throw "BUNDLE_INTEGRIDADE_FALHOU"}
 $hash=Get-FileHash -LiteralPath $bundle -Algorithm SHA256
 $manifest="$bundle.sha256"
 Set-Content -LiteralPath $manifest -Encoding ASCII -Value "$($hash.Hash)  $(Split-Path -Leaf $bundle)"
+# Verificar uma restauração real (git clone em diretório temporário) para
+# detectar bundle incompleto antes de declarar backup válido.
+& node "$PSScriptRoot\verify-hub-bundle.mjs" --bundle $bundle
+if($LASTEXITCODE -ne 0){throw "BUNDLE_RESTAURACAO_FALHOU"}
 Write-Host "BACKUP_GIT_VALIDADO: $bundle" -ForegroundColor Green
 Write-Host "SHA256: $($hash.Hash)"
 Write-Host "Aviso: dados privados do Firestore e segredos de provedores NAO estao neste arquivo."
