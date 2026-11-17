@@ -74,7 +74,7 @@ test('nenhum dado privado é entregue no HTML, dados FUMP preservados e demo só
 });
 test('regras negam operações privadas e exigem contador acoplado à inscrição',async()=>{
   const rules=await fs.readFile(new URL('../firestore.rules',import.meta.url),'utf8');
-  assert.match(rules,/match \/publicMenus\/current/);assert.match(rules,/allow get: if true/);
+  assert.match(rules,/match \/publicMenus\/current/);assert.match(rules,/match \/publicMenus\/current\s*\{\s*allow read, write: if false;/);
   assert.match(rules,/match \/eventAdminAccess\/\{accessId\}/);assert.match(rules,/allow list, create, update, delete: if false/);
   assert.match(rules,/canJoinCount\(eventId\)/);assert.match(rules,/existsAfter\(entryPath/);assert.match(rules,/request.time < resource.data.drawAtTimestamp/);assert.ok(rules.includes('match /eventPosters/'));assert.ok(rules.includes('match /eventSettings/'));
   assert.match(rules,/encrypted\.ciphertext/);assert.match(rules,/allow create, update, delete: if false/);
