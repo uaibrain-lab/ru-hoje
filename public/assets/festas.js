@@ -68,6 +68,7 @@ function switchTab(tab,historyMode='push'){
   }
   if(tab==='festas')void refreshEvents();else stopPublicEventsListener();
   if(tab==='interno')notifyInternoShown();
+  if(changed)window.dispatchEvent(new Event(tab==='menu'?'hub:menu:activated':'hub:menu:deactivated'));
   if(changed && historyMode==='push'){
     const url=new URL(window.location.href);
     if(tab==='menu')url.searchParams.delete('aba');
