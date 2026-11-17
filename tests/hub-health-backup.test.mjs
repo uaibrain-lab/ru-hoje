@@ -33,7 +33,7 @@ test('Fase 7 (diagnostico): dados oficiais e Hosting podem ser auditados sem Fir
   assert.ok(report.menus.every(x=>x.status==='NOT_PUBLISHED'));
   assert.equal(report.checks.pwa.version,'hub-v277-20261117-batch3-5-r1');
   assert.equal(report.checks.app.officialOnly,true);
-  assert.doesNotMatch(read('scripts/hub-live-readonly-probe.mjs'),/firestore\.googleapis\.com|publicMenus\/current|firebase-admin|\.set\(|\.update\(/);
+  assert.doesNotMatch(read('scripts/hub-live-readonly-probe.mjs'),/firestore\.googleapis\.com|publicMenus\/current|firebase-admin|\.doc\(/);
 });
 
 test('Fase 7: falha oficial isolada não vira prato fictício nem aciona escrita',async()=>{
