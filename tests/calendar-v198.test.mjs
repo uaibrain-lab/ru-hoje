@@ -53,7 +53,7 @@ test('frontend inclui domingos, atualiza os pontos quando chegam dados e muda o 
   assert.doesNotMatch(app,/getUTCDay\(\) === 0\) continue/);
   assert.match(app,/missingMenuForDate\(iso,state\.selectedRu\)/);
   assert.match(app,/renderRestaurant\(\);\s*renderDates\(\);\s*renderMenus\(\);/);
-  assert.match(app,/writeStore\(STORAGE_DATA, JSON\.stringify\(value\)\); \} catch \{\}\s*\/\/[^\n]+\s*renderDates\(\);/);
+  assert.doesNotMatch(app,/STORAGE_DATA|STORAGE_LIVE|publicMenus\/current|\/data\/cardapios\.json/);
   assert.match(sw,/\/assets\/date-availability\.js/);
 });
 
