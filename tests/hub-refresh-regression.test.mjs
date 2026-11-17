@@ -60,7 +60,7 @@ test('Rules bloqueiam snapshots legados e pedidos públicos de cardápios', () =
   const rules=load('firestore.rules');
   for (const name of ['publicMenus/current','menuSyncState/current','menuSyncRequests/current']) {
     const escaped=name.replaceAll('/','\\/');
-    assert.match(rules,new RegExp('match '+escaped+'\\s*\\{\\s*allow read, write: if false;'));
+    assert.match(rules,new RegExp('match /'+escaped+'\\s*\\{\\s*allow read, write: if false;'));
   }
   assert.doesNotMatch(rules, /request\.resource\.data\.requestedAt == request\.time/);
 });
