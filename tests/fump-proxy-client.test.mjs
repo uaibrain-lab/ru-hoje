@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {buildProxyMenuUrl,readLiveMenu} from '../public/assets/fump-live.js';
+import {buildProxyMenuUrl,readLiveMenu,freshMenuTimestamp,isValidLiveEntry} from '../public/assets/fump-live.js';
 import {getJsonViaPublicProxy} from '../scripts/fump-api.mjs';
 
 const iso='2026-11-16';
@@ -14,7 +14,7 @@ const fixtures={id:6,cardapios:[{
 }]};
 function fakeResponse(data=fixtures,status=200) {
   return {ok:status>=200 && status<300,status,
-    headers:{get:()=> 'application/json'},
+    headers:{get:name=>({'content-type':'application/json','x-menu-fetched-at':new Date().toISOString()}[String(name).toLowerCase()]||null)},
     text:async()=>JSON.stringify(data)};
 }
 
@@ -46,7 +46,7 @@ test('browser usa endpoint CORS do proxy e mesmo parser da FUMP',async()=>{
       actual=url;
       assert.equal(opts.mode,'cors');
       assert.equal(opts.credentials,'omit');
-      assert.equal(opts.cache,'default');
+      assert.equal(opts.cache,'no-store');
       return fakeResponse();
     }
   });
@@ -98,7 +98,7 @@ test('node transforma 502 do Worker em erro; não publica dados vazios por falha
   }),/FUMP_PUBLIC_PROXY_HTTP_502/);
 });
 
-test('menu servido como stale no cache compartilhado conserva data de coleta e rotulo',async()=>{
+test('menu identificado como stale na Cloudflare é recusado, sem reutilizar prato antigo',async()=>{
   const collectedAt='2026-11-16T15:00:00.000Z';
   const result=await readLiveMenu('setorial-i',iso,{
     proxyUrl:base,
@@ -113,8 +113,26 @@ test('menu servido como stale no cache compartilhado conserva data de coleta e r
       text:async()=>JSON.stringify(fixtures)
     })
   });
-  assert.equal(result.status,'VALID_MENU');
-  assert.equal(result.cacheStatus,'STALE');
-  assert.equal(result.fetchedAt,collectedAt);
-  assert.equal(result.meals.almoco.items[0].name,'Arroz');
+  assert.equal(result.status,'FETCH_ERROR');
+  assert.equal(result.error,'FUMP_RESPONSE_STALE_OR_UNVERIFIED');
+  assert.equal(result.meals,undefined);
+});
+
+test('o navegador rejeita timestamp ausente, antigo ou futuro do Worker',async()=>{
+  const at=new Date();
+  assert.equal(freshMenuTimestamp(at.toISOString(),at.getTime()),true);
+  assert.equal(freshMenuTimestamp(new Date(at.getTime()-71_000).toISOString(),at.getTime()),false);
+  assert.equal(freshMenuTimestamp(new Date(at.getTime()+20_000).toISOString(),at.getTime()),false);
+  assert.equal(freshMenuTimestamp(''),false);
+  const cached={iso,sourceRestaurantId:'6',fetchedAt:new Date(Date.now()-90_000).toISOString(),
+    meals:{almoco:{items:[{name:'Arroz'}]}}};
+  assert.equal(isValidLiveEntry(cached,iso,'setorial-i'),false);
+  const missing=await readLiveMenu('setorial-i',iso,{
+    proxyUrl:base,maxAttempts:1,
+    fetchFn:async()=>({ok:true,status:200,
+      headers:{get:name=>name==='content-type'?'application/json':null},
+      text:async()=>JSON.stringify(fixtures)})
+  });
+  assert.equal(missing.status,'FETCH_ERROR');
+  assert.equal(missing.error,'FUMP_RESPONSE_STALE_OR_UNVERIFIED');
 });
