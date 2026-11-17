@@ -300,8 +300,20 @@ if(window.L){
   const dk=matchMedia('(prefers-color-scheme:dark)').matches;
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors · dados: internorotas/ufmg (MIT)'}).addTo(map);
   route=L.layerGroup().addTo(map);sel=L.layerGroup().addTo(map);usr=L.layerGroup().addTo(map);
-  D.paradas.forEach(p=>{const o=p.categoria!=='Parada Regular';
-    L.circleMarker(p.coordenadas,{radius:o?11:8,color:dk?'#fff':'#101828',weight:3,fillColor:o?(dk?'#fff':'#101828'):(dk?'#14181f':'#fff'),fillOpacity:1}).addTo(map).bindTooltip(stopName(p)).on('click',()=>go({t:'stop',id:p.idParada}))});
+  // Todos os pontos usam miolo claro e contorno definido; paradas de origem
+  // ganham aro azul, nunca preenchimento preto. Contraste estável em ambos os temas.
+  D.paradas.forEach(p=>{
+    const origin=p.categoria==='Ponto de Origem/Destino';
+    L.circleMarker(p.coordenadas,{
+      radius:origin?10:7,
+      color:origin?'#2386d1':'#334155',
+      weight:origin?3:2.5,
+      fillColor:'#ffffff',
+      fillOpacity:1,
+      opacity:1,
+      className:origin?'interno-stop-origin':'interno-stop-regular'
+    }).addTo(map).bindTooltip(stopName(p)).on('click',()=>go({t:'stop',id:p.idParada}));
+  });
   // O iframe pode ficar oculto ao alternar abas; recalcular somente quando seu
   // contêiner mudar de tamanho, sem recriar o mapa nem alterar o zoom.
   let invalidateRaf=0;
