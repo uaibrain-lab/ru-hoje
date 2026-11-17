@@ -534,9 +534,6 @@ function renderMenus() {
     } else if (liveStatus?.status==='FETCH_ERROR' && navigator.onLine) {
       $('connection-notice').textContent='Não foi possível consultar a FUMP agora. Nenhum cardápio anterior será exibido.';
       $('connection-notice').hidden=false;
-    } else if (liveStatus?.status==='PARSE_ERROR') {
-      $('connection-notice').textContent='A FUMP respondeu em formato inesperado; nenhum prato foi exibido.';
-      $('connection-notice').hidden=false;
     }
     list.append(renderNoMenu(ru,day,!navigator.onLine?'FETCH_ERROR':liveStatus?.status));
     renderLastUpdateLine(null);
