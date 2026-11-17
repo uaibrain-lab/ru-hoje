@@ -19,7 +19,8 @@ test('Fase 3: somente contador de prefetch persiste; pratos e histórico de cons
 
 test('Fase 3: só RU selecionado + até três datas abertas para prefetch',()=>{
   const app=read('public/assets/app.js');
-  assert.match(app,/futureDays:3,\s*otherFutureDays:0,\s*limit:3/);
+  assert.match(app,/futureDays:5,\s*otherFutureDays:0,\s*limit:5/);
+  assert.match(app,/!isNonOperatingDay\(task\.iso,ruId\)\)\.slice\(0,3\)/);
   assert.match(app,/\.filter\(task=>sourceForRu\(task\.ruId\)===sourceForRu\(ruId\)/);
   assert.match(app,/!isNonOperatingDay\(task\.iso,ruId\)/);
   assert.match(app,/state\.prefetchQuota\.count>=PREFETCH_LIMIT_PER_DAY/);
