@@ -863,11 +863,11 @@ dialog{background:var(--card);color:var(--ink);border-color:var(--line)}
 .meal-contents .dish-row{
   padding-left:15px;
   column-gap:8px;
-  min-height:36px;
+  min-height:44px;
   align-items:start;
 }
 .meal-contents .dish-row>.dish-title{
-  min-height:36px;
+  min-height:44px;
   display:flex;
   align-items:center;
   overflow-wrap:anywhere;
@@ -875,11 +875,20 @@ dialog{background:var(--card);color:var(--ink);border-color:var(--line)}
 .meal-contents .dish-row>.dish-trigger{
   min-height:44px;
   padding:7px 0;
+  display:flex;
+  align-items:center;
+  gap:4px;
   line-height:1.4;
   overflow-wrap:anywhere;
 }
+.meal-contents .dish-trigger>.dish-title{
+  display:block;min-width:0;flex:0 1 auto;
+}
+.meal-contents .dish-trigger .dish-chevron{
+  flex:none;margin-left:0;
+}
 .meal-contents .dish-row:not(:has(>.dish-trigger)):before{
-  margin-top:15.5px;
+  margin-top:19.5px;
 }
 .meal-contents .menu-group--main .dish-list li,
 .meal-contents .menu-group--vegetarian .dish-list li{font-weight:680}
