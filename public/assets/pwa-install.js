@@ -9,6 +9,7 @@
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const isMobile = isIOS || /Android/i.test(ua);
   let deferredPrompt = null;
+  let installedThisSession = false;
   let ui = null;
   let showTimer = null;
 
@@ -36,7 +37,7 @@
 
   function refreshInstalledState() {
     if (!ui) return;
-    const installed = standalone();
+    const installed = standalone() || installedThisSession;
     ui.manual.hidden = installed;
     if (installed) {
       deferredPrompt = null;
@@ -158,6 +159,7 @@
     scheduleToast();
   });
   window.addEventListener('appinstalled', () => {
+    installedThisSession = true;
     markClosed();
     deferredPrompt = null;
     refreshInstalledState();
