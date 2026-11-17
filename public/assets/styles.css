@@ -904,3 +904,12 @@ dialog{background:var(--card);color:var(--ink);border-color:var(--line)}
     grid-template-columns:minmax(0,1fr);
   }
 }
+
+/* UX mobile: aproximar o indicador de funcionamento do título do mês.
+   Restringir a mudança ao RU com horários carregados; preservar o espaço
+   da seleção de restaurante enquanto os horários ainda estão ocultos. */
+@media(max-width:850px){
+  .restaurant-section .hours-wrap{margin-top:2px}
+  .restaurant-section .hours-details>summary{min-height:36px;padding:2px 4px}
+  .restaurant-section:has(.hours-wrap:not([hidden])) + .date-section{margin-top:2px}
+}
