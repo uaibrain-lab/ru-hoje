@@ -8,18 +8,21 @@ const redundant = read('../.github/workflows/hub-production-request-processor.ym
 const watchdog = read('../.github/workflows/hub-production-watchdog.yml');
 const watchdogScript = read('../scripts/hub-production-watchdog.sh');
 
-test('primary production schedule recurs without an end date', () => {
-  assert.ok(primary.includes("41 8,12,16,20 * * 1-5"));
+test('coleta primaria e manual e nao depende de cron', () => {
+  assert.doesNotMatch(primary,/^  schedule:/m);
+  assert.match(primary,/workflow_dispatch:/);
   assert.doesNotMatch(primary, /UNTIL=|windowStart|windowDays|cutoff/i);
 });
 
-test('redundant production schedule recurs without an end date', () => {
-  assert.ok(redundant.includes("23 10,14,18,22 * * 1-5"));
+test('coleta redundante fica disponivel somente para acionamento manual', () => {
+  assert.doesNotMatch(redundant,/^  schedule:/m);
+  assert.match(redundant,/workflow_dispatch:/);
   assert.doesNotMatch(redundant, /UNTIL=|windowStart|windowDays|cutoff/i);
 });
 
-test('watchdog is scheduled every hour on every day with no expiry', () => {
-  assert.ok(watchdog.includes("cron: '17 * * * *'"));
+test('watchdog nao aciona recuperacao horaria sem autorizacao', () => {
+  assert.doesNotMatch(watchdog,/^  schedule:/m);
+  assert.match(watchdog,/workflow_dispatch:/);
   assert.doesNotMatch(watchdog, /UNTIL=|windowStart|windowDays|cutoff/i);
   assert.ok(watchdog.includes('cancel-in-progress: false'));
 });
