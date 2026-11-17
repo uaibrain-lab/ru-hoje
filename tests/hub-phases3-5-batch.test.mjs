@@ -24,7 +24,7 @@ test('Fase 3: só RU selecionado + até três datas abertas para prefetch',()=>{
   assert.match(app,/!isNonOperatingDay\(task\.iso,ruId\)/);
   assert.match(app,/state\.prefetchQuota\.count>=PREFETCH_LIMIT_PER_DAY/);
   assert.match(app,/prefetchAllowed\(\)/);
-  assert.match(app,/if\(consecutiveFailures>=3\) break/);
+  assert.match(app,/if\s*\(consecutiveFailures>=3\) break/);
 });
 
 test('Fase 4: negar leitura/escrita legada de cardápio e sync sem alterar autorizações de eventos',()=>{
