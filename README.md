@@ -16,13 +16,23 @@ O servidor resolve as URLs limpas do Firebase e encaminha somente `GET /api/menu
 
 ## Classificação consistente dos pratos
 
-O módulo `public/assets/dish-category.js` centraliza as categorias visuais do cardápio. O índice abrange **202 nomes distintos** presentes no conjunto dos **126 pratos do catálogo de ingredientes** e dos **142 nomes observados no histórico** (66 em comum). Parte dos nomes possui aliases ou correções pontuais adicionais.
+O módulo `public/assets/dish-category.js` centraliza as categorias visuais do cardápio. O índice abrange **217 nomes distintos**: 202 oriundos da união dos **126 pratos do catálogo de ingredientes** e dos **142 nomes observados no histórico** (66 em comum), mais **15 nomes detectados pela consulta FUMP em novembro de 2026**. Há também aliases e correções nominais. Os 15 novos nomes são apenas fallback se a FUMP não enviar um tipo reconhecível; não sobrescrevem a categoria oficial atual.
 
 Ordem de classificação: **(1)** exceções nominais com conflito já confirmado (como "bife de milho"), **(2)** tipo explícito e reconhecido da FUMP atual, **(3)** catálogo de receitas e evidência histórica quando o tipo oficial estiver ausente/desconhecido, **(4)** regras conservadoras para pratos ainda não catalogados. Categorias legadas reconhecidas são preservadas salvo correções pontuais verificadas. Isso corrige nomes conhecidos sem reclassificar indiscriminadamente pratos cuja receita pode variar entre RUs, como "charuto de repolho". Não inferir vegetarianismo de uma palavra isolada nem tratar categoria de exibição como garantia de ingredientes/alergênicos.
 
 O arquivo `public/data/cardapios.json` é **somente uma evidência histórica**: não é usado para preencher cardápios atuais. A aplicação continua exigindo confirmação da FUMP via Worker. As verificações em `tests/hub-catalog-classification.test.mjs` detectam pratos conhecidos sem categoria e protegem a precedência entre o catálogo e o tipo oficial.
 
 Uma auditoria adicional em `scripts/audit-dish-classification.mjs` percorre **todos os 685 registros do histórico**, incluindo os **19 que continham categoria vazia**, sem alterar o arquivo de origem. Ela valida se a classificação efetiva é conhecida e identifica divergências para revisão. Execute `npm run audit:categories`; o comando encerra com erro se um nome registrado não puder ser classificado. O teste `hub-dish-classification-audit.test.mjs` também executa essa verificação em toda rodada de `npm test`, para detectar lacunas em futuros acréscimos ao catálogo. Itens inteiramente novos da FUMP que ainda não constam nas fontes registradas precisam de evidência nova para classificação segura.
+
+### Varredura de cardápios da FUMP (somente leitura)
+
+A varredura pontual de **17/11/2026 a 01/12/2026** no Worker do Hub consultou as **4 fontes em 15 datas**: **60/60 respostas HTTP 200**, sendo **10 com cardápios**, **50 vazias**, **171 pratos e 88 nomes distintos**. Os 171 pratos possuíam categoria efetiva; **15 nomes inéditos** foram incorporados ao catálogo como fallback, e a divergência de `Quibe de Cenoura` foi confirmada (fonte ID 1 = `Prato protéico 3`, fonte ID 2 = `Prato protéico 2`). O prato foi corrigido para opção vegetariana. As divergências já confirmadas de `Bife de milho`, `Quibe assado com lentilha`, `Espinafre com ricota e abobrinha` e `Hambúrguer de grão-de-bico` também foram observadas.
+
+O relatório completo da execução original foi arquivado como artefato do GitHub Actions em [Validar projeto, execução 44090456146](https://github.com/uaibrain-lab/ru-hoje/actions/runs/44090456146). A execução foi **única**: a etapa de rede foi removida do workflow de validação, evitando 60 chamadas extras a cada commit.
+
+Para repetir **sob demanda** o intervalo do Worker, execute `npm run audit:fump-window`, que grava `audit-results/fump-window-classification.json` apenas na máquina local. **Limitação:** o Worker protege o uso gratuito e aceita somente hoje até D+14. No GitHub Actions, a API direta `https://fump.ufmg.br:3003` sofreu timeout nas consultas de 17/11/2026, 10/2026, 10/2025 e 10/2020; esses intervalos antigos NÃO foram auditados remotamente.
+
+Quando houver acesso direto à porta 3003 (por exemplo, de uma máquina na rede brasileira), use `npm run audit:fump:history -- 2000-01-01` para consultar a API histórica ano a ano, com limite de requisições, espera entre GETs, divisão de respostas grandes e relatório `audit-results/fump-historical-classification.json`. O limite inicial `2000-01-01` é explícito e ajustável; não há documentação confirmada de uma data histórica mínima suportada. A auditoria é incompleta se a fonte falhar ou bloquear acesso; **nunca confundir erro/timeout com ausência de cardápio**. O script não escreve nenhum cardápio no sistema.
 
 **Nota:** instruções de versões e workflows antigos mais abaixo neste README são históricas e podem não refletir a produção atual.
 
