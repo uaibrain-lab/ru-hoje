@@ -51,9 +51,10 @@ export function auditPhaseZero(read=localRead) {
       !/menuSyncRequests\/current|requestCommunityRefresh\(/.test(app),
       'Navegador consulta cardápios sem endpoint de gravação'),
     ok('FIRESTORE_MENU_DENY_WRITE',
-      /match \/publicMenus\/current\s*\{[^}]*allow list, create, update, delete: if false;/s.test(firestore) &&
+      /match \/publicMenus\/current\s*\{[^}]*allow read, write: if false;/s.test(firestore) &&
+      /match \/menuSyncState\/current\s*\{[^}]*allow read, write: if false;/s.test(firestore) &&
       /match \/menuSyncRequests\/current\s*\{[^}]*allow read, write: if false;/s.test(firestore),
-      'Coleções legadas de cardápios rejeitam escrita de cliente'),
+      'Snapshots legados de cardápio e estado de sync negam leitura e escrita públicas'),
     ok('MENU_AUTHORITATIVE_ONLY',
       app.includes('function menuFor(date, ruId) { return liveMenuFor(date,ruId); }') &&
       app.includes('state.liveMenus.delete(key)') &&
