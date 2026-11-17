@@ -22,6 +22,8 @@ Ordem de classificação: **(1)** exceções nominais com conflito já confirmad
 
 O arquivo `public/data/cardapios.json` é **somente uma evidência histórica**: não é usado para preencher cardápios atuais. A aplicação continua exigindo confirmação da FUMP via Worker. As verificações em `tests/hub-catalog-classification.test.mjs` detectam pratos conhecidos sem categoria e protegem a precedência entre o catálogo e o tipo oficial.
 
+Uma auditoria adicional em `scripts/audit-dish-classification.mjs` percorre **todos os 685 registros do histórico**, incluindo os **19 que continham categoria vazia**, sem alterar o arquivo de origem. Ela valida se a classificação efetiva é conhecida e identifica divergências para revisão. Execute `npm run audit:categories`; o comando encerra com erro se um nome registrado não puder ser classificado. O teste `hub-dish-classification-audit.test.mjs` também executa essa verificação em toda rodada de `npm test`, para detectar lacunas em futuros acréscimos ao catálogo. Itens inteiramente novos da FUMP que ainda não constam nas fontes registradas precisam de evidência nova para classificação segura.
+
 **Nota:** instruções de versões e workflows antigos mais abaixo neste README são históricas e podem não refletir a produção atual.
 
 ## Estado comprovado
