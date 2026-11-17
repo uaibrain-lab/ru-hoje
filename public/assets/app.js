@@ -1,7 +1,7 @@
 // OCUPA_RU_P3_CLIENT_FIX
 import {currentOpening, weeklySummary} from './hours.js';
 import {publishedCategory} from './dish-category.js';
-import {isMissingMenu, dateChipLabel} from './date-availability.js';
+import {hasMenuForDate, dateChipLabel} from './date-availability.js';
 import {readLiveMenu, sourceForRu, isValidLiveEntry, validISO} from './fump-live.js';
 import {buildPrefetchPlan, canRunBackgroundFetch, recentlyChecked, PREFETCH_LIMIT_PER_DAY, PREFETCH_MIN_GAP_MS} from './fump-prefetch.js';
 const SOURCE_URL = 'https://fump.ufmg.br/cardapio-do-dia/';
@@ -56,6 +56,20 @@ function liveMenuFor(date, ruId) {
   return isValidLiveEntry(entry,date,ruId) ? entry : null;
 }
 function menuFor(date, ruId) { return liveMenuFor(date,ruId) || state.data?.days?.[date]?.restaurants?.[ruId] || null; }
+/**
+ * O marcador de ausência exige uma resposta positiva de "não publicado" para
+ * este RU/data. Falha de rede e ausência no snapshot não provam falta de cardápio.
+ */
+function missingMenuForDate(iso,ruId) {
+  if (!sourceForRu(ruId)) return false;
+  if (liveMenuFor(iso,ruId) || hasMenuForDate(state.data,iso,ruId)) return false;
+  const key=liveKey(iso,ruId);
+  const current=state.liveStatus.get(key)?.status;
+  if (current==='NOT_PUBLISHED') return true;
+  if (current==='FETCH_ERROR' || current==='PARSE_ERROR') return false;
+  return recentlyChecked(state.prefetchChecks.get(key))
+    && state.prefetchChecks.get(key).status==='NOT_PUBLISHED';
+}
 function hydrateLiveMenus() {
   try {
     const stored = JSON.parse(readStore(STORAGE_LIVE) || '{}');
@@ -349,7 +363,7 @@ function renderDates({ scroll = false } = {}) {
     const iso = addDays(today, offset);
     const date = dayDate(iso);
     const isWeekend = [0, 6].includes(date.getUTCDay());
-    const withoutMenu = !!(state.data?.days && !menuFor(iso,state.selectedRu) && isMissingMenu(state.data, iso, state.selectedRu));
+    const withoutMenu = missingMenuForDate(iso,state.selectedRu);
     const card = el('button', 'date-card');
     card.type = 'button';
     card.dataset.iso = iso;
