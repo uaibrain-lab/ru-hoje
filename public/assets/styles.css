@@ -582,8 +582,10 @@ dialog{background:var(--card);color:var(--ink);border-color:var(--line)}
   display:block;
   padding:3.08%;
   border:solid #44405c;
-  border-width:max(.5px,.17vw);
-  border-radius:3.0cqw;
+  /* cqw no próprio container resolve para a viewport: a 1920px o raio
+     antigo crescia para ~58px, deixando o card visualmente deformado. */
+  border-width:1px;
+  border-radius:16px;
   background:radial-gradient(ellipse 90% 120% at 75% 48%,#242130 0%,#1b1928 65%,#201e2c 100%);
   color:var(--fc-ink);
   overflow:visible;
