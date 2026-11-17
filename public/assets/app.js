@@ -585,7 +585,7 @@ function initTheme() {
  */
 function setupPwaUpdates() {
   if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
-  const releaseKey='ruhoje:sw-refresh:hub-v280-20261117-festas-frame';
+  const releaseKey='ruhoje:sw-refresh:hub-v281-20261117-festas-mobile';
   const hadController=!!navigator.serviceWorker.controller;
   let reloadRequested=false;
   let reloading=false;
