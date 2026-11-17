@@ -6,6 +6,7 @@ import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 import {isNonOperatingDay} from '../public/assets/date-availability.js';
+import {createPreviewServer} from './preview-local.mjs';
 const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..','public');
 const MIME={'.js':'text/javascript','.html':'text/html','.json':'application/json','.css':'text/css','.svg':'image/svg+xml','.png':'image/png','.webmanifest':'application/manifest+json'};
 const server=http.createServer(async(req,res)=>{
@@ -134,8 +135,8 @@ try {
   }
   assert.equal(await page.locator('.date-card[data-missing-menu]').count(),0,
     'Atributo legado de ausência de cardápio não deve continuar no calendário');
-  assert.equal(await page.locator('.meal-card').count(),2);
-  assert.deepEqual(await page.locator('.meal-card h3').allTextContents(),['Almoço','Café da manhã']);
+  assert.equal(await page.locator('.meal-card').count(),1);
+  assert.deepEqual(await page.locator('.meal-card h3').allTextContents(),['Almoço']);
   assert.equal(await page.locator('.meal-card').filter({hasText:'Sopa indevida'}).count(),0);
   await page.reload({waitUntil:'networkidle'});
   assert.equal(await page.locator('#current-restaurant').innerText(),'RU Setorial I');
@@ -156,7 +157,7 @@ try {
   assert.deepEqual(await page.locator('.meal-card h3').allTextContents(),expectedSetorialIIOrder);
   assert.equal(await page.locator('.meal-card').filter({hasText:'Café indevido'}).count(),0);
   await page.locator('.date-card').last().click();
-  await page.getByText('Ainda sem cardápio por aqui').waitFor();
+  await page.getByText('Cardápio ainda não divulgado').waitFor();
   // O endpoint técnico JSON da FUMP não é oferecido como link ao visitante.
   assert.equal(await page.getByRole('link',{name:/Abrir resposta oficial deste RU\/data/i}).count(),0);
   assert.equal(await page.locator('.no-menu a[href*=":3003/"]').count(),0);
@@ -208,7 +209,7 @@ try {
     Date.now=()=>window.__realDateNow()+65_000;
     window.dispatchEvent(new Event('online'));
   });
-  await page.getByText('Ainda sem cardápio por aqui').waitFor({timeout:17000});
+  await page.getByText('Consulta indisponível').waitFor({timeout:17000});
   await page.evaluate(()=>{
     Date.now=window.__realDateNow;
     delete window.__realDateNow;
@@ -268,7 +269,7 @@ try {
   const passiveErrors=[];
   passive.on('pageerror',e=>passiveErrors.push(e.message));
   await passive.goto(url,{waitUntil:'domcontentloaded'});
-  await passive.getByText('Ainda sem cardápio por aqui').waitFor({timeout:15000});
+  await passive.getByText('Consulta indisponível').waitFor({timeout:15000});
   await passive.waitForTimeout(250);
   assert.equal(await passive.getByText('Prato antigo e indevido',{exact:true}).count(),0);
   assert.equal(await passive.getByText('Frango grelhado',{exact:true}).count(),0);
@@ -415,6 +416,132 @@ try {
   }finally{
     await busContext.close();
   }
+  // Regressão mobile-first: festa em tela pequena, abas no histórico e busca do Interno.
+  // A demonstração usa dados locais, sem depender de contas ou eventos reais.
+  const mobileContext=await browser.newContext({serviceWorkers:'block'});
+  await mobileContext.addInitScript(()=>{
+    try{localStorage.setItem('ruhoje:restaurant:v1','setorial-i');}catch{}
+  });
+  try{
+    for(const width of [375,390,412]){
+      const mobile=await mobileContext.newPage();
+      await mobile.setViewportSize({width,height:812});
+      let menuRequests=0;
+      await mobile.route('https://hub-fump-proxy.hubufmg.workers.dev/**',route=>{menuRequests++;return route.fulfill({
+        status:200,contentType:'application/json',body:'{"id":6,"cardapios":[]}'
+      });});
+      await mobile.route('https://tile.openstreetmap.org/**',route=>route.abort());
+      await mobile.goto(url+'?festas-demo=1&aba=festas',{waitUntil:'domcontentloaded'});
+      await mobile.locator('.festas-page .festa-card--compact').waitFor({state:'visible'});
+      assert.equal(menuRequests,0,'Festas não deve disparar consultas de cardápio no primeiro acesso');
+      const layout=await mobile.evaluate(()=>{
+        const card=document.querySelector('.festas-page .festa-card--compact');
+        const action=card?.querySelector('.festa-action');
+        const title=card?.querySelector('.festa-card-title');
+        return {
+          viewport:window.innerWidth,
+          documentWidth:document.documentElement.scrollWidth,
+          cardRight:card?.getBoundingClientRect().right,
+          actionHeight:action?.getBoundingClientRect().height,
+          labelSize:parseFloat(getComputedStyle(action.querySelector('.festa-action-label')).fontSize),
+          titleSize:parseFloat(getComputedStyle(title).fontSize)
+        };
+      });
+      assert.ok(layout.documentWidth<=width+1,`Rolagem horizontal em ${width}px: ${JSON.stringify(layout)}`);
+      assert.ok(layout.cardRight<=width+1,`Card de Festas ultrapassa viewport de ${width}px`);
+      assert.ok(layout.actionHeight>=43.9,`Ação pequena em ${width}px: ${layout.actionHeight}px`);
+      assert.ok(layout.labelSize>=12,`Legenda pequena em ${width}px: ${layout.labelSize}px`);
+      assert.ok(layout.titleSize>=16,`Título pequeno em ${width}px: ${layout.titleSize}px`);
+      await mobile.locator('#tab-sobre').click();
+      assert.equal(new URL(mobile.url()).searchParams.get('aba'),'sobre');
+      await mobile.goBack();
+      await mobile.waitForFunction(()=>
+        document.querySelector('#tab-festas')?.getAttribute('aria-current')==='page');
+      await mobile.locator('#tab-interno').click();
+      const bus=mobile.frameLocator('#interno-frame');
+      await bus.locator('#q').waitFor({state:'visible',timeout:15000});
+      assert.equal(await bus.locator('#sheet').evaluate(e=>e.classList.contains('peek')),false,
+        'Busca do Interno deve abrir sem painel recolhido');
+      assert.equal(menuRequests,0,'Interno não deve disparar consulta FUMP');
+      await mobile.locator('#tab-menu').click();
+      await mobile.waitForFunction(()=>document.querySelector('#tab-menu')?.getAttribute('aria-current')==='page');
+      for(let attempt=0;attempt<30 && !menuRequests;attempt++)await mobile.waitForTimeout(100);
+      assert.ok(menuRequests>0,'Ao voltar ao Cardápio, a consulta FUMP deve ser retomada');
+      await mobile.close();
+    }
+  }finally{await mobileContext.close();}
+  // Primeira visita por link direto não deve bloquear Festas com o seletor de RU.
+  const firstVisit=await browser.newContext({serviceWorkers:'block'});
+  try{
+    const direct=await firstVisit.newPage();
+    await direct.goto(url+'?festas-demo=1&aba=festas',{waitUntil:'domcontentloaded'});
+    await direct.locator('.festas-page .festa-card--compact').waitFor({state:'visible'});
+    assert.equal(await direct.locator('#restaurant-dialog').evaluate(el=>el.open),false);
+  }finally{await firstVisit.close();}
+  console.log('E2E mobile aprovado: 375/390/412 px, consulta sob demanda, links diretos, histórico e Interno.');
+
+
+  // Prévia local real: 4 fontes oficiais (5 RUs, Saúde/Direito compartilham
+  // fonte) e 2 datas. Sem mock no navegador: exercita o relay HTTP do Node,
+  // as rotas limpas, a seleção de RU e o parser do app em conjunto.
+  const localRequests=[];
+  const previewServer=createPreviewServer({fetchFn:async upstream=>{
+    const u=new URL(upstream);
+    const id=u.searchParams.get('id'),date=u.searchParams.get('data');
+    localRequests.push({id,date});
+    assert.equal(u.origin,'https://hub-fump-proxy.hubufmg.workers.dev');
+    assert.ok(['1','2','5','6'].includes(id));
+    assert.ok(/^\d{4}-\d{2}-\d{2}$/.test(date));
+    return new Response(JSON.stringify({id:Number(id),cardapios:[{
+      data:date,refeicoes:[{tipoRefeicao:'Almoço',pratos:[{
+        tipoPrato:'Prato protéico 1',descricaoPrato:`Prato fonte ${id} em ${date}`
+      },...(['1','6'].includes(id)?[{
+        tipoPrato:id==='6'?'Prato protéico 1':'Prato protéico 3',descricaoPrato:'Bife de milho'
+      }]:[])]}]
+    }]}),{status:200,headers:{
+      'Content-Type':'application/json','X-Menu-Fetched-At':new Date().toISOString()
+    }});
+  }});
+  await new Promise(resolve=>previewServer.listen(0,'127.0.0.1',resolve));
+  const previewOrigin=`http://127.0.0.1:${previewServer.address().port}`;
+  const previewContext=await browser.newContext({serviceWorkers:'block'});
+  try{
+    const preview=await previewContext.newPage();
+    await preview.goto(previewOrigin+'/',{waitUntil:'domcontentloaded'});
+    const ruOptions=[
+      ['RU Setorial I Campus Pampulha','6'],
+      ['RU Setorial II Campus Pampulha','1'],
+      ['RU Saúde Campus Saúde','2'],
+      ['RU Direito Faculdade de Direito','2'],
+      ['RU ICA Montes Claros','5']
+    ];
+    for(const [label,id] of ruOptions){
+      if(!(await preview.locator('#restaurant-dialog').evaluate(e=>e.open)))
+        await preview.locator('#restaurant-trigger').click();
+      await preview.getByRole('button',{name:label,exact:true}).click();
+      await preview.getByText(`Prato fonte ${id} em ${today}`,{exact:true}).waitFor({timeout:12000});
+      assert.equal(await preview.locator('.meal-card').count(),1);
+      if(['1','6'].includes(id)){
+        assert.equal(await preview.locator('.menu-group--vegetarian').getByText('Bife de milho',{exact:true}).count(),1,
+          `Bife de milho precisa ser vegetariano no RU fonte ${id}`);
+        assert.equal(await preview.locator('.menu-group--main').getByText('Bife de milho',{exact:true}).count(),0);
+      }
+    }
+    const nextDay=new Date(Date.parse(today+'T12:00:00Z')+86400000).toISOString().slice(0,10);
+    await preview.locator(`.date-card[data-iso="${nextDay}"]`).click();
+    await preview.getByText(`Prato fonte 5 em ${nextDay}`,{exact:true}).waitFor({timeout:12000});
+    for(const id of ['1','2','5','6'])
+      assert.ok(localRequests.some(req=>req.id===id&&req.date===today),
+        `Prévia não consultou hoje para fonte ${id}`);
+    assert.ok(localRequests.some(req=>req.id==='5'&&req.date===nextDay),
+      'Prévia não consultou a data selecionada');
+    assert.equal(await preview.locator('#connection-notice').isVisible(),false);
+  }finally{
+    await previewContext.close();
+    await new Promise(resolve=>previewServer.close(resolve));
+  }
+  console.log('E2E prévia local aprovado: 5 RUs (4 fontes), troca de RU e dias, parser e proxy Node.');
+
   console.log('E2E Interno aprovado: Leaflet local, 49 pontos offline, mapa canônico e contingência sem tiles.');
 
   console.log('E2E aprovado: FUMP como fonte única, ausência de Firestore/localStorage antigo, prefetch D+1 e migração PWA.');

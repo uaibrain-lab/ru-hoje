@@ -582,8 +582,10 @@ dialog{background:var(--card);color:var(--ink);border-color:var(--line)}
   display:block;
   padding:3.08%;
   border:solid #44405c;
-  border-width:max(.5px,.17vw);
-  border-radius:3.0cqw;
+  /* cqw no próprio container resolve para a viewport: a 1920px o raio
+     antigo crescia para ~58px, deixando o card visualmente deformado. */
+  border-width:1px;
+  border-radius:16px;
   background:radial-gradient(ellipse 90% 120% at 75% 48%,#242130 0%,#1b1928 65%,#201e2c 100%);
   color:var(--fc-ink);
   overflow:visible;
@@ -795,8 +797,177 @@ dialog{background:var(--card);color:var(--ink);border-color:var(--line)}
 .dish-expansion{grid-column:2;grid-row:2;min-width:0;width:100%;margin:7px 0 3px;border-left:2px solid var(--purple);padding:8px 10px 9px 12px;background:var(--surface-subtle);border-radius:0 9px 9px 0}
 .dish-expansion .miniheading{font-size:10px;letter-spacing:.65px;font-weight:800;color:var(--purpleDark);text-transform:uppercase;margin:0 0 4px}
 .dish-expansion p{font-size:12.5px;color:var(--muted);line-height:1.55;margin:0;overflow-wrap:anywhere}
+/* Hub UX 2026-11: hierarquia discreta do cardápio e skeleton inicial FUMP. */
+.sobre-content h3{font-size:16px;line-height:1.35;font-weight:800;letter-spacing:-.02em;color:var(--ink);margin:4px 0 10px}
+.sobre-content p+h3{margin-top:24px}
+.meal-skeleton{display:grid;gap:12px;padding:22px;border:1px solid var(--line);border-radius:18px;background:var(--card)}
+.meal-skeleton .loading-shimmer{width:100%;height:17px;min-height:17px;border-radius:7px}
+.meal-skeleton .loading-shimmer:first-child{width:52%;height:22px;min-height:22px}
+.meal-skeleton .loading-shimmer:last-child{width:76%}
+/* Mesma geometria para as duas categorias: evita a faixa lateral e a
+   borda superior/padding extra herdados de .menu-group + .menu-group. */
+.meal-contents .menu-group--main,
+.meal-contents .menu-group--vegetarian,
+.meal-contents .menu-group + .menu-group.menu-group--main,
+.meal-contents .menu-group + .menu-group.menu-group--vegetarian{
+  border:1px solid var(--group-accent-border);
+  border-radius:13px;
+  padding:12px 13px;
+  margin-top:10px;
+}
+.meal-contents .menu-group--main{
+  --group-accent-border:color-mix(in srgb,var(--purple) 22%,transparent);
+  background:var(--purpleSoft);
+}
+.meal-contents .menu-group--vegetarian{
+  --group-accent-border:color-mix(in srgb,#24936b 22%,transparent);
+  background:color-mix(in srgb,var(--card) 91%,#24936b);
+}
+.meal-contents .menu-group:first-child{margin-top:0;}
+.meal-contents .menu-group--main .menu-group-title,
+.meal-contents .menu-group--vegetarian .menu-group-title{font-size:12px;letter-spacing:.2px;font-weight:800;color:var(--ink)}
+.meal-contents .menu-group--main .dish-row>.dish-title,
+.meal-contents .menu-group--main .dish-trigger,
+.meal-contents .menu-group--vegetarian .dish-row>.dish-title,
+.meal-contents .menu-group--vegetarian .dish-trigger{font-weight:650}
+.dish-trigger{min-height:44px}
+.dish-row:has(>.dish-trigger):before{margin-top:calc((44px - 5px)/2)}
+@media(max-width:850px){
+  .sobre-content p{font-size:15px;line-height:1.72}
+  .festa-dialog input:not([type=checkbox]):not([type=file]),
+  .festa-dialog textarea,.festa-dialog select{font-size:16px;min-height:46px}
+  .festa-dialog button.festa-primary,
+  .festa-dialog button.festa-secondary{min-height:48px;font-size:14px}
+  .festa-dialog-title .icon-btn,
+  .festa-admin-event-actions .icon-btn{min-width:44px;min-height:44px}
+  .festa-dialog-inner{max-height:min(90dvh,calc(100dvh - 20px));overscroll-behavior:contain}
+  .festas-page .festa-card--compact{padding:12px;border-radius:16px}
+  .festas-page .festa-card--compact .festa-card-main{
+    aspect-ratio:auto;min-height:0;
+    grid-template-columns:minmax(0,32%) minmax(0,1fr);
+    grid-template-rows:auto auto auto;
+    grid-template-areas:'poster info' 'actions actions' 'status status';
+    column-gap:12px;row-gap:11px;align-items:start;
+  }
+  .festas-page .festa-card--compact .festa-card-main--no-poster{
+    grid-template-columns:minmax(0,1fr);
+    grid-template-areas:'info' 'actions' 'status';
+    min-height:0;
+  }
+  .festas-page .festa-card--compact .festa-poster-trigger{
+    border-radius:10px;min-height:0;height:auto;aspect-ratio:3/4;
+    align-self:start;display:grid;place-items:center;
+  }
+  .festas-page .festa-card--compact .festa-poster-trigger .festa-art{
+    width:100%;height:100%;max-width:100%;max-height:100%;
+    object-fit:contain;object-position:center;
+  }
+  .festas-page .festa-card--compact .festa-card-content{overflow:visible}
+  .festas-page .festa-card--compact .festa-card-title{
+    display:block;overflow:visible;-webkit-line-clamp:unset;
+    font-size:clamp(16px,4.6vw,20px);line-height:1.17;
+    letter-spacing:-.025em;overflow-wrap:anywhere;
+  }
+  .festas-page .festa-card--compact .festa-card-organizer{
+    font-size:12px;margin-top:6px;line-height:1.4;
+    white-space:normal;overflow-wrap:anywhere;
+    display:-webkit-box;-webkit-box-orient:vertical;
+    -webkit-line-clamp:2;overflow:hidden;
+  }
+  .festas-page .festa-card--compact .festa-meta{font-size:12px;gap:8px;margin-top:11px;line-height:1.35}
+  .festas-page .festa-card--compact .festa-meta-row{gap:6px;flex-wrap:wrap}
+  .festas-page .festa-card--compact .festa-meta-item{
+    gap:6px;white-space:normal;min-width:0;align-items:flex-start;
+  }
+  .festas-page .festa-card--compact .festa-meta-icon{flex:0 0 16px;width:16px;height:16px}
+  .festas-page .festa-card--compact .festa-meta-separator{width:2px;height:12px;margin:0 3px}
+  .festas-page .festa-card--compact .festa-meta-location{
+    font-size:12px;line-height:1.4;gap:6px;
+  }
+  .festas-page .festa-card--compact .festa-meta-location>span:last-child{
+    white-space:normal;overflow:visible;text-overflow:clip;
+    overflow-wrap:anywhere;
+  }
+  .festas-page .festa-card--compact .festa-card-tags{gap:5px;margin-top:10px;flex-wrap:wrap;overflow:visible}
+  .festas-page .festa-card--compact .festa-tag-chip,
+  .festas-page .festa-card--compact .festa-tag-more{font-size:11px;line-height:1.25;padding:6px 9px}
+  .festas-page .festa-card--compact .festa-tag-more{min-height:44px}
+  .festas-page .festa-card--compact .festa-card-actions--inline{
+    grid-area:actions;gap:8px;align-self:stretch;transform:none;
+  }
+  .festas-page .festa-card--compact .festa-card-actions--inline .festa-action{
+    height:auto;min-height:46px;border-width:1px;border-radius:10px;
+    padding:8px;gap:5px;
+  }
+  .festas-page .festa-card--compact .festa-card-actions--inline .festa-action-label{
+    font-size:12px;line-height:1.2;white-space:normal;overflow-wrap:anywhere
+  }
+  .festas-page .festa-card--compact .festa-action-icon{width:15px;height:15px}
+  .festas-page .festa-card--compact .festa-action-chevron{width:12px;height:12px}
+  .festas-page .festa-card--compact .festa-card-status{
+    grid-area:status;grid-column:auto;grid-row:auto;
+    font-size:12px;line-height:1.4;align-self:start;
+  }
+}
+@media(max-width:319px){
+  .festas-page .festa-card--compact .festa-card-main{
+    grid-template-columns:minmax(0,30%) minmax(0,1fr);column-gap:9px;
+  }
+  .festas-page .festa-card--compact .festa-card-main--no-poster{
+    grid-template-columns:minmax(0,1fr);
+  }
+  .festas-page .festa-card--compact .festa-card-actions--inline{
+    grid-template-columns:minmax(0,1fr);
+  }
+}
 
+/* UX mobile: aproximar o indicador de funcionamento do título do mês.
+   Restringir a mudança ao RU com horários carregados; preservar o espaço
+   da seleção de restaurante enquanto os horários ainda estão ocultos. */
+@media(max-width:850px){
+  .restaurant-section .hours-wrap{margin-top:2px}
+  .restaurant-section .hours-details>summary{min-height:36px;padding:2px 4px}
+  .restaurant-section:has(.hours-wrap:not([hidden])) + .date-section{margin-top:2px}
+}
 
+/* Cardápio mobile: conteúdo prioritário visível cedo, sem reduzir os alvos
+   de toque dos pratos (44px) nem das datas (>=56px). Os ajustes de altura
+   ficam restritos à aba de cardápio; Interno/Festas/Sobre permanecem iguais. */
+@media(max-width:650px){
+  .site-wrap:has(#bandeco-main:not([hidden])) .topbar{margin-bottom:9px}
+  #bandeco-main .restaurant-picker{min-height:62px;padding:7px 11px;gap:10px}
+  #bandeco-main .picker-icon,#bandeco-main .picker-photo{
+    width:42px;height:42px;
+  }
+  #bandeco-main .date-section .section-heading h2{font-size:17px}
+  #bandeco-main .date-strip{padding-block:5px;gap:6px}
+  #bandeco-main .date-card{
+    min-height:62px;flex-basis:56px;min-width:56px;
+    padding:5px 4px;gap:2px;
+  }
+  #bandeco-main .date-card .daynum{font-size:21px}
+  #bandeco-main .menu-section{margin-top:7px}
+  #bandeco-main .menu-heading-row{margin-bottom:6px}
+  #bandeco-main .menu-heading-row h2{font-size:18px}
+  #bandeco-main .meal-card{padding:12px 12px 13px}
+  #bandeco-main .meal-name{gap:9px}
+  #bandeco-main .meal-icon{
+    width:36px;height:36px;border-radius:11px;
+  }
+  #bandeco-main .meal-icon svg{width:18px;height:18px}
+  #bandeco-main .meal-name h3{font-size:16px}
+  #bandeco-main .meal-subtitle{margin-top:2px}
+  #bandeco-main .meal-contents{margin-top:9px}
+  #bandeco-main .meal-contents .menu-group--main,
+  #bandeco-main .meal-contents .menu-group--vegetarian,
+  #bandeco-main .meal-contents .menu-group + .menu-group.menu-group--main,
+  #bandeco-main .meal-contents .menu-group + .menu-group.menu-group--vegetarian{
+    padding:9px 11px;margin-top:8px;
+  }
+  #bandeco-main .meal-contents .menu-group:first-child{margin-top:0}
+  #bandeco-main .meal-contents .menu-group-title{margin-bottom:4px}
+  #bandeco-main .meal-contents .dish-list{gap:4px}
+}
 
 /* Instalação PWA — aviso opcional, discreto, acima das abas móveis. */
 .pwa-install-toast[hidden],.pwa-install-manual-wrap[hidden]{display:none!important}

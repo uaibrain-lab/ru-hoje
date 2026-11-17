@@ -1,10 +1,13 @@
 /**
- * Correções conservadoras para dados oficiais da FUMP sem tipo cadastrado
- * e snapshots legados que não distinguiam prato protéico 3 (vegetariano).
+ * Categorias conhecidas do Hub UFMG, combinando o catálogo histórico de
+ * ingredientes do ICA e correções pontuais verificadas em cardápios FUMP.
  *
- * Evidência: FUMP, 20/10/2026, API JSON IDs 1, 2, 5, 6.
- * Nunca inferir indiscriminadamente proteína por palavras como "bife"
- * ("Bife de milho" é vegetariano) ou "bolinho".
+ * Para um nome EXATO catalogado como opção vegetariana ou prato principal,
+ * nossa classificação prevalece sobre o tipo genérico da FUMP (frequentemente
+ * lançado em uma posição errada). Nas demais categorias, o tipo oficial
+ * reconhecido continua prioritário; sem ele, recorre-se ao catálogo.
+ * Nunca inferir por palavras isoladas como "bife", "milho" ou "bolinho".
+ * Não confundir classificação de exibição com certificação nutricional.
  */
 const normal = value => String(value ?? '')
   .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -25,9 +28,9 @@ const UNREGISTERED_OVERRIDES = Object.freeze({
   'asa de frango assada': 'proteina',
 });
 
-// Catálogo auxiliar alimentado pelo PDF "Ingredientes - ICA".
-// Ele só é consultado quando a FUMP não informa um tipo confiável;
-// classificações oficiais reconhecidas continuam prevalecendo.
+// Catálogo de receitas alimentado pelo PDF "Ingredientes - ICA".
+// Pratos principais e vegetarianos catalogados têm prioridade sobre a FUMP.
+// Para os demais grupos, a classificação é auxiliar se a fonte for explícita.
 const ICA_CATALOG = Object.freeze({
   // Acompanhamentos
   'arroz a grega': 'acompanhamento',
@@ -151,7 +154,8 @@ const ICA_CATALOG = Object.freeze({
   'salada diferente': 'salada',
   'salada fantasia': 'salada',
   'salada provencal': 'salada',
-  'salada seria': 'salada',
+  'salada siria': 'salada',
+  'salada seria': 'salada', // grafia legada; PDF de ingredientes: Salada Síria
   'salada tropical': 'salada',
   'salpicao de cenoura': 'salada',
   'tabule': 'salada',
@@ -172,6 +176,113 @@ const ICA_CATALOG = Object.freeze({
   'refresco': 'bebida',
 });
 
+// Referências de classificações de cardápios históricos FUMP (outubro/2026).
+// Não são cardápios atuais e NUNCA serão exibidos como pratos publicados.
+// Para nomes vegetarianos/principais identificados aqui, priorizar catálogo.
+// Para os demais grupos, esta tabela atua como fallback sem tipo reconhecido.
+const HISTORICAL_FUMP_CATEGORIES = Object.freeze({
+  // acompanhamento (1)
+  "bolinho de milho": "acompanhamento",
+  // guarnicao (18)
+  "abobora cozida": "guarnicao",
+  "abobrinha a napolitana": "guarnicao",
+  "abobrinha no fuba": "guarnicao",
+  "batata corada ao forno": "guarnicao",
+  "cenoura vick": "guarnicao",
+  "chuchu tropeiro": "guarnicao",
+  "farofa com frutas": "guarnicao",
+  "farofa de repolho": "guarnicao",
+  "parafuso com brocolis": "guarnicao",
+  "penne ao manjericao": "guarnicao",
+  "salada de legumes": "guarnicao",
+  "sopa de abobora": "guarnicao",
+  "sopa de batata": "guarnicao",
+  "sopa de fuba": "guarnicao",
+  "sopa de inhame": "guarnicao",
+  "sopa de legumes": "guarnicao",
+  "sopa de mandioca": "guarnicao",
+  "virado de couve": "guarnicao",
+  // vegetariana (9)
+  "charuto de repolho": "vegetariana",
+  "cuscuz de legumes com coentro": "vegetariana",
+  "espinafre com ricota e abobrinha": "vegetariana",
+  "feijoada de soja": "vegetariana",
+  "hamburguer de grao de bico": "vegetariana",
+  "quibe assado com lentilha": "vegetariana",
+  "ratatule": "vegetariana",
+  "soja refogada com cenoura": "vegetariana",
+  "virado de lentilha": "vegetariana",
+  // proteina (21)
+  "bife de panela": "proteina",
+  "bife de porco acebolado": "proteina",
+  "bisteca ao molho": "proteina",
+  "bisteca suina assada": "proteina",
+  "carne caipira": "proteina",
+  "carne de porco frita": "proteina",
+  "carne moida a jardineira": "proteina",
+  "carne moida com azeitonas": "proteina",
+  "copa lombo assado": "proteina",
+  "coxa de frango ao molho": "proteina",
+  "escondidinho de frango": "proteina", // revisão nominal: tipo histórico não cadastrado
+  "falso lombo recheado com calabresa": "proteina",
+  "fricasse de frango": "proteina",
+  "isca de carne de porco acebolada": "proteina",
+  "isca de frango colorida": "proteina",
+  "isca de pernil": "proteina",
+  "linguica assada": "proteina",
+  "linguica toscana acebolada": "proteina",
+  "linguica toscana assada": "proteina",
+  "sobrecoxa de frango assada": "proteina",
+  "torta de frango": "proteina",
+  // molho (2)
+  "molho de manjericao": "molho", // revisão nominal: tipo histórico não cadastrado
+  "molho de salsao": "molho", // revisão nominal: tipo histórico não cadastrado
+  // salada (16)
+  "salada de acelga com alface": "salada",
+  "salada de acelga com alface roxo": "salada",
+  "salada de almeirao": "salada",
+  "salada de batata baroa": "salada",
+  "salada de berinjela com oregano": "salada",
+  "salada de beterraba": "salada",
+  "salada de chuchu com milho verde": "salada",
+  "salada de grao de bico ao vinagrete": "salada",
+  "salada de pepino": "salada",
+  "salada de repolho bicolor": "salada",
+  "salada de repolho com maionese": "salada",
+  "salada grega": "salada",
+  "salada tabule": "salada",
+  "salpicao de legumes": "salada",
+  "seleta de legumes": "salada",
+  "vinagrete": "salada",
+  // sobremesa (4)
+  "banana": "sobremesa",
+  "doce tablete": "sobremesa",
+  "fruta": "sobremesa",
+  "gelatina de morango": "sobremesa",
+});
+
+// Novos nomes detectados em consulta oficial ao Worker da FUMP em
+// 17–19/11/2026 (IDs 6, 1, 2, 5; datas consultadas até 01/12).
+// Vegetarianos/principais registrados têm prioridade por nome exato.
+// Os demais grupos atuam como fallback se o tipo atual vier ausente.
+const OBSERVED_FUMP_CATEGORIES_NOV2026 = Object.freeze({
+  'banana prata': 'sobremesa',
+  'carne moida com legumes': 'proteina',
+  'chuchu refogado': 'guarnicao',
+  'doce de abobora': 'sobremesa',
+  'feijao com bacon': 'acompanhamento',
+  'feijao tropeiro': 'acompanhamento',
+  'gelatina de uva': 'sobremesa',
+  'melao': 'sobremesa',
+  'repolho bulgaro': 'guarnicao',
+  'salada de almeirao com alface roxa': 'salada',
+  'salada de almeirao com repolho': 'salada',
+  'salada de almeirao com repolho roxo': 'salada',
+  'salada de jilo': 'salada',
+  'sopa de fuba com couve': 'guarnicao',
+  'torta colorida': 'proteina',
+});
+
 // Registro comprovado como "Prato protéico 3" na API, mas publicado
 // por versões anteriores com category='proteina'.
 const VERIFIED_VEGETARIAN_LEGACY = new Set([
@@ -187,72 +298,88 @@ const VERIFIED_VEGETARIAN_LEGACY = new Set([
   'assado de grao de bico',
 ]);
 
+// 1. Categorias revisadas de receitas + exceções verificadas.
+// 2. Nomes observados no histórico ou na última varredura.
+// Para categoria principal/vegetariana o catálogo inteiro é autoritativo;
+// para os demais tipos continua sendo uma referência auxiliar.
+const VERIFIED_DISH_CATEGORIES = Object.freeze({
+  ...ICA_CATALOG,
+  ...UNREGISTERED_OVERRIDES,
+  ...Object.fromEntries([...VERIFIED_VEGETARIAN_LEGACY].map(name=>[name,'vegetariana'])),
+});
+
+export function knownDishCategory(name) {
+  const key=normal(name);
+  return VERIFIED_DISH_CATEGORIES[key] || HISTORICAL_FUMP_CATEGORIES[key] ||
+    OBSERVED_FUMP_CATEGORIES_NOV2026[key] || '';
+}
+
 export function unregisteredCategory(name) {
+  const known=knownDishCategory(name);
+  if(known) return known;
   const key = normal(name);
-  // A FUMP pode enviar strogonoff sem tipo cadastrado. O prato continua
-  // sendo principal; somente a variante explicitamente vegana é vegetariana.
+  // Fallback para strogonoff ainda não catalogado, sem arriscar inferência
+  // sobre receitas específicas de diferentes restaurantes.
   if (/\bstrogonoff\b/.test(key)) {
     return /\b(?:vegano|vegetariano)\b/.test(key) ? 'vegetariana' : 'proteina';
   }
-  return UNREGISTERED_OVERRIDES[key] || ICA_CATALOG[key] || '';
-}
-
-/**
- * Interpreta somente a classificação oficial publicada pela FUMP.
- * A posição "Prato protéico 3" é a alternativa vegetariana observada
- * nos cardápios oficiais; os demais protéicos continuam proteínas.
- * Retorno vazio: a fonte não deu uma classificação conhecida.
- */
-export function categoryFromSourceType(sourceType, name = '') {
-  const t = normal(sourceType);
-  if (t.includes('entrada')) return 'salada';
-  if (t.includes('sobremesa')) return 'sobremesa';
-  if (t.includes('um copo') || t.includes('refresco') || t.includes('bebida')) return 'bebida';
-  if (t.includes('guarnicao')) return 'guarnicao';
-  if (t.includes('acompanhamento')) return 'acompanhamento';
-  if (t.includes('vegetariano') || t.includes('vegano') || /\bproteico\s*3\b/.test(t)) return 'vegetariana';
-  if (t.includes('proteico') || t.includes('proteina')) return 'proteina';
-  if (t === 'tipo de item nao cadastrado' || !t) return unregisteredCategory(name);
   return '';
 }
 
 /**
- * Exibição de snapshots novos e legados.
- * 1. Prioriza o tipo oficial original quando presente e reconhecido.
- * 2. Sem essa evidência, aplica somente exceções pontuais verificadas.
- * Nunca escreve ou altera dados remotamente.
+ * O catálogo reconhece o prato pelo nome exato, independentemente do RU.
+ * Categorias principais e vegetarianas catalogadas são prioritárias sobre
+ * todos os tipos FUMP, incluindo posições protéicas, guarnições e entradas.
+ * Isso vale também para o histórico e novos nomes oficialmente observados.
+ * Não classificar por substring: nomes desconhecidos seguem a classificação
+ * explícita da FUMP; outros grupos catalogados são apenas fallback.
  */
-export function publishedCategory(category, name, sourceType = '') {
-  const original = normal(sourceType);
-  // Correções nominais confirmadas para casos em que o tipo da FUMP veio
-  // ausente ou inconsistente com a natureza do prato.
-  const nameKey = normal(name);
-  if (nameKey === 'soja refogada com legumes') return 'vegetariana';
-  if (nameKey === 'frango ao molho de tomate') return 'proteina';
-  // Em uma resposta antiga sem tipo oficial, preservar categoria legada
-  // exceto para os nomes que sabemos terem sido classificados incorretamente.
-  if (original && original !== 'tipo de item nao cadastrado') {
-    const official = categoryFromSourceType(sourceType, name);
-    if (official) return official;
+function priorityMainCategory(name) {
+  const known=knownDishCategory(name);
+  return known==='proteina' || known==='vegetariana' ? known : '';
+}
+export function categoryFromSourceType(sourceType, name = '') {
+  const preferred=priorityMainCategory(name);
+  if(preferred) return preferred;
+  const t=normal(sourceType);
+  if(t.includes('entrada')) return 'salada';
+  if(t.includes('sobremesa')) return 'sobremesa';
+  if(t.includes('um copo') || t.includes('refresco') || t.includes('bebida')) return 'bebida';
+  if(t.includes('guarnicao')) return 'guarnicao';
+  if(t.includes('acompanhamento')) return 'acompanhamento';
+  if(t.includes('vegetariano') || t.includes('vegano') || /\bproteico\s*3\b/.test(t)) return 'vegetariana';
+  if(t.includes('proteico') || t.includes('proteina')) return 'proteina';
+  if(t==='tipo de item nao cadastrado' || !t) return unregisteredCategory(name);
+  return '';
+}
+
+/**
+ * Exibição: aplicar a mesma prioridade de pratos principais/vegetarianos do
+ * parser também a dados já recebidos (ou caches legados). Nos demais grupos,
+ * usar primeiro o tipo FUMP reconhecido e só então o fallback nominal.
+ */
+export function publishedCategory(category,name,sourceType='') {
+  const key=normal(name);
+  const preferred=priorityMainCategory(name);
+  if(preferred) return preferred;
+
+  const original=normal(sourceType);
+  if(original && original!=='tipo de item nao cadastrado') {
+    const official=categoryFromSourceType(sourceType,name);
+    if(official) return official;
   }
-  const saved = normal(category);
-  if (!saved || saved === 'outros' || saved === 'tipo de item nao cadastrado') {
-    return (original === '' || original === 'tipo de item nao cadastrado')
-      ? (ICA_CATALOG[nameKey] || unregisteredCategory(name) || saved)
-      : saved;
+  const saved=normal(category);
+  if(!saved || saved==='outros' || saved==='tipo de item nao cadastrado') {
+    return knownDishCategory(name) || unregisteredCategory(name) || saved;
   }
-  // O catálogo pode corrigir somente categorias legadas claramente conflitantes;
-  // nunca substitui uma categoria legada diferente sem evidência suficiente.
-  if ((original === '' || original === 'tipo de item nao cadastrado') &&
-      ((saved === 'proteina' && ICA_CATALOG[nameKey] === 'vegetariana') ||
-       (saved === 'molho' && ICA_CATALOG[nameKey] === 'proteina'))) {
-    return ICA_CATALOG[nameKey];
-  }
-  // Somente para dados legados sem tipo original: indicação vegetariana explícita
-  // no nome ou nomes já confirmados. Nunca sobrepor a categoria de outra família.
-  if (saved === 'proteina' && (VERIFIED_VEGETARIAN_LEGACY.has(normal(name)) ||
-      /\b(?:vegetarian[oa]s?|vegan[oa]s?)\b/.test(normal(name)))) {
+  // Ajustes legados comprovados: proteína cadastral não significava carne
+  // quando o prato era a alternativa vegetariana, e vice-versa no caso
+  // nominal de proteína classificada como molho.
+  if(saved==='proteina' && (VERIFIED_VEGETARIAN_LEGACY.has(key) ||
+       ICA_CATALOG[key]==='vegetariana' ||
+       /\b(?:vegetarian[oa]s?|vegan[oa]s?)\b/.test(key))) {
     return 'vegetariana';
   }
+  if(saved==='molho' && ICA_CATALOG[key]==='proteina') return 'proteina';
   return category;
 }

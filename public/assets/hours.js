@@ -45,7 +45,7 @@ export function currentOpening(ruId, time=new Date()) {
   const clock=brClock(time);
   const slots=hoursFor(ruId,clock.iso);
   const open=slots.find(s=>clock.minute>=s.startMinute && clock.minute<s.endMinute);
-  if(open) return {state:'open',message:`Aberto agora · fecha às ${shortHour(open.end)}`,details:`${open.label} · ${shortHour(open.start)}–${shortHour(open.end)}`};
+  if(open) return {state:'open',message:`Aberto agora · fecha às ${shortHour(open.end)}`,details:`${open.label} · ${shortHour(open.start)}–${shortHour(open.end)}`,minutesRemaining:open.endMinute-clock.minute};
   for(let i=0;i<8;i++) {
     const iso=addDay(clock.iso,i);
     const upcoming=hoursFor(ruId,iso).find(s=>i>0 || clock.minute<s.startMinute);

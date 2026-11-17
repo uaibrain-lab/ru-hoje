@@ -48,8 +48,8 @@ test('Sem adivinhação: itens desconhecidos permanecem sem categoria',()=>{
   assert.equal(categoryKey('Tipo de item não cadastrado','Preparação surpresa'), '');
   assert.equal(publishedCategory('','Preparação surpresa'), '');
   assert.equal(publishedCategory('proteina','Carne de porco frita'),'proteina');
-  assert.equal(categoryKey('Entrada 2','Frango Xadrez'),'salada'); // tipo oficial reconhecido prevalece
-  assert.equal(categoryKey('Bebida','Frango Xadrez'),'bebida');
+  assert.equal(categoryKey('Entrada 2','Frango Xadrez'),'proteina'); // proteína catalogada prevalece mesmo com tipo oficial errado
+  assert.equal(categoryKey('Bebida','Frango Xadrez'),'proteina');
 });
 
 test('Integração: versão do cache e novo módulo offline estão presentes',()=>{
