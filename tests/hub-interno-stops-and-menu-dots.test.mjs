@@ -57,7 +57,7 @@ test('mapa mantém os 49 pontos com mesmo desenho e sem origem azul',()=>{
 test('aviso verboso da FUMP foi retirado sem esconder o estado sem cardápio',()=>{
   const app=read('../public/assets/app.js');
   assert.ok(!app.includes('A consulta à FUMP não retornou pratos nesta data. Isso não confirma que o RU esteja fechado.'));
-  assert.ok(app.includes('list.append(renderNoMenu(ru,day))'));
+  assert.match(app,/list\.append\(renderNoMenu\(ru,day,/);
   assert.ok(app.includes('return isNonOperatingDay(iso,ruId)'));
   assert.ok(app.includes('sem atendimento regular previsto'));
   assert.ok(!app.includes('sem cardápio carregado'));
