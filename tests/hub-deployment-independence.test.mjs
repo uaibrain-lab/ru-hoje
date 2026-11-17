@@ -3,14 +3,14 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 
-test('v277 torna Leaflet CORE: mapa offline não depende de carregamento opcional',()=>{
+test('v278 preserva Leaflet CORE: mapa offline não depende de carregamento opcional',()=>{
   const sw=read('public/service-worker.js');
   const core=sw.match(/const CORE = \[([\s\S]*?)\];/)?.[1];
   assert.ok(core,'CORE precisa existir');
   assert.match(core,/\/assets\/vendor\/leaflet-1\.9\.4\.js/);
   assert.match(core,/\/assets\/vendor\/leaflet-1\.9\.4\.css/);
   assert.match(sw,/await cache\.addAll\(CORE\)/);
-  assert.match(sw,/hub-v277-20261117-batch3-5-r1/);
+  assert.match(sw,/hub-v278-20261117-pwa-install-r1/);
 });
 
 test('Hosting não publica snapshot estático obsoleto da FUMP',()=>{
