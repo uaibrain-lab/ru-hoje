@@ -29,11 +29,11 @@ test('15 nomes descobertos em consulta real à FUMP de 17–19/11 possuem fallba
     assert.equal(publishedCategory('',name,'Tipo de item não cadastrado'),expected,name);
   }
 });
-test('o fallback observado não reclassifica contra um tipo oficial atual diferente',()=>{
+test('proteínas observadas têm prioridade, enquanto tipos auxiliares seguem a FUMP',()=>{
   assert.equal(knownDishCategory('Torta colorida'),'proteina');
-  assert.equal(categoryFromSourceType('Prato protéico 3','Torta colorida'),'vegetariana');
-  assert.equal(publishedCategory('proteina','Torta colorida','Prato protéico 3'),'vegetariana');
-  assert.equal(categoryFromSourceType('Guarnição','Carne Moída com Legumes'),'guarnicao');
+  assert.equal(categoryFromSourceType('Prato protéico 3','Torta colorida'),'proteina');
+  assert.equal(publishedCategory('proteina','Torta colorida','Prato protéico 3'),'proteina');
+  assert.equal(categoryFromSourceType('Guarnição','Carne Moída com Legumes'),'proteina');
   assert.equal(categoryFromSourceType('Prato protéico 1','Carne Moída com Legumes'),'proteina');
 });
 test('Quibe de Cenoura é vegetariano nos dois tipos oficiais conflitantes',()=>{
