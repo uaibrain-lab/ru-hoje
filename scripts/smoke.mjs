@@ -139,7 +139,7 @@ try {
   await page.getByRole('button',{name:'RU Setorial I Campus Pampulha',exact:true}).click();
   await page.evaluate(()=>window.dispatchEvent(new Event('online')));
   await page.getByText('Frango ao Vivo',{exact:true}).waitFor({timeout:12000});
-  assert.match(await page.locator('#update-line').innerText(),/FUMP ao vivo/);
+  assert.match(await page.locator('#update-line').innerText(),/FUMP oficial/);
   // A próxima data é consultada em segundo plano sem clique explícito.
   // Pré-carregamento agora vive somente em memória, jamais em localStorage.
   for (let attempt=0;attempt<60 && !relayRequests.some(x=>x.id==='6'&&x.date===tomorrow);attempt++) {
