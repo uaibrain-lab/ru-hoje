@@ -304,8 +304,8 @@ try {
   await pwaPage.waitForFunction(()=>!!navigator.serviceWorker.controller,null,{timeout:25000});
   await pwaPage.waitForTimeout(700);
   await pwaPage.evaluate(async()=>{
-    const c=await caches.open('hub-v276-20261117-fresh-menus-r1');
-    await c.put('/assets/app.js?v=hub-20261117-fresh-menus-r1',
+    const c=await caches.open('hub-v277-20261117-batch3-5-r1');
+    await c.put('/assets/app.js?v=hub-20261117-batch3-5-r1',
       new Response('throw new Error("STALE_CACHE_EXECUTED")',{
         headers:{'Content-Type':'text/javascript'}
       }));
