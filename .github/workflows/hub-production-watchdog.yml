@@ -1,9 +1,8 @@
 name: Hub UFMG — monitor de atualização automática
 
 on:
-  schedule:
-    # Vigilância contínua diária; minuto fora do início da hora para reduzir atrasos.
-    - cron: '17 * * * *'
+  # Cardapios atualizados sob demanda pelo navegador via Cloudflare Worker.
+  # Coleta administrativa permanece disponivel por workflow_dispatch.
   workflow_dispatch:
 
 permissions:
