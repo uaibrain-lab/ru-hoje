@@ -368,8 +368,18 @@ try {
     await busPage.locator('#interno-frame').evaluate(frame=>{
       frame.src='/interno/index.html?offline=1';
     });
-    await bus.locator('#sheet').waitFor({timeout:20000});
-    assert.match(await bus.locator('body').evaluate(()=>document.title),/Interno/);
+    // Não consultar o frame durante o redirect /interno/index.html -> /interno:
+    // Playwright pode perder o execution context apesar de #sheet já existir
+    // na navegação anterior. Aguarde o documento NOVO ficar completo.
+    await busPage.waitForFunction(()=>{
+      const frame=document.getElementById('interno-frame');
+      try {
+        const doc=frame?.contentDocument;
+        return doc?.readyState==='complete' && !!doc.querySelector('#sheet')
+          && /Interno/.test(doc.title)
+          && frame.contentWindow.location.pathname==='/interno';
+      }catch{return false;}
+    },null,{timeout:20000});
   }finally{
     await busContext.close();
   }
