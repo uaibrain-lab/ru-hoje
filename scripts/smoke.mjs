@@ -6,6 +6,7 @@ import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 import {isNonOperatingDay} from '../public/assets/date-availability.js';
+import {createPreviewServer} from './preview-local.mjs';
 const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..','public');
 const MIME={'.js':'text/javascript','.html':'text/html','.json':'application/json','.css':'text/css','.svg':'image/svg+xml','.png':'image/png','.webmanifest':'application/manifest+json'};
 const server=http.createServer(async(req,res)=>{
@@ -478,6 +479,61 @@ try {
     assert.equal(await direct.locator('#restaurant-dialog').evaluate(el=>el.open),false);
   }finally{await firstVisit.close();}
   console.log('E2E mobile aprovado: 375/390/412 px, consulta sob demanda, links diretos, histórico e Interno.');
+
+
+  // Prévia local real: 4 fontes oficiais (5 RUs, Saúde/Direito compartilham
+  // fonte) e 2 datas. Sem mock no navegador: exercita o relay HTTP do Node,
+  // as rotas limpas, a seleção de RU e o parser do app em conjunto.
+  const localRequests=[];
+  const previewServer=createPreviewServer({fetchFn:async upstream=>{
+    const u=new URL(upstream);
+    const id=u.searchParams.get('id'),date=u.searchParams.get('data');
+    localRequests.push({id,date});
+    assert.equal(u.origin,'https://hub-fump-proxy.hubufmg.workers.dev');
+    assert.ok(['1','2','5','6'].includes(id));
+    assert.ok(/^\\d{4}-\\d{2}-\\d{2}$/.test(date));
+    return new Response(JSON.stringify({id:Number(id),cardapios:[{
+      data:date,refeicoes:[{tipoRefeicao:'Almoço',pratos:[{
+        tipoPrato:'Prato protéico 1',descricaoPrato:`Prato fonte ${id} em ${date}`
+      }]}]
+    }]}),{status:200,headers:{
+      'Content-Type':'application/json','X-Menu-Fetched-At':new Date().toISOString()
+    }});
+  }});
+  await new Promise(resolve=>previewServer.listen(0,'127.0.0.1',resolve));
+  const previewOrigin=`http://127.0.0.1:${previewServer.address().port}`;
+  const previewContext=await browser.newContext({serviceWorkers:'block'});
+  try{
+    const preview=await previewContext.newPage();
+    await preview.goto(previewOrigin+'/',{waitUntil:'domcontentloaded'});
+    const ruOptions=[
+      ['RU Setorial I Campus Pampulha','6'],
+      ['RU Setorial II Campus Pampulha','1'],
+      ['RU Saúde Campus Saúde','2'],
+      ['RU Direito Faculdade de Direito','2'],
+      ['RU ICA Montes Claros','5']
+    ];
+    for(const [label,id] of ruOptions){
+      if(!(await preview.locator('#restaurant-dialog').evaluate(e=>e.open)))
+        await preview.locator('#restaurant-trigger').click();
+      await preview.getByRole('button',{name:label,exact:true}).click();
+      await preview.getByText(`Prato fonte ${id} em ${today}`,{exact:true}).waitFor({timeout:12000});
+      assert.equal(await preview.locator('.meal-card').count(),1);
+    }
+    const nextDay=new Date(Date.parse(today+'T12:00:00Z')+86400000).toISOString().slice(0,10);
+    await preview.locator(`.date-card[data-iso="${nextDay}"]`).click();
+    await preview.getByText(`Prato fonte 5 em ${nextDay}`,{exact:true}).waitFor({timeout:12000});
+    for(const id of ['1','2','5','6'])
+      assert.ok(localRequests.some(req=>req.id===id&&req.date===today),
+        `Prévia não consultou hoje para fonte ${id}`);
+    assert.ok(localRequests.some(req=>req.id==='5'&&req.date===nextDay),
+      'Prévia não consultou a data selecionada');
+    assert.equal(await preview.locator('#connection-notice').isVisible(),false);
+  }finally{
+    await previewContext.close();
+    await new Promise(resolve=>previewServer.close(resolve));
+  }
+  console.log('E2E prévia local aprovado: 5 RUs (4 fontes), troca de RU e dias, parser e proxy Node.');
 
   console.log('E2E Interno aprovado: Leaflet local, 49 pontos offline, mapa canônico e contingência sem tiles.');
 
