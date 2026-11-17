@@ -585,7 +585,7 @@ function initTheme() {
  */
 function setupPwaUpdates() {
   if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
-  const releaseKey='ruhoje:sw-refresh:hub-v282-20261117-menu-spacing';
+  const releaseKey='ruhoje:sw-refresh:hub-v283-20261117-menu-fold';
   const hadController=!!navigator.serviceWorker.controller;
   let reloadRequested=false;
   let reloading=false;
