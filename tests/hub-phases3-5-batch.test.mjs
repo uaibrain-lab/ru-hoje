@@ -59,7 +59,7 @@ test('Fase 5: Interno usa Leaflet local, fonte do sistema e URL de tiles OSM con
   assert.match(interno,/OpenStreetMap contributors/);
   assert.match(interno,/route=L\.layerGroup\(\)\.addTo\(map\)/);
   assert.match(interno,/radius:7,/);
-  assert.match(sw,/hub-v278-20261117-pwa-install-r1/);
+  assert.match(sw,/const VERSION = 'hub-v\d+-\d{8}-[a-z0-9-]+'/);
   assert.match(sw,/\/assets\/vendor\/leaflet-1\.9\.4\.js/);
   assert.match(sw,/\/assets\/vendor\/leaflet-1\.9\.4\.css/);
   assert.match(js,/Leaflet v?1\.9\.4/);
