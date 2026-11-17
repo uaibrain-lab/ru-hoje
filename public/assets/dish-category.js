@@ -174,6 +174,91 @@ const ICA_CATALOG = Object.freeze({
   'refresco': 'bebida',
 });
 
+// Referências de classificações de cardápios históricos FUMP (outubro/2026).
+// Não são cardápios atuais e NUNCA serão exibidos como pratos publicados.
+// Para nomes presentes apenas aqui, a categoria oficial ATUAL prevalece;
+// esta tabela atua como fallback quando o item vem sem tipo reconhecido.
+const HISTORICAL_FUMP_CATEGORIES = Object.freeze({
+  // acompanhamento (1)
+  "bolinho de milho": "acompanhamento",
+  // guarnicao (18)
+  "abobora cozida": "guarnicao",
+  "abobrinha a napolitana": "guarnicao",
+  "abobrinha no fuba": "guarnicao",
+  "batata corada ao forno": "guarnicao",
+  "cenoura vick": "guarnicao",
+  "chuchu tropeiro": "guarnicao",
+  "farofa com frutas": "guarnicao",
+  "farofa de repolho": "guarnicao",
+  "parafuso com brocolis": "guarnicao",
+  "penne ao manjericao": "guarnicao",
+  "salada de legumes": "guarnicao",
+  "sopa de abobora": "guarnicao",
+  "sopa de batata": "guarnicao",
+  "sopa de fuba": "guarnicao",
+  "sopa de inhame": "guarnicao",
+  "sopa de legumes": "guarnicao",
+  "sopa de mandioca": "guarnicao",
+  "virado de couve": "guarnicao",
+  // vegetariana (9)
+  "charuto de repolho": "vegetariana",
+  "cuscuz de legumes com coentro": "vegetariana",
+  "espinafre com ricota e abobrinha": "vegetariana",
+  "feijoada de soja": "vegetariana",
+  "hamburguer de grao de bico": "vegetariana",
+  "quibe assado com lentilha": "vegetariana",
+  "ratatule": "vegetariana",
+  "soja refogada com cenoura": "vegetariana",
+  "virado de lentilha": "vegetariana",
+  // proteina (21)
+  "bife de panela": "proteina",
+  "bife de porco acebolado": "proteina",
+  "bisteca ao molho": "proteina",
+  "bisteca suina assada": "proteina",
+  "carne caipira": "proteina",
+  "carne de porco frita": "proteina",
+  "carne moida a jardineira": "proteina",
+  "carne moida com azeitonas": "proteina",
+  "copa lombo assado": "proteina",
+  "coxa de frango ao molho": "proteina",
+  "escondidinho de frango": "proteina", // revisão nominal: tipo histórico não cadastrado
+  "falso lombo recheado com calabresa": "proteina",
+  "fricasse de frango": "proteina",
+  "isca de carne de porco acebolada": "proteina",
+  "isca de frango colorida": "proteina",
+  "isca de pernil": "proteina",
+  "linguica assada": "proteina",
+  "linguica toscana acebolada": "proteina",
+  "linguica toscana assada": "proteina",
+  "sobrecoxa de frango assada": "proteina",
+  "torta de frango": "proteina",
+  // molho (2)
+  "molho de manjericao": "molho", // revisão nominal: tipo histórico não cadastrado
+  "molho de salsao": "molho", // revisão nominal: tipo histórico não cadastrado
+  // salada (16)
+  "salada de acelga com alface": "salada",
+  "salada de acelga com alface roxo": "salada",
+  "salada de almeirao": "salada",
+  "salada de batata baroa": "salada",
+  "salada de berinjela com oregano": "salada",
+  "salada de beterraba": "salada",
+  "salada de chuchu com milho verde": "salada",
+  "salada de grao de bico ao vinagrete": "salada",
+  "salada de pepino": "salada",
+  "salada de repolho bicolor": "salada",
+  "salada de repolho com maionese": "salada",
+  "salada grega": "salada",
+  "salada tabule": "salada",
+  "salpicao de legumes": "salada",
+  "seleta de legumes": "salada",
+  "vinagrete": "salada",
+  // sobremesa (4)
+  "banana": "sobremesa",
+  "doce tablete": "sobremesa",
+  "fruta": "sobremesa",
+  "gelatina de morango": "sobremesa",
+});
+
 // Registro comprovado como "Prato protéico 3" na API, mas publicado
 // por versões anteriores com category='proteina'.
 const VERIFIED_VEGETARIAN_LEGACY = new Set([
@@ -189,17 +274,18 @@ const VERIFIED_VEGETARIAN_LEGACY = new Set([
   'assado de grao de bico',
 ]);
 
-// Única tabela de categorias para nomes exatos. O PDF de ingredientes não
-// traz o tipo FUMP de cada prato: a taxonomia foi revisada separadamente.
-// Inclui os 126 pratos do catálogo, aliases conhecidos e correções verificadas.
-const KNOWN_DISH_CATEGORIES = Object.freeze({
+// 1. Categorias revisadas (catálogo de ingredientes e exceções verificadas).
+// 2. Nomes só observados no histórico: fallback, não força mudança do tipo
+//    oficial atual quando ele existe (receitas podem variar entre os RUs).
+const VERIFIED_DISH_CATEGORIES = Object.freeze({
   ...ICA_CATALOG,
   ...UNREGISTERED_OVERRIDES,
   ...Object.fromEntries([...VERIFIED_VEGETARIAN_LEGACY].map(name=>[name,'vegetariana'])),
 });
 
 export function knownDishCategory(name) {
-  return KNOWN_DISH_CATEGORIES[normal(name)] || '';
+  const key=normal(name);
+  return VERIFIED_DISH_CATEGORIES[key] || HISTORICAL_FUMP_CATEGORIES[key] || '';
 }
 
 export function unregisteredCategory(name) {
@@ -223,7 +309,7 @@ export function unregisteredCategory(name) {
 export function categoryFromSourceType(sourceType, name = '') {
   // O tipo de item pode variar entre RUs. Para pratos já catalogados
   // (incluindo bife de milho), usar a categoria editorial confirmada.
-  const known=knownDishCategory(name);
+  const known=VERIFIED_DISH_CATEGORIES[normal(name)];
   if(known) return known;
   const t = normal(sourceType);
   if (t.includes('entrada')) return 'salada';
@@ -244,13 +330,18 @@ export function categoryFromSourceType(sourceType, name = '') {
  * Nunca escreve ou altera dados remotamente.
  */
 export function publishedCategory(category, name, sourceType = '') {
-  const known=knownDishCategory(name);
-  if(known) return known;
+  const key=normal(name);
+  const verified=VERIFIED_DISH_CATEGORIES[key];
+  if(verified) return verified;
   const original=normal(sourceType);
   if(original && original!=='tipo de item nao cadastrado') {
     const official=categoryFromSourceType(sourceType,name);
     if(official) return official;
   }
+  // Catálogo histórico amplia a cobertura sem contradizer uma categoria
+  // oficial atual reconhecida (ex.: charuto de repolho com recheio diferente).
+  const historical=HISTORICAL_FUMP_CATEGORIES[key];
+  if(historical) return historical;
   const saved=normal(category);
   if(!saved || saved==='outros' || saved==='tipo de item nao cadastrado') {
     return unregisteredCategory(name) || saved;
