@@ -61,7 +61,7 @@ test('Fase 5: Interno usa Leaflet local, fonte do sistema e URL de tiles OSM con
   assert.match(sw,/hub-v277-20261117-batch3-5-r1/);
   assert.match(sw,/\/assets\/vendor\/leaflet-1\.9\.4\.js/);
   assert.match(sw,/\/assets\/vendor\/leaflet-1\.9\.4\.css/);
-  assert.match(js,/Leaflet 1\.9\.4/);
+  assert.match(js,/Leaflet v?1\.9\.4/);
   assert.match(css,/data:image\/png;base64/);
   assert.doesNotMatch(css,/url\(images\//);
   assert.match(license,/BSD 2-Clause License/);
