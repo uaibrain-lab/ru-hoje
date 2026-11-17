@@ -316,7 +316,7 @@ function renderRestaurant() {
       renderRestaurant();
       renderDates();
       renderMenus();
-      refreshLive({force:true});
+      refreshLive({force:!liveMenuFor(state.selectedDate || sPauloParts().iso,item.id)});
       startPrefetch(item.id,state.selectedDate || sPauloParts().iso);
       $('restaurant-dialog').close();
       $('restaurant-trigger').focus();
@@ -378,7 +378,7 @@ function renderDates({ scroll = false } = {}) {
       // Focus returns to the new node after re-render (keyboard accessibility).
       if (event?.detail === 0) dateStrip.querySelector(`[data-iso="${iso}"]`)?.focus({preventScroll:true});
       renderMenus();
-      refreshLive({force:true});
+      refreshLive({force:!liveMenuFor(iso,state.selectedRu)});
       startPrefetch(state.selectedRu,iso);
     });
     dateStrip.append(card);
@@ -722,7 +722,7 @@ function boot() {
   initDialog();
   renderRestaurant(); renderDates({scroll:true}); renderMenus();
   loadIngredientCatalog().then(() => renderMenus());
-  $('today-button').addEventListener('click',()=> {cancelPrefetch();state.selectedDate=sPauloParts().iso;renderDates({scroll:true});renderMenus();refreshLive({force:true});startPrefetch(state.selectedRu,state.selectedDate);});
+  $('today-button').addEventListener('click',()=> {cancelPrefetch();state.selectedDate=sPauloParts().iso;renderDates({scroll:true});renderMenus();refreshLive({force:!liveMenuFor(state.selectedDate,state.selectedRu)});startPrefetch(state.selectedRu,state.selectedDate);});
   window.addEventListener('online',()=>{fetchMenus();refreshLive({force:true});startPrefetch(state.selectedRu,state.selectedDate);});
   window.addEventListener('offline',()=>{cancelPrefetch();renderMenus();});
   window.addEventListener('storage',event=>{
