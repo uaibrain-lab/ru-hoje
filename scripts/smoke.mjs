@@ -257,7 +257,7 @@ try {
     await busPage.evaluate(()=>document.getElementById('restaurant-dialog')?.close());
     await busPage.locator('#tab-interno').click();
     await bus.locator('#sheet').waitFor({timeout:20000});
-    assert.match(await bus.locator('body').evaluate(()=>location.pathname),/^\\/interno$/);
+    assert.equal(await bus.locator('body').evaluate(()=>location.pathname),'/interno');
     // Links ainda armazenados em HTML antigo também devem abrir o mapa.
     await busPage.locator('#interno-frame').evaluate(frame=>{
       frame.src='/interno/index.html?legacy=1';
