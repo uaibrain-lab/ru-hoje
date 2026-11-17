@@ -26,4 +26,11 @@ jobs:
       - run: npm run test:menu:spacing
       - run: npm run test:menu:fold
       - run: npm run test:menu:groups
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: menu-compact-visual-qa
+          path: qa-results/menu-compact/*.png
+          if-no-files-found: ignore
+          retention-days: 7
       - run: node --check public/assets/app.js && node --check public/service-worker.js && node --check scripts/sync.mjs && node --check scripts/publish.mjs && node --check cardapios-qa/scripts/ocupa-qa-api-monitor.mjs && bash -n scripts/fump-network-diagnostics.sh

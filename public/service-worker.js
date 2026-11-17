@@ -3,7 +3,7 @@
  * Cache permanece disponível offline, mas nunca congela uma versão antiga
  * de app.js, config.js ou seus imports após um deploy.
  */
-const VERSION = 'hub-v284-20261117-menu-groups';
+const VERSION = 'hub-v285-20261117-menu-compact';
 const SHELL = [
   '/', '/index.html', '/interno', '/favicon.ico', '/config.js',
   '/assets/app.js', '/assets/pwa-install.js', '/assets/vendor/leaflet-1.9.4.js',
