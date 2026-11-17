@@ -25,4 +25,5 @@ jobs:
       - run: npm run test:festas:mobile
       - run: npm run test:menu:spacing
       - run: npm run test:menu:fold
+      - run: npm run test:menu:groups
       - run: node --check public/assets/app.js && node --check public/service-worker.js && node --check scripts/sync.mjs && node --check scripts/publish.mjs && node --check cardapios-qa/scripts/ocupa-qa-api-monitor.mjs && bash -n scripts/fump-network-diagnostics.sh
