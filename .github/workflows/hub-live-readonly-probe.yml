@@ -2,14 +2,24 @@ name: Hub UFMG - auditoria de dados ao vivo (somente leitura)
 
 on:
   workflow_dispatch:
+  schedule:
+    # 07h30, 12h30 e 17h30 de segunda a sábado em Brasília (UTC-3).
+    # Nenhuma consulta escreve no site ou no Firestore.
+    - cron: '30 10,15,20 * * 1-6'
   pull_request:
     branches: [main]
     paths:
       - 'scripts/hub-live-readonly-probe.mjs'
+      - 'tests/hub-health-backup.test.mjs'
       - '.github/workflows/hub-live-readonly-probe.yml'
 
 permissions:
   contents: read
+  issues: write
+
+concurrency:
+  group: hub-live-readonly-probe
+  cancel-in-progress: false
 
 jobs:
   audit:
@@ -22,5 +32,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Confirmar leitura sem escrita
+      - name: Confirmar leitura oficial e sinalizar falha generalizada
+        id: audit
+        env:
+          HUB_HEALTH_STRICT: 'true'
         run: node scripts/hub-live-readonly-probe.mjs
+      - name: Consolidar incidente operacional, sem ações sobre a FUMP
+        if: ${{ always() && github.event_name != 'pull_request' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HUB_INCIDENT_LABEL: saude-site
+          HUB_INCIDENT_STATUS: ${{ steps.audit.outcome == 'success' && 'success' || 'failure' }}
+        run: bash scripts/hub-sync-incident.sh
