@@ -1,7 +1,7 @@
 // OCUPA_RU_P3_CLIENT_FIX
 import {currentOpening, weeklySummary} from './hours.js';
 import {publishedCategory} from './dish-category.js';
-import {needsMenuDot, dateChipLabel} from './date-availability.js';
+import {isNonOperatingDay, dateChipLabel} from './date-availability.js';
 import {readLiveMenu, sourceForRu, isValidLiveEntry, validISO} from './fump-live.js';
 import {buildPrefetchPlan, canRunBackgroundFetch, recentlyChecked, PREFETCH_LIMIT_PER_DAY, PREFETCH_MIN_GAP_MS} from './fump-prefetch.js';
 const SOURCE_URL = 'https://fump.ufmg.br/cardapio-do-dia/';
@@ -53,11 +53,11 @@ function liveMenuFor(date, ruId) {
 }
 function menuFor(date, ruId) { return liveMenuFor(date,ruId); }
 /**
- * O marcador sinaliza data com serviço regular, porém sem cardápio carregado.
- * Uma falha de rede não o oculta; ele some quando os pratos são validados.
+ * Indicador do calendário: aparece apenas em datas sem atendimento regular.
+ * Nunca depende de cardápio, HTTP 503 ou resposta da FUMP.
  */
-function missingMenuForDate(iso,ruId) {
-  return needsMenuDot(null,iso,ruId,!!liveMenuFor(iso,ruId));
+function nonOperatingDayForDate(iso,ruId) {
+  return isNonOperatingDay(iso,ruId);
 }
 // Ao atualizar para o modelo FUMP-only, descartar cardápios de instalações antigas.
  // Nenhum dado desses índices volta a ser lido nem salvo.
@@ -338,17 +338,17 @@ function renderDates({ scroll = false } = {}) {
     const iso = addDays(today, offset);
     const date = dayDate(iso);
     const isWeekend = [0, 6].includes(date.getUTCDay());
-    const withoutMenu = missingMenuForDate(iso,state.selectedRu);
+    const withoutService = nonOperatingDayForDate(iso,state.selectedRu);
     const card = el('button', 'date-card');
     card.type = 'button';
     card.dataset.iso = iso;
     card.dataset.weekend = String(isWeekend);
-    card.dataset.missingMenu = String(withoutMenu);
+    card.dataset.noRegularService = String(withoutService);
     card.setAttribute('aria-pressed', String(iso === state.selectedDate));
-    card.setAttribute('aria-label', `${friendlyDate(iso, {weekday:'long',day:'numeric',month:'long'})}${iso === today ? ', hoje' : ''}${withoutMenu ? ', sem cardápio carregado' : ''}`);
+    card.setAttribute('aria-label', `${friendlyDate(iso, {weekday:'long',day:'numeric',month:'long'})}${iso === today ? ', hoje' : ''}${withoutService ? ', sem atendimento regular previsto' : ''}`);
     card.append(el('span','weekday',friendlyDate(iso,{weekday:'short'}).replace('.','')),
       el('span','daynum',String(date.getUTCDate()).padStart(2,'0')),
-      el('span','daylabel',dateChipLabel(iso === today, withoutMenu)));
+      el('span','daylabel',dateChipLabel(iso === today, withoutService)));
     card.addEventListener('click', (event) => {
       cancelPrefetch();
       state.selectedDate = iso;
@@ -562,7 +562,7 @@ function initTheme() {
  */
 function setupPwaUpdates() {
   if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
-  const releaseKey='ruhoje:sw-refresh:hub-v274-20261117-fump-only-r1';
+  const releaseKey='ruhoje:sw-refresh:hub-v275-20261117-no-service-dots-r1';
   const hadController=!!navigator.serviceWorker.controller;
   let reloadRequested=false;
   let reloading=false;
