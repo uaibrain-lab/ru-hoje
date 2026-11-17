@@ -217,8 +217,8 @@ try {
   await pwaPage.waitForFunction(()=>!!navigator.serviceWorker.controller,null,{timeout:25000});
   await pwaPage.waitForTimeout(700);
   await pwaPage.evaluate(async()=>{
-    const c=await caches.open('hub-v270-20261116-demand-ready-r1');
-    await c.put('/assets/app.js?v=hub-20261116-demand-ready-r1',
+    const c=await caches.open('hub-v271-20261117-interno-navigation-r1');
+    await c.put('/assets/app.js?v=hub-20261117-interno-navigation-r1',
       new Response('throw new Error("STALE_CACHE_EXECUTED")',{
         headers:{'Content-Type':'text/javascript'}
       }));
