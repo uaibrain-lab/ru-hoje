@@ -188,7 +188,8 @@ try {
     'O teste deve simular erro na primeira sequência de pré-busca');
   assert.ok(observed.some(x=>x.id==='6' && x.date===day3),
     'Falha pontual bloqueou D+3');
-  assert.equal(await passive.locator('.date-card[data-iso="'+failedTomorrowPlusOne+'"]').getAttribute('data-missing-menu'),'true');
+  // Falha HTTP 503 significa disponibilidade desconhecida, nunca "sem cardápio".
+  assert.equal(await passive.locator('.date-card[data-iso="'+failedTomorrowPlusOne+'"]').getAttribute('data-missing-menu'),'false');
   assert.deepEqual(passiveErrors,[],'Exceção JS no pré-carregamento sem cliques');
   await passive.close();
   // A bolinha desapareceu em D+1 e D+3 sem visita manual a nenhuma data.
@@ -208,8 +209,8 @@ try {
   await pwaPage.waitForFunction(()=>!!navigator.serviceWorker.controller,null,{timeout:25000});
   await pwaPage.waitForTimeout(700);
   await pwaPage.evaluate(async()=>{
-    const c=await caches.open('hub-v269-20261116-hide-api-link-r1');
-    await c.put('/assets/app.js?v=hub-20261116-hide-api-link-r1',
+    const c=await caches.open('hub-v270-20261116-demand-ready-r1');
+    await c.put('/assets/app.js?v=hub-20261116-demand-ready-r1',
       new Response('throw new Error("STALE_CACHE_EXECUTED")',{
         headers:{'Content-Type':'text/javascript'}
       }));
