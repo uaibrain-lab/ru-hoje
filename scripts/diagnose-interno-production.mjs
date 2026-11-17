@@ -17,6 +17,7 @@ try{
     page.on('response',r=>{if(/interno|leaflet|openstreetmap/.test(r.url()) && (r.status()>=300 || network.length<6))network.push('HTTP '+r.status()+' '+r.url().slice(0,180));});
     try {
       await page.goto(base+'/',{waitUntil:'domcontentloaded',timeout:22000});
+      await page.evaluate(()=>document.getElementById('restaurant-dialog')?.close());
       await page.locator('#tab-interno').click({timeout:10000});
       await page.waitForTimeout(9500);
       const ifr=page.frameLocator('#interno-frame');
