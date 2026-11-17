@@ -54,6 +54,13 @@ export function auditPhaseZero(read=localRead) {
       /match \/publicMenus\/current\s*\{[^}]*allow list, create, update, delete: if false;/s.test(firestore) &&
       /match \/menuSyncRequests\/current\s*\{[^}]*allow read, write: if false;/s.test(firestore),
       'Coleções legadas de cardápios rejeitam escrita de cliente'),
+    ok('MENU_AUTHORITATIVE_ONLY',
+      app.includes('function menuFor(date, ruId) { return liveMenuFor(date,ruId); }') &&
+      app.includes('state.liveMenus.delete(key)') &&
+      !/firestore\.googleapis\.com|publicMenus\/current|\/data\/cardapios\.json|hydrateLiveMenus\(|persistLiveMenus\(|fetchMenus\(/.test(app) &&
+      !sw.includes("'/data/cardapios.json'") &&
+      !/publicFeedUrl/.test(read('public/config.js')),
+      'A interface só exibe cardápios da FUMP: sem Firestore, estático ou menu duradouro'),
     ok('RAFFLE_SINGLE_SCHEDULE_GATED',
       /cron: '10 21 \* \* 3-5'/.test(raffle) &&
       raffle.includes("vars.HUB_PROD_RAFFLES_ENABLED == 'true'") &&
@@ -86,7 +93,7 @@ export function auditPhaseZero(read=localRead) {
     checks:results, passed:results.filter(x=>x.pass).length,
     failed:results.filter(x=>!x.pass).map(x=>x.id),
     observedTechnicalDebt:[
-      'Cardápios ainda usam localStorage e fallback Firestore/JSON; remover apenas na Fase 1–3',
+      'Fase 1: Firestore/JSON e menu local foram retirados da exibição; revisar cache do Worker na Fase 2',
       'Interno ainda carrega Leaflet externo e tiles OSM; contingência na Fase 5',
       'Sorteios ainda dependem de GitHub Actions; migrar apenas após homologação da Fase 6',
       'Cache do Worker usa 240 s e pode servir resposta anterior; revisar na Fase 2'
