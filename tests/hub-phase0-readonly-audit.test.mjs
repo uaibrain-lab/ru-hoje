@@ -9,9 +9,9 @@ test('auditoria Fase 0 garante contratos críticos sem acessar rede ou mutar pro
   const report=auditPhaseZero();
   assert.equal(report.mode,'read-only');
   assert.equal(report.phase,0);
-  assert.equal(report.checks.length,8);
+  assert.equal(report.checks.length,9);
   assert.deepEqual(report.failed,[],JSON.stringify(report.checks.filter(x=>!x.pass)));
-  assert.equal(report.passed,8);
+  assert.equal(report.passed,9);
 });
 
 test('auditoria falha caso alguém habilite POST no Worker oficial',()=>{
@@ -46,4 +46,11 @@ test('auditoria falha se surgirem sorteios adicionais por agendamento',()=>{
 test('auditoria não exige chaves, Firestore Admin ou acesso ao navegador',()=>{
   const script=read('scripts/hub-phase0-readonly-audit.mjs');
   assert.doesNotMatch(script,/\bfetch\s*\(|https\.request\(|https\.get\(|writeFile|mkdirSync|firebase-admin|Firestore\(/);
+});
+
+test('auditoria Fase 1 bloqueia retorno de snapshots Firestore ao cardápio',()=>{
+  const report=auditPhaseZero(path=>path==='public/assets/app.js'
+    ? read(path)+"\nfunction fetchMenus(){ return fetch('https://firestore.googleapis.com/v1/legacy'); }"
+    : read(path));
+  assert.ok(report.failed.includes('MENU_AUTHORITATIVE_ONLY'));
 });
