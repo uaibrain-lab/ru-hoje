@@ -1011,10 +1011,8 @@ dialog{background:var(--card);color:var(--ink);border-color:var(--line)}
   #bandeco-main .meal-name h3{font-size:16px}
   #bandeco-main .meal-subtitle{margin-top:2px}
   #bandeco-main .meal-contents{margin-top:9px}
-  #bandeco-main .meal-contents .menu-group--main,
-  #bandeco-main .meal-contents .menu-group--vegetarian,
-  #bandeco-main .meal-contents .menu-group + .menu-group.menu-group--main,
-  #bandeco-main .meal-contents .menu-group + .menu-group.menu-group--vegetarian{
+  #bandeco-main .meal-contents .menu-group,
+  #bandeco-main .meal-contents .menu-group + .menu-group{
     padding:9px 11px;margin-top:8px;
   }
   #bandeco-main .meal-contents .menu-group:first-child{margin-top:0}
