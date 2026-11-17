@@ -301,10 +301,10 @@ export function unregisteredCategory(name) {
 }
 
 /**
- * Interpreta somente a classificação oficial publicada pela FUMP.
- * A posição "Prato protéico 3" é a alternativa vegetariana observada
- * nos cardápios oficiais; os demais protéicos continuam proteínas.
- * Retorno vazio: a fonte não deu uma classificação conhecida.
+ * Aplica a categoria revisada de nomes catalogados antes do tipo genérico.
+ * Para nomes sem categoria revisada, respeita o tipo atual da FUMP;
+ * "Prato protéico 3" é a alternativa vegetariana observada.
+ * Se a FUMP não informou tipo, recorre à classificação histórica conhecida.
  */
 export function categoryFromSourceType(sourceType, name = '') {
   // O tipo de item pode variar entre RUs. Para pratos já catalogados
@@ -324,10 +324,9 @@ export function categoryFromSourceType(sourceType, name = '') {
 }
 
 /**
- * Exibição de snapshots novos e legados.
- * 1. Prioriza o tipo oficial original quando presente e reconhecido.
- * 2. Sem essa evidência, aplica somente exceções pontuais verificadas.
- * Nunca escreve ou altera dados remotamente.
+ * Categoria usada na interface: primeiro o catálogo revisado, depois o tipo
+ * oficial atual e, apenas na ausência dele, a classificação histórica.
+ * Não altera nenhum payload da FUMP, nem grava dados remotamente.
  */
 export function publishedCategory(category, name, sourceType = '') {
   const key=normal(name);
