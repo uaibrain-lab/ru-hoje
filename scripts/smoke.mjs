@@ -388,35 +388,28 @@ try {
     assert.match(await bus.locator('body').innerText(),/Pontos|Linhas|Ponto perto de mim/);
     // Se ficar offline, o shell canônico já foi armazenado na instalação do SW.
     await busContext.setOffline(true);
-    await busPage.locator('#interno-frame').evaluate(frame=>{
+    await busPage.evaluate(()=>{
+      const frame=document.getElementById('interno-frame');
+      // Sem comparar a identidade, a espera pode passar no iframe ANTIGO
+      // ainda pronto, antes da nova navegação offline realmente começar.
+      window.__beforeOfflineDoc=frame?.contentDocument;
       frame.src='/interno/index.html?offline=1';
     });
-    // Não consultar o frame durante o redirect /interno/index.html -> /interno:
-    // Playwright pode perder o execution context apesar de #sheet já existir
-    // na navegação anterior. Aguarde o documento NOVO ficar completo.
-    await busPage.waitForFunction(()=>{
-      const frame=document.getElementById('interno-frame');
-      try {
-        const doc=frame?.contentDocument;
-        return doc?.readyState==='complete' && !!doc.querySelector('#sheet')
-          && /Interno/.test(doc.title)
-          && frame.contentWindow.location.pathname==='/interno';
-      }catch{return false;}
-    },null,{timeout:20000});
-    // "readyState=complete" confirma o HTML, não o fim da inicialização
-    // do mapa. O documento pode terminar antes do script Leaflet construir
-    // as 49 paradas (especialmente no SW offline do Chromium em CI).
-    // Aguarde os três sinais funcionais sem diminuir a exigência do teste.
     await busPage.waitForFunction(()=>{
       const frame=document.getElementById('interno-frame');
       try{
         const doc=frame?.contentDocument;
-        return frame?.contentWindow?.L?.version==='1.9.4'
-          && doc?.querySelectorAll('path.interno-stop').length===49
-          && /Mapa-base indisponível/.test(
-            doc?.getElementById('map-basemap-notice')?.textContent||'');
+        return doc && doc!==window.__beforeOfflineDoc &&
+          doc.readyState==='complete' && !!doc.querySelector('#sheet') &&
+          /Interno/.test(doc.title) &&
+          frame.contentWindow.location.pathname==='/interno' &&
+          frame.contentWindow.L?.version==='1.9.4' &&
+          doc.querySelectorAll('path.interno-stop').length===49 &&
+          /Mapa-base indisponível/.test(
+            doc.getElementById('map-basemap-notice')?.textContent||'');
       }catch{return false;}
     },null,{timeout:20000});
+    await busPage.evaluate(()=>delete window.__beforeOfflineDoc);
     const offlineMap=await busPage.evaluate(()=>{
       const frame=document.getElementById('interno-frame');
       const doc=frame?.contentDocument;
