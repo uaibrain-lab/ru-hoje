@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readFileSync,existsSync} from 'node:fs';
 import {due} from '../scripts/raffle-engine.mjs';
 import {assertPreparedRaffleResult,entriesSnapshotHash} from '../scripts/raffle-publication-guard.mjs';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
@@ -32,6 +32,7 @@ test('resultado preparado de verdade deve ter ganhador e hash do snapshot',()=>{
 });
 
 test('nenhuma tarefa recorrente de backup; cópia Git fica sob demanda',()=>{
+  assert.equal(existsSync(new URL('../scripts/HUB-BACKUP-AGENDAR.ps1',import.meta.url)),false);
   const deploy=read('scripts/HUB-BATCH-DEPLOY-VERIFICAR.ps1');
   const manual=read('scripts/HUB-BACKUP-GIT-LOCAL.ps1');
   assert.match(deploy,/if\(\$env:HUB_BACKUP_BEFORE_DEPLOY -eq "true"\)/);
