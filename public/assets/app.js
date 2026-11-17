@@ -668,7 +668,7 @@ function initTheme() {
  */
 function setupPwaUpdates() {
   if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
-  const releaseKey='ruhoje:sw-refresh:hub-v272-20261117-interno-markers-menu-dots-r1';
+  const releaseKey='ruhoje:sw-refresh:hub-v273-20261117-uniform-stop-markers-r1';
   const hadController=!!navigator.serviceWorker.controller;
   let reloadRequested=false;
   let reloading=false;
