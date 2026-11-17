@@ -9,7 +9,7 @@
     "test": "node --test tests/*.test.mjs",
     "scrape": "node scripts/sync.mjs",
     "publish": "node scripts/publish.mjs",
-    "serve": "python -m http.server 8080 --directory public",
+    "serve": "node scripts/preview-local.mjs",
     "test:e2e": "node scripts/smoke.mjs",
     "test:festas": "node scripts/test-festas-local.mjs",
     "test:festas:visual": "node scripts/test-festas-v244-visual.mjs",
