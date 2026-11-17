@@ -166,9 +166,11 @@ async function refreshLive({force = false, ruId = state.selectedRu, iso = state.
   const key = liveKey(iso,ruId);
   const now = Date.now();
   if (state.livePending.has(key)) return state.livePending.get(key);
-  // Tentativas de background e o clock a cada minuto respeitam cooldown,
-  // inclusive HTTP 503. Interação explícita passa force:true.
-  if (!force && now-(state.liveChecks.get(key) || 0) < 4*60_000) return {status:'SKIPPED'};
+  // Fase 2: atualizar automaticamente no máximo uma vez por minuto por
+  // RU/data. Cliques que pedem dados ainda ausentes têm janela mínima de 30s,
+  // evitando que repetidos cliques disparem consultas ilimitadas à FUMP.
+  const minimumGapMs=force && !background ? 30_000 : 60_000;
+  if (now-(state.liveChecks.get(key) || 0) < minimumGapMs) return {status:'SKIPPED'};
   state.liveChecks.set(key,now);
   const proxyUrl=window.RU_CONFIG?.fumpProxyUrl || '';
   const task = readLiveMenu(ruId,iso, background
@@ -562,7 +564,7 @@ function initTheme() {
  */
 function setupPwaUpdates() {
   if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
-  const releaseKey='ruhoje:sw-refresh:hub-v275-20261117-no-service-dots-r1';
+  const releaseKey='ruhoje:sw-refresh:hub-v276-20261117-fresh-menus-r1';
   const hadController=!!navigator.serviceWorker.controller;
   let reloadRequested=false;
   let reloading=false;

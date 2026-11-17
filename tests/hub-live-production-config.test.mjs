@@ -28,8 +28,8 @@ test('GitHub scheduled sync uses same verified proxy without requiring manually 
 test('service worker changes version and HTML app URL to avoid stale code',()=>{
   const sw=read('../public/service-worker.js');
   const html=read('../public/index.html');
-  assert.match(sw,/hub-v275-20261117-no-service-dots-r1/);
-  assert.match(html,/app\.js\?v=hub-20261117-no-service-dots-r1/);
+  assert.match(sw,/hub-v276-20261117-fresh-menus-r1/);
+  assert.match(html,/app\.js\?v=hub-20261117-fresh-menus-r1/);
   assert.ok(sw.includes("path==='/config.js'"));
   assert.match(sw,/cache:'no-store'/);
   assert.match(sw,/path\.endsWith\('\.js'\)/);
@@ -49,7 +49,7 @@ test('atualizacao FUMP por acesso nao requer cron GitHub nem exibe ausencia sem 
   assert.match(core,/function nonOperatingDayForDate\(iso,ruId\)/);
   assert.match(core,/return isNonOperatingDay\(iso,ruId\)/);
   assert.ok(!core.includes('A consulta à FUMP não retornou pratos nesta data. Isso não confirma que o RU esteja fechado.'));
-  assert.match(core,/if \(!force && now-\(state\.liveChecks\.get\(key\) \|\| 0\) < 4\*60_000\) return \{status:'SKIPPED'\}/);
+  assert.match(core,/const minimumGapMs=force && !background \? 30_000 : 60_000/);
   assert.match(core,/refreshLive\(\{force:true\}\)/);
   const wf=[
     'hub-production-cardapios.yml',

@@ -95,7 +95,12 @@ try {
       ]}] : [];
     await route.fulfill({
       status:200,contentType:'application/json',
-      headers:{'Access-Control-Allow-Origin':'*','Cache-Control':'no-store'},
+      headers:{
+        'Access-Control-Allow-Origin':'*',
+        'Access-Control-Expose-Headers':'X-Menu-Fetched-At, CF-Cache-Status',
+        'X-Menu-Fetched-At':new Date().toISOString(),
+        'Cache-Control':'no-store'
+      },
       body:JSON.stringify({id:Number(id),cardapios})
     });
   };
@@ -151,6 +156,12 @@ try {
   assert.equal(await page.getByRole('link',{name:/Abrir resposta oficial deste RU\/data/i}).count(),0);
   assert.equal(await page.locator('.no-menu a[href*=":3003/"]').count(),0);
 
+  // O relógio de teste avança 31s para ultrapassar o limite de clique,
+  // sem aguardar o tempo real nem abrir uma exceção no rate-limit de produção.
+  await page.evaluate(()=>{
+    window.__realDateNow=Date.now;
+    Date.now=()=>window.__realDateNow()+31_000;
+  });
   // Mudança oficial de última hora deve substituir a resposta anterior sem snapshots.
   liveEnabled = true;
   await page.locator('.date-card').first().click();
@@ -158,6 +169,10 @@ try {
   await page.getByRole('button',{name:'RU Setorial I Campus Pampulha',exact:true}).click();
   await page.evaluate(()=>window.dispatchEvent(new Event('online')));
   await page.getByText('Frango ao Vivo',{exact:true}).waitFor({timeout:12000});
+  await page.evaluate(()=>{
+    Date.now=window.__realDateNow;
+    delete window.__realDateNow;
+  });
   assert.match(await page.locator('#update-line').innerText(),/FUMP oficial/);
   // A próxima data é consultada em segundo plano sem clique explícito.
   // Pré-carregamento agora vive somente em memória, jamais em localStorage.
@@ -178,8 +193,20 @@ try {
   await page.locator('.date-card').first().click();
   await page.getByText('Frango ao Vivo',{exact:true}).waitFor({timeout:12000});
   failOfficialToday=true;
-  await page.evaluate(()=>window.dispatchEvent(new Event('online')));
+  // Avançar somente o relógio do cooldown da página no E2E, sem aguardar 30s.
+  // A data oficial da resposta continua vindo da API simulada.
+  await page.evaluate(()=>{
+    window.__realDateNow=Date.now;
+    // A consulta anterior foi feita com relógio +31s. +65s garante
+    // novo intervalo de pelo menos 30s antes do 503 simulado.
+    Date.now=()=>window.__realDateNow()+65_000;
+    window.dispatchEvent(new Event('online'));
+  });
   await page.getByText('Ainda sem cardápio por aqui').waitFor({timeout:17000});
+  await page.evaluate(()=>{
+    Date.now=window.__realDateNow;
+    delete window.__realDateNow;
+  });
   assert.equal(await page.getByText('Frango ao Vivo',{exact:true}).count(),0);
   assert.match(await page.locator('#connection-notice').innerText(),/Não foi possível consultar a FUMP/);
   failOfficialToday=false;
@@ -277,8 +304,8 @@ try {
   await pwaPage.waitForFunction(()=>!!navigator.serviceWorker.controller,null,{timeout:25000});
   await pwaPage.waitForTimeout(700);
   await pwaPage.evaluate(async()=>{
-    const c=await caches.open('hub-v275-20261117-no-service-dots-r1');
-    await c.put('/assets/app.js?v=hub-20261117-no-service-dots-r1',
+    const c=await caches.open('hub-v276-20261117-fresh-menus-r1');
+    await c.put('/assets/app.js?v=hub-20261117-fresh-menus-r1',
       new Response('throw new Error("STALE_CACHE_EXECUTED")',{
         headers:{'Content-Type':'text/javascript'}
       }));

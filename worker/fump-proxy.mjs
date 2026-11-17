@@ -104,16 +104,28 @@ export async function handleRequest(request,{
       const hit=await cache.match(cacheKey);
       if(hit){
         const body=await hit.text();
-        const headers=corsHeaders(origin);
-        headers.set('Content-Type','application/json; charset=utf-8');
-        const wasPositive = isRestaurants || (()=> {
-          try {return JSON.parse(body)?.cardapios?.length>0;}catch{return false;}
-        })();
-        headers.set('Cache-Control','public,max-age=60,stale-if-error='+(wasPositive ? 1800 : 0));
+        // Nunca prolongar TTL com um HIT nem devolver resposta antiga da
+        // configuração anterior. A hora original da coleta é a autoridade.
         const recorded=hit.headers.get('X-Menu-Fetched-At');
-        if(recorded) headers.set('X-Menu-Fetched-At',recorded);
-        headers.set('X-Menu-Cache','HIT');
-        return new Response(body,{status:200,headers});
+        const fetchedMs=Date.parse(recorded || '');
+        let cacheSeconds=0;
+        try {
+          const value=JSON.parse(body);
+          cacheSeconds=isRestaurants ? 1800 : (value?.cardapios?.length ? 60 : 15);
+        } catch { /* cache inválido -> buscar origem */ }
+        const ageMs=now.getTime()-fetchedMs;
+        if(cacheSeconds>0 && Number.isFinite(ageMs) && ageMs>=0 &&
+           ageMs<cacheSeconds*1000) {
+          const headers=corsHeaders(origin);
+          headers.set('Content-Type','application/json; charset=utf-8');
+          headers.set('Cache-Control',`public,max-age=${Math.max(0,Math.floor((cacheSeconds*1000-ageMs)/1000))}`);
+          headers.set('X-Menu-Fetched-At',recorded);
+          headers.set('X-Menu-Cache','HIT');
+          return new Response(body,{status:200,headers});
+        }
+        // Fail closed: um registro sem timestamp ou vencido não é contingência.
+        // Removê-lo evita tentativas repetidas de servir cache expirado.
+        await cache.delete?.(cacheKey);
       }
     } catch { /* cache indisponível não impede acesso à origem */ }
   }
@@ -165,10 +177,9 @@ export async function handleRequest(request,{
   } finally { clearTimeout(timeout); }
 
   const body=JSON.stringify(raw);
-  const seconds=isRestaurants ? 1800 : (raw.cardapios.length ? 240 : 30);
-  // Falha temporaria: ate 30 minutos de contingencia apenas para cardapios
-  // com pratos confirmados. Resposta vazia nao ganha stale-if-error.
-  const staleSeconds=isRestaurants || raw.cardapios.length ? 1800 : 0;
+  // Fase 2: o mesmo cardápio só pode ser reutilizado por até 60 segundos.
+  // Resposta vazia expira antes (15 s); falhas da FUMP nunca usam stale cache.
+  const seconds=isRestaurants ? 1800 : (raw.cardapios.length ? 60 : 15);
   const fetchedAt=now.toISOString();
   if(cache){
     const put=cache.put(cacheKey,new Response(body,{
@@ -184,7 +195,7 @@ export async function handleRequest(request,{
   }
   const headers=corsHeaders(origin);
   headers.set('Content-Type','application/json; charset=utf-8');
-  headers.set('Cache-Control',`public,max-age=${seconds},stale-if-error=${staleSeconds}`);
+  headers.set('Cache-Control',`public,max-age=${seconds}`);
   headers.set('X-Menu-Fetched-At',fetchedAt);
   headers.set('X-Menu-Cache','MISS');
   return new Response(body,{status:200,headers});

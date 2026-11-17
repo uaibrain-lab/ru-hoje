@@ -11,6 +11,13 @@ const APP_TO_SOURCE = Object.freeze({
   'setorial-i':'6', 'setorial-ii':'1', saude:'2', direito:'2', ica:'5'
 });
 const DEFAULT_TIMEOUT_MS = 8500;
+// TTL de 60s do Worker + 10s para atraso de rede/relógio entre dispositivos.
+export const MAX_MENU_FRESHNESS_MS = 70_000;
+export function freshMenuTimestamp(value, nowMs=Date.now()) {
+  const time=typeof value==='string' && value.trim() ? Date.parse(value) : NaN;
+  const age=nowMs-time;
+  return Number.isFinite(time) && Number.isFinite(nowMs) && age>=-10_000 && age<=MAX_MENU_FRESHNESS_MS;
+}
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const clean = error => String(error?.message || error?.name || 'UNKNOWN')
   .replace(/[^A-Za-z0-9_ .:/-]/g, '_').slice(0, 96);
@@ -110,7 +117,8 @@ export async function readLiveMenu(ruId, iso, {
   let cacheStatus='';
   for (let attempt=1;attempt<=maxAttempts;attempt++) {
     try {
-      const incoming=await fetchOnce(url,fetchFn,timeoutMs,proxyUrl ? 'default' : 'no-store');
+      // Um só nível de cache (Worker). Nunca estender o TTL pelo HTTP cache do navegador.
+      const incoming=await fetchOnce(url,fetchFn,timeoutMs,'no-store');
       response=incoming.body;
       sourceFetchedAt=incoming.upstreamFetchedAt;
       cacheStatus=incoming.cacheStatus;
@@ -123,6 +131,10 @@ export async function readLiveMenu(ruId, iso, {
     }
   }
   try {
+    if (proxyUrl && !freshMenuTimestamp(sourceFetchedAt,nowFn().getTime()))
+      return {status:'FETCH_ERROR',ruId,iso,error:'FUMP_RESPONSE_STALE_OR_UNVERIFIED'};
+    if (cacheStatus==='STALE')
+      return {status:'FETCH_ERROR',ruId,iso,error:'FUMP_RESPONSE_STALE'};
     if (!response || !Array.isArray(response.cardapios)) throw new Error('FUMP_LIVE_SCHEMA_CHANGED');
     if (response.id != null && String(response.id)!==sourceId) throw new Error('FUMP_LIVE_RU_MISMATCH');
     const {meals,meta} = parseMenuJson(response,{iso,sourceId});
@@ -131,10 +143,7 @@ export async function readLiveMenu(ruId, iso, {
     }
     // Quando o JSON não traz data explícita, a consulta é atribuída à data
     // solicitada nos dois parâmetros oficiais. Não aceitar qualquer data divergente.
-    const stamped=sourceFetchedAt && Date.parse(sourceFetchedAt);
-    const stampedNow=nowFn();
-    const fetchedAt=Number.isFinite(stamped) && stamped <= stampedNow.getTime()+600000
-      ? new Date(stamped).toISOString() : stampedNow.toISOString();
+    const fetchedAt=proxyUrl ? new Date(sourceFetchedAt).toISOString() : nowFn().toISOString();
     return {status:'VALID_MENU',ruId,iso,sourceId,fetchedAt,cacheStatus,
       dateEvidence:meta.checkedDates ? 'response' : 'request',
       meals:Object.fromEntries(Object.entries(meals).map(([key,v]) => [
@@ -150,7 +159,7 @@ export function isValidLiveEntry(value, iso, ruId) {
   return !!(value && value.iso===iso
     && value.sourceRestaurantId===sourceForRu(ruId)
     && typeof value.fetchedAt==='string' && Number.isFinite(Date.parse(value.fetchedAt))
-    && Date.parse(value.fetchedAt)<=Date.now()+600000
+    && freshMenuTimestamp(value.fetchedAt)
     && value.meals && typeof value.meals==='object'
     && Object.values(value.meals).some(meal => Array.isArray(meal?.items)
       && meal.items.some(item => typeof item?.name==='string' && item.name.trim())));
