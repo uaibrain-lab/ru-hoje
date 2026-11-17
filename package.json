@@ -15,6 +15,7 @@
     "serve": "node scripts/preview-local.mjs",
     "test:e2e": "node scripts/smoke.mjs",
     "test:festas": "node scripts/test-festas-local.mjs",
+    "test:festas:card": "node scripts/qa-festas-card-frame.mjs",
     "test:festas:visual": "node scripts/test-festas-v244-visual.mjs",
     "test:festas:visual:v245": "node scripts/test-festas-v245-visual.mjs",
     "test:festas:security": "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File scripts/Test-Festas-Security-Standalone.ps1 -Suite Full",
