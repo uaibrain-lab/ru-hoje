@@ -569,7 +569,7 @@ function initTheme() {
  */
 function setupPwaUpdates() {
   if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
-  const releaseKey='ruhoje:sw-refresh:hub-v277-20261117-batch3-5-r1';
+  const releaseKey='ruhoje:sw-refresh:hub-v278-20261117-pwa-install-r1';
   const hadController=!!navigator.serviceWorker.controller;
   let reloadRequested=false;
   let reloading=false;

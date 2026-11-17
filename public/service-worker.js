@@ -3,10 +3,10 @@
  * Cache permanece disponível offline, mas nunca congela uma versão antiga
  * de app.js, config.js ou seus imports após um deploy.
  */
-const VERSION = 'hub-v277-20261117-batch3-5-r1';
+const VERSION = 'hub-v278-20261117-pwa-install-r1';
 const SHELL = [
   '/', '/index.html', '/interno', '/favicon.ico', '/config.js',
-  '/assets/app.js', '/assets/vendor/leaflet-1.9.4.js',
+  '/assets/app.js', '/assets/pwa-install.js', '/assets/vendor/leaflet-1.9.4.js',
   '/assets/vendor/leaflet-1.9.4.css', '/assets/fump-live.js', '/assets/fump-prefetch.js',
   '/assets/fump-parse.js', '/assets/dish-category.js',
   '/assets/date-availability.js', '/assets/festas.js',
@@ -24,7 +24,7 @@ const SHELL = [
   '/data/pratos-ingredientes.json'
 ];
 const CORE = [
-  '/', '/index.html', '/interno', '/config.js', '/assets/app.js',
+  '/', '/index.html', '/interno', '/config.js', '/assets/app.js', '/assets/pwa-install.js',
   // Mapa offline é parte essencial: instalação só é ativada com JS/CSS Leaflet.
   '/assets/vendor/leaflet-1.9.4.js', '/assets/vendor/leaflet-1.9.4.css',
   '/assets/fump-live.js', '/assets/fump-parse.js',
