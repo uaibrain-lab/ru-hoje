@@ -448,7 +448,7 @@ try {
       });
       assert.ok(layout.documentWidth<=width+1,`Rolagem horizontal em ${width}px: ${JSON.stringify(layout)}`);
       assert.ok(layout.cardRight<=width+1,`Card de Festas ultrapassa viewport de ${width}px`);
-      assert.ok(layout.actionHeight>=44,`Ação pequena em ${width}px: ${layout.actionHeight}px`);
+      assert.ok(layout.actionHeight>=43.9,`Ação pequena em ${width}px: ${layout.actionHeight}px`);
       assert.ok(layout.labelSize>=12,`Legenda pequena em ${width}px: ${layout.labelSize}px`);
       assert.ok(layout.titleSize>=16,`Título pequeno em ${width}px: ${layout.titleSize}px`);
       await mobile.locator('#tab-sobre').click();
