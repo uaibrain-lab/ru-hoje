@@ -96,8 +96,8 @@ try{
       assert.ok(metrics.docWidth<=width+1,'Rolagem horizontal detectada: '+hint);
       const groups=metrics.groups;
       const base=groups[0];
-      assert.ok(base.label.includes('PRATOS PRINCIPAIS'),'Ordem principal incorreta: '+hint);
-      assert.ok(groups[1].label.includes('OPÇÃO VEGETARIANA'),'Ordem vegetariana incorreta: '+hint);
+      assert.ok(base.label.toLocaleLowerCase('pt-BR').includes('pratos principais'),'Ordem principal incorreta: '+hint);
+      assert.ok(groups[1].label.toLocaleLowerCase('pt-BR').includes('opção vegetariana'),'Ordem vegetariana incorreta: '+hint);
       for(const group of groups){
         assert.ok(Math.abs(group.box.left-base.box.left)<1,
           'Categorias com recuo esquerdo diferente: '+hint);
