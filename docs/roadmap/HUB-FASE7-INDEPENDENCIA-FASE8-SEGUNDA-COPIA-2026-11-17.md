@@ -54,9 +54,12 @@ compartilhamento de rede ou pasta de sincronização autorizada. Ele:
 3. Confere SHA-256 da cópia e também executa um clone real da cópia.
 4. Se a cópia estiver no mesmo volume, avisa que não há isolamento físico.
 
-Para o deploy final, a pasta secundária é opcional e configurada por
-variável de ambiente local `HUB_BACKUP_SECONDARY_PATH`. Se não definida,
-o backup continua apenas em `Documents/Hub-UFMG-Backups`.
+O backup não é periódico e não é necessário para a publicação normal:
+o código já está versionado no GitHub. O operador pode executá-lo diretamente
+quando houver necessidade de uma cópia fora do repositório. Durante o deploy,
+ele só roda com `HUB_BACKUP_BEFORE_DEPLOY=true`; se uma segunda pasta for
+desejada, indicar `HUB_BACKUP_SECONDARY_PATH`. Nenhuma dessas opções
+está habilitada por padrão.
 
 **Limites importantes:** backup Git não inclui documentos Firestore,
 dados pessoais, chaves privadas ou configuração de conta Cloudflare.
@@ -81,8 +84,8 @@ seguem como etapa posterior, a ser tratada sem publicar dados sensíveis.
 O script preparado é `scripts/HUB-BATCH-DEPLOY-VERIFICAR.ps1` (PowerShell 5.1).
 Depois que todos os lotes estiverem aprovados, ele fará em uma execução:
 
-1. Atualizar `main` e gerar backup Git, com teste real de restauração;
-   fazer segunda cópia validada se o caminho secundário estiver configurado.
+1. Atualizar `main` e, somente quando solicitado explicitamente,
+   criar snapshot Git com restauração de teste.
 2. Auditar as regras locais de segurança.
 3. Publicar o Cloudflare Worker **e o Cron**.
 4. Verificar em HTTPS que o Worker bloqueia IDs arbitrários (400), retorna
@@ -103,21 +106,13 @@ Triggers no painel Cloudflare e o conteúdo de Hosting. O requisito de
 autonomia permanente continua limitado por disponibilidade, cota gratuita
 e mudanças de políticas dos provedores.
 
-## Cópia local semanal opcional (não ativada automaticamente)
+## Decisão de escopo: sem backup semanal
 
-A nova ferramenta `scripts/HUB-BACKUP-AGENDAR.ps1` permite consultar,
-instalar ou remover uma tarefa semanal do Agendador do Windows que executa
-`HUB-BACKUP-GIT-LOCAL.ps1`. Sem a opção explícita `-Acao Instalar`,
-**nada é agendado**. O agendamento usa a conta interativa sem elevação,
-domingo às 19h, com `StartWhenAvailable` para retomar tarefas perdidas
-quando o Windows voltar a executar o Agendador.
+O agendamento semanal do Windows foi descartado. Não resolve o risco principal
+do site (perda de inscrições/resultados do Firestore) e duplica um histórico
+que já existe no GitHub. Não há tarefa programada no projeto.
 
-Exemplo futuro, somente depois de escolher a unidade externa de backup:
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File ".\scripts\HUB-BACKUP-AGENDAR.ps1" -Acao Instalar -DestinoSecundario "X:\Hub-UFMG"
-```
-
-Isso **não é backup automático em nuvem**: requer que o computador esteja
-ligado, a conta do Windows conectada, espaço disponível e um destino secundário
-realmente independente. Não copia dados sensíveis do Firestore e não cria
-nenhum agendamento sem autorização do operador.
+Permanecem apenas o versionamento GitHub, o backup dos dados públicos próprios
+do Interno já incluído no repositório e uma ferramenta manual de snapshot Git
+para uso excepcional. Uma eventual recuperação de dados de participantes
+precisará de um projeto específico, privado e proporcional ao risco.
