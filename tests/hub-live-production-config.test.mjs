@@ -49,6 +49,8 @@ test('atualizacao FUMP por acesso nao requer cron GitHub nem exibe ausencia sem 
   assert.match(core,/function missingMenuForDate\(iso,ruId\)/);
   assert.match(core,/current==='NOT_PUBLISHED'/);
   assert.match(core,/status==='NOT_PUBLISHED'/);
+  assert.match(core,/if \(!force && now-\(state\.liveChecks\.get\(key\) \|\| 0\) < 4\*60_000\) return \{status:'SKIPPED'\}/);
+  assert.match(core,/refreshLive\(\{force:true\}\)/);
   const wf=[
     'hub-production-cardapios.yml',
     'hub-production-request-processor.yml',
