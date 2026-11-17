@@ -259,6 +259,28 @@ const HISTORICAL_FUMP_CATEGORIES = Object.freeze({
   "gelatina de morango": "sobremesa",
 });
 
+// Novos nomes detectados em consulta oficial ao Worker da FUMP em
+// 17–19/11/2026 (IDs 6, 1, 2, 5; datas consultadas até 01/12).
+// Atua SOMENTE como fallback se o tipo atual vier ausente: receitas e
+// categorias podem mudar; nunca substituir o dado oficial atual sem prova.
+const OBSERVED_FUMP_CATEGORIES_NOV2026 = Object.freeze({
+  'banana prata': 'sobremesa',
+  'carne moida com legumes': 'proteina',
+  'chuchu refogado': 'guarnicao',
+  'doce de abobora': 'sobremesa',
+  'feijao com bacon': 'acompanhamento',
+  'feijao tropeiro': 'acompanhamento',
+  'gelatina de uva': 'sobremesa',
+  'melao': 'sobremesa',
+  'repolho bulgaro': 'guarnicao',
+  'salada de almeirao com alface roxa': 'salada',
+  'salada de almeirao com repolho': 'salada',
+  'salada de almeirao com repolho roxo': 'salada',
+  'salada de jilo': 'salada',
+  'sopa de fuba com couve': 'guarnicao',
+  'torta colorida': 'proteina',
+});
+
 // Registro comprovado como "Prato protéico 3" na API, mas publicado
 // por versões anteriores com category='proteina'.
 const VERIFIED_VEGETARIAN_LEGACY = new Set([
@@ -285,7 +307,8 @@ const VERIFIED_DISH_CATEGORIES = Object.freeze({
 
 export function knownDishCategory(name) {
   const key=normal(name);
-  return VERIFIED_DISH_CATEGORIES[key] || HISTORICAL_FUMP_CATEGORIES[key] || '';
+  return VERIFIED_DISH_CATEGORIES[key] || HISTORICAL_FUMP_CATEGORIES[key] ||
+    OBSERVED_FUMP_CATEGORIES_NOV2026[key] || '';
 }
 
 export function unregisteredCategory(name) {
@@ -314,6 +337,9 @@ const VERIFIED_SOURCE_CORRECTIONS = Object.freeze({
   // como "Prato protéico 3", mas outros RUs podem fornecer tipos conflitantes.
   'espinafre com ricota e abobrinha': 'vegetariana',
   'hamburguer de grao de bico': 'vegetariana',
+  // Confirmado como prato vegetariano no histórico e em 19/11/2026:
+  // ID=1 usa protéico 3; ID=2 usa protéico 2 para o mesmo nome.
+  'quibe de cenoura': 'vegetariana',
 });
 
 /**
