@@ -207,7 +207,7 @@ async function refreshLive({force = false, ruId = state.selectedRu, iso = state.
     ? {maxAttempts:1,timeoutMs:12000,proxyUrl}
     : {maxAttempts:proxyUrl ? 2 : 1,proxyUrl}).then(result => {
     recordPrefetchCheck(key,result.status);
-    state.liveStatus.set(key,{status:result.status,at:new Date().toISOString(),error:result.error || null});
+    state.liveStatus.set(key,{status:result.status,at:new Date().toISOString(),cacheStatus:result.cacheStatus||'',error:result.error || null});
     if (result.status === 'VALID_MENU') {
       // Apenas dados positivos e validados podem alterar o que aparece.
       const payload = {iso,ruId,meals:result.meals,sourceRestaurantId:result.sourceId,fetchedAt:result.fetchedAt};
@@ -517,7 +517,8 @@ function renderMenus() {
   // A consulta ao Worker em andamento não deve parecer um erro definitivo.
   const waitingForLive=state.livePending.has(selectedKey) && !liveStatus;
   const sourceLabel = live
-    ? (liveStatus?.status === 'VALID_MENU' ? 'FUMP ao vivo' : 'Última consulta direta válida')
+    ? (liveStatus?.cacheStatus === 'STALE' ? 'Última resposta oficial em contingência'
+      : liveStatus?.status === 'VALID_MENU' ? 'FUMP ao vivo' : 'Última consulta direta válida')
     : state.snapshotSource === 'firestore' ? 'Cópia sincronizada (Firestore)'
     : state.snapshotSource === 'static' ? 'Cópia estática'
     : 'Cópia local';
@@ -537,6 +538,10 @@ function renderMenus() {
   } else if (!navigator.onLine) {
     $('connection-notice').textContent = 'Você está offline. Os dados disponíveis podem estar desatualizados.';
     $('connection-notice').hidden = false;
+  }
+  if (live && liveStatus?.cacheStatus === 'STALE') {
+    $('connection-notice').textContent='A consulta atual está indisponível. Exibindo uma resposta anterior validada da FUMP.';
+    $('connection-notice').hidden=false;
   }
   if (day === today.iso && liveStatus && liveStatus.status !== 'VALID_MENU' && !live && data &&
       !state.lastError && !state.fallbackUsed && navigator.onLine) {
