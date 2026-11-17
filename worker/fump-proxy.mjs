@@ -43,6 +43,7 @@ function corsHeaders(origin) {
     headers.set('Access-Control-Allow-Methods','GET, OPTIONS');
     headers.set('Access-Control-Allow-Headers','Accept, Content-Type');
     headers.set('Access-Control-Max-Age','7200');
+    headers.set('Access-Control-Expose-Headers','X-Menu-Cache, X-Menu-Fetched-At, CF-Cache-Status');
   }
   return headers;
 }
@@ -105,7 +106,12 @@ export async function handleRequest(request,{
         const body=await hit.text();
         const headers=corsHeaders(origin);
         headers.set('Content-Type','application/json; charset=utf-8');
-        headers.set('Cache-Control','public,max-age=60');
+        const wasPositive = isRestaurants || (()=> {
+          try {return JSON.parse(body)?.cardapios?.length>0;}catch{return false;}
+        })();
+        headers.set('Cache-Control','public,max-age=60,stale-if-error='+(wasPositive ? 1800 : 0));
+        const recorded=hit.headers.get('X-Menu-Fetched-At');
+        if(recorded) headers.set('X-Menu-Fetched-At',recorded);
         headers.set('X-Menu-Cache','HIT');
         return new Response(body,{status:200,headers});
       }
@@ -160,11 +166,16 @@ export async function handleRequest(request,{
 
   const body=JSON.stringify(raw);
   const seconds=isRestaurants ? 1800 : (raw.cardapios.length ? 240 : 30);
+  // Falha temporaria: ate 30 minutos de contingencia apenas para cardapios
+  // com pratos confirmados. Resposta vazia nao ganha stale-if-error.
+  const staleSeconds=isRestaurants || raw.cardapios.length ? 1800 : 0;
+  const fetchedAt=now.toISOString();
   if(cache){
     const put=cache.put(cacheKey,new Response(body,{
       status:200,
       headers:{
         'Content-Type':'application/json; charset=utf-8',
+        'X-Menu-Fetched-At':fetchedAt,
         'Cache-Control':`public,max-age=${seconds}`
       }
     }));
@@ -173,7 +184,8 @@ export async function handleRequest(request,{
   }
   const headers=corsHeaders(origin);
   headers.set('Content-Type','application/json; charset=utf-8');
-  headers.set('Cache-Control',`public,max-age=${seconds}`);
+  headers.set('Cache-Control',`public,max-age=${seconds},stale-if-error=${staleSeconds}`);
+  headers.set('X-Menu-Fetched-At',fetchedAt);
   headers.set('X-Menu-Cache','MISS');
   return new Response(body,{status:200,headers});
 }
