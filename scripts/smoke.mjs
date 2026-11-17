@@ -425,12 +425,14 @@ try {
     for(const width of [375,390,412]){
       const mobile=await mobileContext.newPage();
       await mobile.setViewportSize({width,height:812});
-      await mobile.route('https://hub-fump-proxy.hubufmg.workers.dev/**',route=>route.fulfill({
+      let menuRequests=0;
+      await mobile.route('https://hub-fump-proxy.hubufmg.workers.dev/**',route=>{menuRequests++;return route.fulfill({
         status:200,contentType:'application/json',body:'{"id":6,"cardapios":[]}'
-      }));
+      });});
       await mobile.route('https://tile.openstreetmap.org/**',route=>route.abort());
       await mobile.goto(url+'?festas-demo=1&aba=festas',{waitUntil:'domcontentloaded'});
       await mobile.locator('.festas-page .festa-card--compact').waitFor({state:'visible'});
+      assert.equal(menuRequests,0,'Festas não deve disparar consultas de cardápio no primeiro acesso');
       const layout=await mobile.evaluate(()=>{
         const card=document.querySelector('.festas-page .festa-card--compact');
         const action=card?.querySelector('.festa-action');
@@ -459,10 +461,23 @@ try {
       await bus.locator('#q').waitFor({state:'visible',timeout:15000});
       assert.equal(await bus.locator('#sheet').evaluate(e=>e.classList.contains('peek')),false,
         'Busca do Interno deve abrir sem painel recolhido');
+      assert.equal(menuRequests,0,'Interno não deve disparar consulta FUMP');
+      await mobile.locator('#tab-menu').click();
+      await mobile.waitForFunction(()=>document.querySelector('#tab-menu')?.getAttribute('aria-current')==='page');
+      for(let attempt=0;attempt<30 && !menuRequests;attempt++)await mobile.waitForTimeout(100);
+      assert.ok(menuRequests>0,'Ao voltar ao Cardápio, a consulta FUMP deve ser retomada');
       await mobile.close();
     }
   }finally{await mobileContext.close();}
-  console.log('E2E mobile aprovado: 375/390/412 px, cards de Festas, histórico e busca do Interno.');
+  // Primeira visita por link direto não deve bloquear Festas com o seletor de RU.
+  const firstVisit=await browser.newContext({serviceWorkers:'block'});
+  try{
+    const direct=await firstVisit.newPage();
+    await direct.goto(url+'?festas-demo=1&aba=festas',{waitUntil:'domcontentloaded'});
+    await direct.locator('.festas-page .festa-card--compact').waitFor({state:'visible'});
+    assert.equal(await direct.locator('#restaurant-dialog').evaluate(el=>el.open),false);
+  }finally{await firstVisit.close();}
+  console.log('E2E mobile aprovado: 375/390/412 px, consulta sob demanda, links diretos, histórico e Interno.');
 
   console.log('E2E Interno aprovado: Leaflet local, 49 pontos offline, mapa canônico e contingência sem tiles.');
 
