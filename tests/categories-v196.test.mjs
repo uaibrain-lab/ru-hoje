@@ -18,7 +18,7 @@ test('v1.9.6: Assado de Grão-de-Bico em dados antigos é vegetariano sem altera
   }
   assert.equal(publishedCategory('proteina','Assado de frango com grão-de-bico'),'proteina');
   assert.equal(publishedCategory('proteina','Assado de carne'),'proteina');
-  assert.equal(publishedCategory('guarnicao','Assado de Grão-de-Bico'),'guarnicao');
+  assert.equal(publishedCategory('guarnicao','Assado de Grão-de-Bico'),'vegetariana');
   assert.equal(publishedCategory('proteina', 'Cassoulet VEGETARIANO'),'vegetariana');
   assert.equal(publishedCategory('proteina', 'Strogonoff vegano'),'vegetariana');
 });
@@ -32,14 +32,14 @@ test('v1.9.6: novas coletas mantêm tipoPrato exato da API ao lado da categoria'
   assert.deepEqual(items[3],{name:'Molho Verde',category:'molho',sourceType:'Tipo de item não cadastrado'});
 });
 
-test('v1.9.6: tipo oficial prevalece mesmo quando nome constar de exceções antigas',()=>{
-  assert.equal(publishedCategory('proteina','Assado de Grão-de-Bico','Prato protéico 1'),'proteina');
-  assert.equal(publishedCategory('proteina','Carne de porco frita','Prato protéico 3'),'vegetariana');
+test('v1.9.6: classificação catalogada de vegetarianos e proteínas prevalece',()=>{
+  assert.equal(publishedCategory('proteina','Assado de Grão-de-Bico','Prato protéico 1'),'vegetariana');
+  assert.equal(publishedCategory('proteina','Carne de porco frita','Prato protéico 3'),'proteina');
   assert.equal(publishedCategory('proteina','Bolinho de Ervilha','Prato protéico 3'),'vegetariana');
   assert.equal(publishedCategory('', 'Frango Xadrez','Tipo de item não cadastrado'),'proteina');
   assert.equal(publishedCategory('', 'Assado de Grão-de-Bico','Tipo de item não cadastrado'),'vegetariana');
   assert.equal(publishedCategory('', 'Quibe de Cenoura','Tipo de item não cadastrado'),'vegetariana');
-  assert.equal(categoryFromSourceType('Entrada 2','Assado de Grão-de-Bico'),'salada');
+  assert.equal(categoryFromSourceType('Entrada 2','Assado de Grão-de-Bico'),'vegetariana');
   assert.equal(categoryKey('Prato proteico 3','Quibe de Cenoura'),'vegetariana');
 });
 
@@ -55,7 +55,7 @@ test('v1.9.6: strogonoff sem tipo cadastrado continua em pratos principais',()=>
 test('v1.9.6: desconhecidos continuam sem suposição e sem reclassificação',()=>{
   assert.equal(publishedCategory('', 'Item não reconhecido'),'');
   assert.equal(categoryKey('Tipo de item não cadastrado','Item não reconhecido'),'');
-  assert.equal(publishedCategory('acompanhamento','Assado de Grão-de-Bico','Acompanhamento 1'),'acompanhamento');
+  assert.equal(publishedCategory('acompanhamento','Assado de Grão-de-Bico','Acompanhamento 1'),'vegetariana');
   assert.equal(publishedCategory('proteina','Carne de porco frita'),'proteina');
 });
 
