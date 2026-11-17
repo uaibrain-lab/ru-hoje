@@ -195,12 +195,9 @@ async function refreshLive({force = false, ruId = state.selectedRu, iso = state.
   const key = liveKey(iso,ruId);
   const now = Date.now();
   if (state.livePending.has(key)) return state.livePending.get(key);
-  if (!force && now-(state.liveChecks.get(key) || 0) < 4*60_000) {
-    const status=state.liveStatus.get(key)?.status;
-    // Não bloquear uma consulta solicitada pelo usuário apenas porque
-    // uma tentativa em segundo plano falhou anteriormente.
-    if (status!=='FETCH_ERROR' && status!=='PARSE_ERROR') return {status:'SKIPPED'};
-  }
+  // Tentativas de background e o clock a cada minuto respeitam cooldown,
+  // inclusive HTTP 503. Interação explícita passa force:true.
+  if (!force && now-(state.liveChecks.get(key) || 0) < 4*60_000) return {status:'SKIPPED'};
   state.liveChecks.set(key,now);
   const proxyUrl=window.RU_CONFIG?.fumpProxyUrl || '';
   const task = readLiveMenu(ruId,iso, background
@@ -319,7 +316,7 @@ function renderRestaurant() {
       renderRestaurant();
       renderDates();
       renderMenus();
-      refreshLive();
+      refreshLive({force:true});
       startPrefetch(item.id,state.selectedDate || sPauloParts().iso);
       $('restaurant-dialog').close();
       $('restaurant-trigger').focus();
@@ -381,7 +378,7 @@ function renderDates({ scroll = false } = {}) {
       // Focus returns to the new node after re-render (keyboard accessibility).
       if (event?.detail === 0) dateStrip.querySelector(`[data-iso="${iso}"]`)?.focus({preventScroll:true});
       renderMenus();
-      refreshLive();
+      refreshLive({force:true});
       startPrefetch(state.selectedRu,iso);
     });
     dateStrip.append(card);
@@ -725,7 +722,7 @@ function boot() {
   initDialog();
   renderRestaurant(); renderDates({scroll:true}); renderMenus();
   loadIngredientCatalog().then(() => renderMenus());
-  $('today-button').addEventListener('click',()=> {cancelPrefetch();state.selectedDate=sPauloParts().iso;renderDates({scroll:true});renderMenus();refreshLive();startPrefetch(state.selectedRu,state.selectedDate);});
+  $('today-button').addEventListener('click',()=> {cancelPrefetch();state.selectedDate=sPauloParts().iso;renderDates({scroll:true});renderMenus();refreshLive({force:true});startPrefetch(state.selectedRu,state.selectedDate);});
   window.addEventListener('online',()=>{fetchMenus();refreshLive({force:true});startPrefetch(state.selectedRu,state.selectedDate);});
   window.addEventListener('offline',()=>{cancelPrefetch();renderMenus();});
   window.addEventListener('storage',event=>{
