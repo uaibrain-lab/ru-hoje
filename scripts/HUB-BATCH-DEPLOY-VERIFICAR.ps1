@@ -12,13 +12,17 @@ Set-Location $repo
 if ((& git branch --show-current) -ne "main") { throw "BRANCH_DEVE_SER_MAIN" }
 & git pull --ff-only origin main
 if ($LASTEXITCODE -ne 0) { throw "GIT_PULL_FALHOU" }
-Write-Host "Criando backup local independente antes do deploy..." -ForegroundColor Cyan
-$backupArgs=@("-NoProfile","-ExecutionPolicy","Bypass","-File","$PSScriptRoot\HUB-BACKUP-GIT-LOCAL.ps1")
-if(-not [string]::IsNullOrWhiteSpace($env:HUB_BACKUP_SECONDARY_PATH)){
-  $backupArgs+=@("-DestinoSecundario",$env:HUB_BACKUP_SECONDARY_PATH)
+# O GitHub já mantém o histórico completo. Não bloquear uma publicação do
+# site por um backup adicional do mesmo código. Snapshot local só sob demanda.
+if($env:HUB_BACKUP_BEFORE_DEPLOY -eq "true"){
+  Write-Host "Criando snapshot Git opcional antes do deploy..." -ForegroundColor Cyan
+  $backupArgs=@("-NoProfile","-ExecutionPolicy","Bypass","-File","$PSScriptRoot\HUB-BACKUP-GIT-LOCAL.ps1")
+  if(-not [string]::IsNullOrWhiteSpace($env:HUB_BACKUP_SECONDARY_PATH)){
+    $backupArgs+=@("-DestinoSecundario",$env:HUB_BACKUP_SECONDARY_PATH)
+  }
+  & powershell.exe @backupArgs
+  if($LASTEXITCODE -ne 0){throw "BACKUP_OPCIONAL_FALHOU"}
 }
-& powershell.exe @backupArgs
-if($LASTEXITCODE -ne 0){throw "BACKUP_GIT_FALHOU"}
 $sha=(& git rev-parse --short HEAD) -join ""
 Write-Host "Commit local: $sha"
 $swFile=Get-Content -LiteralPath "public\service-worker.js" -Raw
