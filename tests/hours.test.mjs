@@ -33,3 +33,9 @@ test('café da manhã e horários do ICA',()=>{
 test('fuso São Paulo independe do fuso da máquina',()=>{
   assert.equal(brClock(new Date('2026-10-20T01:00:00Z')).iso,'2026-10-19');
 });
+
+test('contagem para encerramento do atendimento regular',()=>{
+  assert.equal(currentOpening('setorial-i',moment('2026-10-19','13:40:00')).minutesRemaining,20);
+  assert.equal(currentOpening('setorial-i',moment('2026-10-19','13:59:00')).minutesRemaining,1);
+  assert.equal(currentOpening('setorial-i',moment('2026-10-19','14:00:00')).minutesRemaining,undefined);
+});
