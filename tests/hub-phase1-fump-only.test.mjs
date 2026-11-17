@@ -21,7 +21,7 @@ test('única fonte de pratos é a resposta validada da FUMP, não Firestore/stat
   assert.doesNotMatch(app,/publicMenus\/current|firestore\.googleapis\.com|\/data\/cardapios\.json|fetchMenus\(|persistLiveMenus\(|hydrateLiveMenus\(|STORAGE_DATA|STORAGE_LIVE/);
   assert.doesNotMatch(config,/publicFeedUrl/);
   assert.doesNotMatch(sw,/['"]\/data\/cardapios\.json['"]/);
-  assert.match(sw,/hub-v276-20261117-fresh-menus-r1/);
+  assert.match(sw,/hub-v277-20261117-batch3-5-r1/);
 });
 
 test('consulta oficial válida produz pratos no formato de exibição',async()=>{
