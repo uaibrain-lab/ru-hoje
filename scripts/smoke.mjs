@@ -93,7 +93,7 @@ try {
   };
   await page.route('https://hub-fump-proxy.hubufmg.workers.dev/**',mockWorker);
   await page.route('https://firestore.googleapis.com/**',async route=> {
-    interceptedRequests++;
+    if (route.request().url().includes('/publicMenus/current')) interceptedRequests++;
     return route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*','cache-control':'no-store'},body:JSON.stringify({fields:{payload:{stringValue:JSON.stringify(data)}}})});
   });
   const errors=[];
