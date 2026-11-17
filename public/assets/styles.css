@@ -828,34 +828,60 @@ dialog{background:var(--card);color:var(--ink);border-color:var(--line)}
   .festas-page .festa-card--compact{padding:12px;border-radius:16px}
   .festas-page .festa-card--compact .festa-card-main{
     aspect-ratio:auto;min-height:0;
-    grid-template-columns:minmax(0,27%) minmax(0,1fr);
+    grid-template-columns:minmax(0,32%) minmax(0,1fr);
     grid-template-rows:auto auto auto;
-    grid-template-areas:'poster info' 'poster actions' 'poster status';
-    column-gap:12px;row-gap:9px;
+    grid-template-areas:'poster info' 'actions actions' 'status status';
+    column-gap:12px;row-gap:11px;align-items:start;
   }
   .festas-page .festa-card--compact .festa-card-main--no-poster{
     grid-template-columns:minmax(0,1fr);
     grid-template-areas:'info' 'actions' 'status';
     min-height:0;
   }
-  .festas-page .festa-card--compact .festa-poster-trigger{border-radius:10px;min-height:120px}
+  .festas-page .festa-card--compact .festa-poster-trigger{
+    border-radius:10px;min-height:0;height:auto;aspect-ratio:3/4;
+    align-self:start;display:grid;place-items:center;
+  }
+  .festas-page .festa-card--compact .festa-poster-trigger .festa-art{
+    width:100%;height:100%;max-width:100%;max-height:100%;
+    object-fit:contain;object-position:center;
+  }
   .festas-page .festa-card--compact .festa-card-content{overflow:visible}
-  .festas-page .festa-card--compact .festa-card-title{font-size:clamp(16px,4.6vw,20px);line-height:1.15;letter-spacing:-.025em}
-  .festas-page .festa-card--compact .festa-card-organizer{font-size:12px;margin-top:6px;line-height:1.35}
+  .festas-page .festa-card--compact .festa-card-title{
+    display:block;overflow:visible;-webkit-line-clamp:unset;
+    font-size:clamp(16px,4.6vw,20px);line-height:1.17;
+    letter-spacing:-.025em;overflow-wrap:anywhere;
+  }
+  .festas-page .festa-card--compact .festa-card-organizer{
+    font-size:12px;margin-top:6px;line-height:1.4;
+    white-space:normal;overflow-wrap:anywhere;
+    display:-webkit-box;-webkit-box-orient:vertical;
+    -webkit-line-clamp:2;overflow:hidden;
+  }
   .festas-page .festa-card--compact .festa-meta{font-size:12px;gap:8px;margin-top:11px;line-height:1.35}
   .festas-page .festa-card--compact .festa-meta-row{gap:6px;flex-wrap:wrap}
-  .festas-page .festa-card--compact .festa-meta-item{gap:6px}
+  .festas-page .festa-card--compact .festa-meta-item{
+    gap:6px;white-space:normal;min-width:0;align-items:flex-start;
+  }
   .festas-page .festa-card--compact .festa-meta-icon{flex:0 0 16px;width:16px;height:16px}
   .festas-page .festa-card--compact .festa-meta-separator{width:2px;height:12px;margin:0 3px}
-  .festas-page .festa-card--compact .festa-meta-location{font-size:12px;line-height:1.35;gap:6px}
+  .festas-page .festa-card--compact .festa-meta-location{
+    font-size:12px;line-height:1.4;gap:6px;
+  }
+  .festas-page .festa-card--compact .festa-meta-location>span:last-child{
+    white-space:normal;overflow:visible;text-overflow:clip;
+    overflow-wrap:anywhere;
+  }
   .festas-page .festa-card--compact .festa-card-tags{gap:5px;margin-top:10px;flex-wrap:wrap;overflow:visible}
   .festas-page .festa-card--compact .festa-tag-chip,
   .festas-page .festa-card--compact .festa-tag-more{font-size:11px;line-height:1.25;padding:6px 9px}
   .festas-page .festa-card--compact .festa-tag-more{min-height:44px}
-  .festas-page .festa-card--compact .festa-card-actions--inline{gap:7px;align-self:stretch}
+  .festas-page .festa-card--compact .festa-card-actions--inline{
+    grid-area:actions;gap:8px;align-self:stretch;transform:none;
+  }
   .festas-page .festa-card--compact .festa-card-actions--inline .festa-action{
-    height:auto;min-height:44px;border-width:1px;border-radius:10px;
-    padding:8px 6px;gap:4px;
+    height:auto;min-height:46px;border-width:1px;border-radius:10px;
+    padding:8px;gap:5px;
   }
   .festas-page .festa-card--compact .festa-card-actions--inline .festa-action-label{
     font-size:12px;line-height:1.2;white-space:normal;overflow-wrap:anywhere
@@ -867,8 +893,14 @@ dialog{background:var(--card);color:var(--ink);border-color:var(--line)}
     font-size:12px;line-height:1.4;align-self:start;
   }
 }
-@media(max-width:370px){
-  .festas-page .festa-card--compact .festa-card-main{grid-template-columns:minmax(0,25%) minmax(0,1fr);column-gap:9px}
-  .festas-page .festa-card--compact .festa-card-main--no-poster{grid-template-columns:minmax(0,1fr)}
-  .festas-page .festa-card--compact .festa-card-actions--inline{grid-template-columns:1fr}
+@media(max-width:319px){
+  .festas-page .festa-card--compact .festa-card-main{
+    grid-template-columns:minmax(0,30%) minmax(0,1fr);column-gap:9px;
+  }
+  .festas-page .festa-card--compact .festa-card-main--no-poster{
+    grid-template-columns:minmax(0,1fr);
+  }
+  .festas-page .festa-card--compact .festa-card-actions--inline{
+    grid-template-columns:minmax(0,1fr);
+  }
 }
