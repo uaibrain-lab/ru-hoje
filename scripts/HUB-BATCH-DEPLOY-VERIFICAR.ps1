@@ -12,6 +12,9 @@ Set-Location $repo
 if ((& git branch --show-current) -ne "main") { throw "BRANCH_DEVE_SER_MAIN" }
 & git pull --ff-only origin main
 if ($LASTEXITCODE -ne 0) { throw "GIT_PULL_FALHOU" }
+Write-Host "Criando backup local independente antes do deploy..." -ForegroundColor Cyan
+& powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$PSScriptRoot\HUB-BACKUP-GIT-LOCAL.ps1"
+if($LASTEXITCODE -ne 0){throw "BACKUP_GIT_FALHOU"}
 $sha=(& git rev-parse --short HEAD) -join ""
 Write-Host "Commit local: $sha"
 $swFile=Get-Content -LiteralPath "public\service-worker.js" -Raw
