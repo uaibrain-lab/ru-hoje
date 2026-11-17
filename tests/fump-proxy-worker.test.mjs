@@ -145,7 +145,7 @@ test('resposta com cardapios vazios não é considerada RU fechado e tem cache c
     now,fetchFn:async()=>fakeResponse({id:6,cardapios:[]})
   });
   assert.equal(response.status,200);
-  assert.equal(response.headers.get('Cache-Control'),'public,max-age=30,stale-if-error=0');
+  assert.equal(response.headers.get('Cache-Control'),'public,max-age=15');
   assert.deepEqual((await response.json()).cardapios,[]);
 });
 
@@ -184,11 +184,11 @@ test('redirecionamento 302 da FUMP não é seguido nem cacheado',async()=>{
   assert.equal(response.headers.get('Access-Control-Allow-Origin'),goodOrigin);
 });
 
-test('respostas positivas expoem timestamp oficial do Worker e contingencia com limite',async()=>{
+test('respostas positivas exibem timestamp real e TTL máximo de um minuto',async()=>{
   const cache=fakeCache();
   const reply=await handleRequest(makeRequest(),{now,cache,fetchFn:async()=>fakeResponse()});
   assert.equal(reply.status,200);
-  assert.equal(reply.headers.get('Cache-Control'),'public,max-age=240,stale-if-error=1800');
+  assert.equal(reply.headers.get('Cache-Control'),'public,max-age=60');
   assert.equal(reply.headers.get('X-Menu-Fetched-At'),now.toISOString());
   assert.match(reply.headers.get('Access-Control-Expose-Headers'),/CF-Cache-Status/);
   const replay=await handleRequest(makeRequest(),{
@@ -197,5 +197,61 @@ test('respostas positivas expoem timestamp oficial do Worker e contingencia com 
   assert.equal(replay.status,200);
   assert.equal(replay.headers.get('X-Menu-Cache'),'HIT');
   assert.equal(replay.headers.get('X-Menu-Fetched-At'),now.toISOString());
-  assert.equal(replay.headers.get('Cache-Control'),'public,max-age=60,stale-if-error=1800');
+  assert.equal(replay.headers.get('Cache-Control'),'public,max-age=60');
+});
+
+test('cache positivo expirado não é devolvido; FUMP mais recente prevalece',async()=>{
+  const cache=fakeCache();
+  let calls=0;
+  const first=await handleRequest(makeRequest(),{now,cache,fetchFn:async()=>{
+    calls++;return fakeResponse();
+  }});
+  assert.equal(first.status,200);
+  const after=new Date(now.getTime()+61_000);
+  const next={id:6,cardapios:[{data:'2026-11-16',refeicoes:[{
+    tipoRefeicao:'Almoço',pratos:[{tipoPrato:'Acompanhamento 1',descricaoPrato:'Feijão atualizado'}]
+  }]}]};
+  const second=await handleRequest(makeRequest(),{now:after,cache,fetchFn:async()=>{
+    calls++;return fakeResponse(next);
+  }});
+  assert.equal(calls,2,'Não pode responder de cache antigo sem consultar a FUMP');
+  assert.equal(second.headers.get('X-Menu-Cache'),'MISS');
+  assert.equal(second.headers.get('X-Menu-Fetched-At'),after.toISOString());
+  assert.equal(second.headers.get('Cache-Control'),'public,max-age=60');
+  assert.deepEqual(await second.json(),next);
+});
+
+test('cache expirado não serve prato antigo quando FUMP retorna 503',async()=>{
+  const cache=fakeCache();
+  await handleRequest(makeRequest(),{now,cache,fetchFn:async()=>fakeResponse()});
+  const second=await handleRequest(makeRequest(),{
+    now:new Date(now.getTime()+62_000),cache,
+    fetchFn:async()=>{throw new Error('upstream 503');}
+  });
+  assert.equal(second.status,503);
+  assert.equal(second.headers.get('Cache-Control'),'no-store');
+  assert.notEqual(second.headers.get('X-Menu-Cache'),'HIT');
+  assert.equal((await second.json()).error,'UPSTREAM_CONNECT_FAILED');
+});
+
+test('cache sem timestamp validado não substitui uma nova consulta oficial',async()=>{
+  const cache=fakeCache();
+  const key=new Request(menuUrl,{method:'GET'});
+  cache.map.set(key.url,new Response(JSON.stringify(food),{
+    headers:{'Content-Type':'application/json','Cache-Control':'public,max-age=240'}
+  }));
+  const second=await handleRequest(makeRequest(),{now,cache,fetchFn:async()=>fakeResponse({id:6,cardapios:[]})});
+  assert.equal(second.headers.get('X-Menu-Cache'),'MISS');
+  assert.deepEqual((await second.json()).cardapios,[]);
+});
+
+test('HIT conserva o tempo restante sem renovar o cache do browser por 60 segundos',async()=>{
+  const cache=fakeCache();
+  await handleRequest(makeRequest(),{now,cache,fetchFn:async()=>fakeResponse()});
+  const after=new Date(now.getTime()+42_000);
+  const hit=await handleRequest(makeRequest(),{
+    now:after,cache,fetchFn:async()=>{throw new Error('NÃO deveria buscar a FUMP');}
+  });
+  assert.equal(hit.headers.get('X-Menu-Cache'),'HIT');
+  assert.equal(hit.headers.get('Cache-Control'),'public,max-age=18');
 });
