@@ -19,6 +19,7 @@
     "test:festas:mobile": "node scripts/qa-festas-mobile-ux.mjs",
     "test:menu:spacing": "node scripts/qa-ru-month-spacing.mjs",
     "test:menu:fold": "node scripts/qa-menu-first-fold.mjs",
+    "test:menu:groups": "node scripts/qa-menu-groups-alignment.mjs",
     "test:festas:visual": "node scripts/test-festas-v244-visual.mjs",
     "test:festas:visual:v245": "node scripts/test-festas-v245-visual.mjs",
     "test:festas:security": "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File scripts/Test-Festas-Security-Standalone.ps1 -Suite Full",
