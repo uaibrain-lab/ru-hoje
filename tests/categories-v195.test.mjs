@@ -18,15 +18,15 @@ test('v1.9.5: itens semelhantes não são reclassificados por suposição',()=>{
   assert.equal(publishedCategory('proteina','Quibe de carne com cenoura'),'proteina');
   assert.equal(publishedCategory('proteina','Frango com soja e batata'),'proteina');
   assert.equal(publishedCategory('proteina','Carne cozida'),'proteina');
-  assert.equal(publishedCategory('guarnicao','Quibe de Cenoura'),'vegetariana'); // conflito confirmado entre IDs 1 e 2 na FUMP em 19/11/2026
+  assert.equal(publishedCategory('guarnicao','Quibe de Cenoura'),'vegetariana'); // todos os vegetarianos catalogados prevalecem
 });
 
-test('v1.9.5: novas coletas seguem o tipoPrato oficial, independente do nome',()=>{
+test('v1.9.5: vegetarianos catalogados prevalecem sobre os tipos FUMP incorretos',()=>{
   for (const name of legacyVegetarians) {
     assert.equal(categoryKey('Prato protéico 3',name),'vegetariana');
     assert.equal(categoryKey('Prato proteico 3',name),'vegetariana');
-    // Exceção nova: 'Quibe de Cenoura' foi vegetariano com tipo 2 e 3.
-    assert.equal(categoryKey('Prato protéico 1',name),name==='Quibe de Cenoura'?'vegetariana':'proteina');
+    // A mesma regra vale para todos os vegetarianos conhecidos, não só os já relatados.
+    assert.equal(categoryKey('Prato protéico 1',name),'vegetariana');
   }
 });
 
