@@ -49,8 +49,10 @@ export function projectOfficialDelays(relativeUpdates,rows,{stopId,calendar,now=
   if(!Array.isArray(relativeUpdates)||!Array.isArray(rows)||
      !/^[0-9]{1,20}$/.test(String(stopId||''))||!calendar||
      !Number.isFinite(now))return [];
-  // Keep the farthest confirmed observation along each exact GTFS trip.
-  const latest=new Map();
+  // A TripUpdate may contain delays for multiple stops, including future
+  // stops. Choose the latest stop at or before EACH selected stop, not
+  // the latest stop of the trip globally (which can be downstream).
+  const byTrip=new Map();
   for(const u of relativeUpdates.slice(0,250)){
     if(!u||!dateOK(u.startDate)||
        !/^[A-Za-z0-9_.:-]{1,90}$/.test(String(u.tripId||''))||
@@ -63,10 +65,9 @@ export function projectOfficialDelays(relativeUpdates,rows,{stopId,calendar,now=
     if(!Number.isFinite(stamp)||stamp<now-120000||stamp>now+60000)continue;
     const start=startTimeSeconds(u.startTime);
     if(start===null)continue;
-    const key=u.tripId+'|'+u.startDate+'|'+u.startTime;
-    const prev=latest.get(key);
-    if(!prev||u.observedStopSequence>prev.observedStopSequence)
-      latest.set(key,u);
+    const key=u.tripId+'|'+u.routeId+'|'+start;
+    if(!byTrip.has(key))byTrip.set(key,[]);
+    byTrip.get(key).push(u);
   }
   const found=[],seen=new Set();
   for(const row of rows){
@@ -74,22 +75,32 @@ export function projectOfficialDelays(relativeUpdates,rows,{stopId,calendar,now=
     const [tid,rid,service,sequence,scheduled,start]=row;
     if(!Number.isSafeInteger(sequence)||sequence<0||
        !Number.isSafeInteger(scheduled)||scheduled<0||scheduled>=48*3600||
-       !Number.isSafeInteger(start)||start<0||start>=48*3600)
-       continue;
-    // Index never trusts a user-supplied trip identifier alone.
-    for(const u of latest.values()){
-      if(u.tripId!==String(tid)||u.routeId!==String(rid)||
-         startTimeSeconds(u.startTime)!==start||
-         sequence<u.observedStopSequence||
-         (sequence===u.observedStopSequence&&String(u.observedStopId)!==String(stopId)))
-         continue;
-      const day=serviceDay(u.startDate);
+       !Number.isSafeInteger(start)||start<0||start>=48*3600)continue;
+    const candidates=byTrip.get(String(tid)+'|'+String(rid)+'|'+start);
+    if(!candidates)continue;
+    // Preserve distinct service days, including 24:xx departures after midnight.
+    const bestByDate=new Map();
+    for(const u of candidates){
+      if(sequence<u.observedStopSequence||
+         (sequence===u.observedStopSequence&&
+          String(u.observedStopId)!==String(stopId)))continue;
+      const state=bestByDate.get(u.startDate);
+      if(!state||u.observedStopSequence>state.u.observedStopSequence)
+        bestByDate.set(u.startDate,{u,conflict:false});
+      else if(u.observedStopSequence===state.u.observedStopSequence&&
+        (u.delaySeconds!==state.u.delaySeconds||
+         u.observedStopId!==state.u.observedStopId))
+        state.conflict=true; // contradictory official records: no ETA
+    }
+    for(const [date,{u,conflict}] of bestByDate){
+      if(conflict)continue;
+      const day=serviceDay(date);
       if(!serviceActive(service,day,calendar))continue;
       const serviceMidnight=Date.parse(day+'T00:00:00-03:00');
       if(!Number.isFinite(serviceMidnight))continue;
       const at=serviceMidnight+(scheduled+u.delaySeconds)*1000;
       if(at<now-30000||at>now+2*3600000)continue;
-      const key=u.tripId+'|'+u.startDate+'|'+sequence;
+      const key=u.tripId+'|'+date+'|'+sequence;
       if(seen.has(key))continue;
       seen.add(key);
       found.push({tripId:u.tripId,routeId:String(rid),stopId:String(stopId),
