@@ -156,6 +156,20 @@ export function createPreviewServer({fetchFn=fetch}={}){
     }
     try{
       let body=await readFile(filePath);
+      if(url.pathname==='/externo/live-gps.js'){
+        // Somente na resposta LOCAL; o pacote aprovado segue intacto.
+        // O Worker real restringe CORS às origens HTTPS do Hub, portanto
+        // a mesma API GTFS-RT é acessada por relay fixo em 127.0.0.1.
+        const source=body.toString('utf8');
+        const original="const request=new URL(cfg.endpoint);\n    request.searchParams.set('source','GTFS_RT');";
+        if(!source.includes(original)){
+          send(res,500,'GPS do Externo incompatível com o proxy local.');
+          return;
+        }
+        const replacement="const request=new URL(['localhost','127.0.0.1'].includes(location.hostname)"+
+          "?location.origin+'/__hub_gps':cfg.endpoint);\n    request.searchParams.set('source','GTFS_RT');";
+        body=Buffer.from(source.replace(original,replacement),'utf8');
+      }
       if(url.pathname==='/config.js'){
         // Apenas na resposta local: no repositório, config.js permanece intacto.
         const config=body.toString('utf8');
