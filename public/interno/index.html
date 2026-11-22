@@ -790,8 +790,8 @@ function municipalStopView(id){
     '<h3>Avisos de serviço</h3><div id="municipal-alert-rows"></div>'+
     '<small>Fonte: SUMOB · GTFS-Realtime</small></section>'+
     '<section id="municipal-stop-realtime" class="municipal-realtime" aria-label="Chegadas previstas em tempo real" hidden>'+
-    '<h3>Chegadas previstas · tempo real</h3><div id="municipal-realtime-rows" class="municipal-arrivals"></div>'+
-    '<small>Fonte oficial SUMOB / GTFS-RT · previsão sujeita ao trânsito</small></section>'+
+    '<h3>Chegadas estimadas · dados ao vivo</h3><div id="municipal-realtime-rows" class="municipal-arrivals"></div>'+
+    '<small>Fonte oficial SUMOB / GTFS-RT · horário direto ou tabela corrigida pelo atraso</small></section>'+
     '<h3 id="municipal-timetable-title">Próximos horários programados</h3>'+
     '<div id="municipal-stop-schedules" role="status" aria-live="polite">'+
     '<p class="note">Consultando horários deste ponto…</p></div>'+
@@ -950,18 +950,30 @@ async function populateMunicipalRealtime(id){
   const rows=section?.querySelector('#municipal-realtime-rows');
   if(!section||!rows)return;
   const now=Date.now();
+  const routes=new Map();
+  for(const r of externalRoutes||[]){
+    routes.set(String(r.id),r);
+    if(!routes.has(String(r.code)))routes.set(String(r.code),r);
+  }
+  const serving=new Set((externalPatterns||[])
+    .filter(p=>p.stops?.includes(String(id))).map(p=>String(p.route)));
+  const selectedRoutes=[...serving].filter(r=>/^[A-Za-z0-9_.:-]{1,70}$/.test(r)).slice(0,25);
   const cached=realtimePredictionsCache.get(String(id));
   let result=cached&&now-cached.fetchedAt<25000?cached.value:null;
   if(!result){
     try{
       const endpoint=new URL('https://externo-bh-gps-free.hubufmg.workers.dev/api/arrivals');
       endpoint.searchParams.set('stop',String(id));
+      if(selectedRoutes.length)endpoint.searchParams.set('routes',selectedRoutes.join(','));
       const response=await fetch(endpoint.href,{cache:'no-store'});
       if(!response.ok)throw Error('OFFICIAL_ETA_UNAVAILABLE');
       const data=await response.json();
       if(!data||data.available!==true||data.source!=='SUMOB_GTFS_RT_TRIP_UPDATES'||
          String(data.stopId)!==String(id)||!Array.isArray(data.items)||
-         data.items.length>36)throw Error('OFFICIAL_ETA_INVALID');
+         data.items.length>36||
+         (data.relativeUpdates!==undefined&&
+          (!Array.isArray(data.relativeUpdates)||data.relativeUpdates.length>250)))
+         throw Error('OFFICIAL_ETA_INVALID');
       const feedTime=Date.parse(data.feedTimestamp||'');
       const fetchedTime=Date.parse(data.fetchedAt||'');
       if(!Number.isFinite(feedTime)||!Number.isFinite(fetchedTime)||
@@ -969,21 +981,14 @@ async function populateMunicipalRealtime(id){
          throw Error('OFFICIAL_ETA_STALE');
       result=data;
     }catch{
-      // HTTPS, CORS, Worker ainda não publicado, feed vazio ou inválido:
-      // a tabela GTFS continua visível, sem inventar estimativas.
+      // Worker ausente ou feed inválido: mantenha somente os horários
+      // programados. Nunca simule ETA por distância em linha reta.
       result=null;
     }
     realtimePredictionsCache.set(String(id),{fetchedAt:now,value:result});
   }
   if(view.t!=='municipal-stop'||String(view.id)!==String(id)||!rows.isConnected)return;
-  const routes=new Map();
-  for(const r of externalRoutes||[]){
-    routes.set(String(r.id),r); // GTFS route_id
-    if(!routes.has(String(r.code)))routes.set(String(r.code),r); // GTFS-RT usa código em algumas linhas
-  }
-  const serving=new Set((externalPatterns||[])
-    .filter(p=>p.stops?.includes(String(id))).map(p=>String(p.route)));
-  const found=[];
+  const found=[],seenTrip=new Set();
   for(const item of result?.items||[]){
     const route=routes.get(String(item.routeId||''));
     if(!route||!serving.has(String(route.id))||
@@ -993,9 +998,32 @@ async function populateMunicipalRealtime(id){
     if(!Number.isFinite(time)||!Number.isFinite(feedTime)||
        time<Date.now()-30000||time>Date.now()+7200000||
        Math.abs(Date.now()-feedTime)>120000)continue;
-    found.push({route,time,type:item.eventType==='arrival'?'arrival':'departure'});
+    found.push({route,time,tripId:String(item.tripId),
+      type:item.eventType==='arrival'?'arrival':'departure',method:'absolute'});
+    seenTrip.add(String(item.tripId));
   }
-  found.sort((a,b)=>a.time-b.time);
+  // SUMOB currently emits delays, not absolute arrival times: join only
+  // against exactly matched trip_id, route_id, service day and stop_sequence.
+  if(result?.relativeUpdates?.length&&selectedRoutes.length){
+    try{
+      const {tripDelaysForStop}=await import('/assets/municipal-realtime.js');
+      const derived=await tripDelaysForStop(id,result.relativeUpdates,{now:Date.now()});
+      if(view.t!=='municipal-stop'||String(view.id)!==String(id)||!rows.isConnected)return;
+      for(const update of derived){
+        const route=routes.get(String(update.routeId));
+        if(!route||!serving.has(String(route.id))||seenTrip.has(update.tripId))
+          continue;
+        found.push({route,time:update.at,tripId:update.tripId,
+          type:'arrival',method:'delay'});
+        seenTrip.add(update.tripId);
+      }
+    }catch{
+      // Índice offline ainda não integrado ou versão incompatível:
+      // mantém os horários GTFS já disponíveis no painel.
+    }
+  }
+  if(view.t!=='municipal-stop'||String(view.id)!==String(id)||!rows.isConnected)return;
+  found.sort((a,b)=>a.time-b.time||a.route.code.localeCompare(b.route.code));
   if(!found.length){section.hidden=true;return;}
   section.hidden=false;
   const heading=document.getElementById('municipal-timetable-title');
@@ -1004,11 +1032,13 @@ async function populateMunicipalRealtime(id){
     const minutes=Math.max(0,Math.ceil((item.time-Date.now())/60000));
     const clock=new Date(item.time).toLocaleTimeString('pt-BR',{
       timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'});
+    const source=item.method==='delay'
+      ?'GTFS + atraso informado pela SUMOB':'Horário informado pela SUMOB';
     return '<button type="button" class="municipal-arrival" data-externo-code="'+esc(item.route.code)+'">'+
       '<span class="municipal-code">'+esc(item.route.code)+'</span>'+
       '<span class="municipal-destination">'+esc(item.route.name||'Linha municipal')+
       '<small>'+(item.type==='departure'?'Partida prevista':'Chegada prevista')+
-      ' · '+clock+' · SUMOB</small></span>'+
+      ' · '+clock+' · '+source+'</small></span>'+
       '<span class="municipal-time">'+(minutes===0?'agora':minutes+' min')+'</span></button>';
   }).join('');
 }
