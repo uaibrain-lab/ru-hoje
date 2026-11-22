@@ -7,6 +7,7 @@ on:
     paths:
       - .github/workflows/hub-onibus-preview.yml
       - scripts/verify-onibus-preview.mjs
+      - scripts/hub-legacy-externo-alias.mjs
       - scripts/verify-onibus-browser.mjs
       - public/interno/index.html
       - public/assets/onibus.js
@@ -91,6 +92,7 @@ jobs:
           test -s "$RUNNER_TEMP/externo/catalog/stops.json"
           test -s "$RUNNER_TEMP/externo/catalog/arrivals/index.json"
           node scripts/stage-externo.mjs "$RUNNER_TEMP/externo"
+          node scripts/hub-legacy-externo-alias.mjs
           node scripts/verify-onibus-preview.mjs
           echo HUB_ONIBUS_CATALOGO_COMPLETO_VALIDADO
 
@@ -123,34 +125,7 @@ jobs:
           compression-level: 0
           if-no-files-found: error
 
-      - name: Verificar autorização de deploy apenas no canal de testes
-        id: deploy-auth
-        env:
-          FIREBASE_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_HUBUFMG }}
-        shell: bash
+      - name: Entrega apenas para deploy manual de homologação
         run: |
-          if [[ -n "$FIREBASE_SA" ]]; then
-            echo "available=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::Sem FIREBASE_SERVICE_ACCOUNT_HUBUFMG; pacote testado, mas sem deploy."
-          fi
-
-      - name: Publicar somente no canal Firebase homologacao-exbdd4qe
-        if: ${{ steps.deploy-auth.outputs.available == 'true' }}
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_HUBUFMG }}
-          projectId: hubufmg
-          channelId: homologacao-exbdd4qe
-          expires: 7d
-
-      - name: Declarar resultado sem confundir staging e deploy
-        env:
-          DEPLOY_AVAILABLE: ${{ steps.deploy-auth.outputs.available }}
-        run: |
-          if [[ "$DEPLOY_AVAILABLE" == "true" ]]; then
-            echo "HUB_ONIBUS_HOMOLOGACAO_PUBLICADA_CANAL_PREVIEW"
-          else
-            echo "HUB_ONIBUS_APROVADO_NAO_PUBLICADO_FALTA_CREDENCIAL"
-          fi
+          echo 'HUB_ONIBUS_ZIP_PRONTO_PARA_DEPLOY_MANUAL'
+          echo 'Nenhum Firebase deploy é executado por este workflow.'
