@@ -533,6 +533,25 @@ try {
       body:JSON.stringify([{id:'R1',code:'101',name:'BH Centro'},
         {id:'R2',code:'901',name:'BH Pampulha'}])
     }));
+    // Reproduce a small official-style municipal area in the unified map.
+    await combined.route('**/externo/catalog/stops.json',route=>route.fulfill({
+      status:200,contentType:'application/json',
+      body:JSON.stringify({
+        '14784087':['Av. Campus Principal',-19.8694,-43.9672],
+        '14784088':['Av. Centro',-19.8697,-43.9676]
+      })
+    }));
+    await combined.route('**/externo/catalog/patterns.json',route=>route.fulfill({
+      status:200,contentType:'application/json',
+      body:JSON.stringify([{id:'p-qa',route:'R1',stops:['14784087','14784088']}])
+    }));
+    await combined.route('**/__hub_gps?**',route=>route.fulfill({
+      status:200,contentType:'application/json',
+      body:JSON.stringify({available:true,source:'GTFS_RT',
+        fetchedAt:new Date().toISOString(),
+        records:[{routeId:'101',vehicleId:'qa-vehicle-1',
+          latitude:-19.8694,longitude:-43.9672,lastGpsFixAt:new Date().toISOString()}]})
+    }));
     await combined.route('**/externo/',route=>route.fulfill({
       status:200,contentType:'text/html',
       body:'<!doctype html><html data-app-mode="free-static"><head><title>Externo QA</title></head><body>'+
@@ -543,7 +562,26 @@ try {
     await combined.goto(url+'?aba=onibus',{waitUntil:'domcontentloaded'});
     await combined.locator('#restaurant-dialog').evaluate(e=>e.close());
     const sheet=combined.frameLocator('#interno-frame');
+    const showAll=sheet.locator('[data-map-mode="all"]'),
+      showInternal=sheet.locator('[data-map-mode="internal"]'),
+      showExternal=sheet.locator('[data-map-mode="external"]');
+    await showAll.waitFor({state:'visible'});
+    assert.equal(await showAll.getAttribute('aria-pressed'),'true');
+    await showExternal.click();
+    assert.equal(await showInternal.getAttribute('aria-pressed'),'false');
+    await showAll.click();
+    await sheet.locator('#map-data-status').getByText(/GPS ao vivo:/).waitFor({timeout:15000});
+    assert.equal(await sheet.locator('.gps-bus-pin').count(),1);
     await sheet.locator('#quick-linhas').click();
+    const stars=sheet.locator('#bus-lines-list [data-fav-list-line^="int:"]');
+    await stars.nth(1).waitFor({state:'visible'});
+    const favorite=await stars.nth(1).getAttribute('data-fav-list-line');
+    await stars.nth(1).click();
+    assert.equal(await sheet.locator('#bus-lines-list [data-fav-list-line]').first()
+      .getAttribute('data-fav-list-line'),favorite,'Linha marcada deve subir ao topo');
+    assert.equal(await sheet.locator('#bus-lines-list [data-fav-list-line="'+favorite+'"]')
+      .getAttribute('aria-pressed'),'true');
+
     await sheet.locator('[data-externo-code="101"]').waitFor({state:'attached',timeout:15000});
     assert.match(await sheet.locator('#bus-lines-list .bus-line-group').first().innerText(),/Internos/);
     await sheet.locator('[data-externo-code="101"]').click();
@@ -556,6 +594,19 @@ try {
     assert.equal(await sheet.locator('[data-line-filter="all"]').getAttribute('aria-pressed'),'true');
     assert.match(await sheet.locator('#bus-lines-list .bus-line-group').first().innerText(),/Internos/);
     assert.equal(new URL(combined.url()).searchParams.get('tipo'),null);
+    await sheet.locator('#quick-pontos').click();
+    await sheet.locator('[data-ext-stop="14784087"]').waitFor({state:'visible',timeout:15000});
+    const internalStopStar=sheet.locator('#list [data-fav-stop-list]').nth(1);
+    const stopId=await internalStopStar.getAttribute('data-fav-stop-list');
+    await internalStopStar.click();
+    assert.equal(await sheet.locator('#list [data-fav-stop-list]').first()
+      .getAttribute('data-fav-stop-list'),stopId,'Ponto favorito deve subir sem seção especial');
+    await sheet.locator('[data-ext-stop="14784087"]').click();
+    await combined.locator('#onibus-externo').waitFor({state:'visible',timeout:10000});
+    assert.equal(new URL(combined.url()).searchParams.get('ponto'),'14784087');
+    assert.equal(await combined.locator('#onibus-external-line').textContent(),'· Av. Campus Principal');
+    await combined.locator('#onibus-back-interno').click();
+    assert.equal(await sheet.locator('#map-source-switch').isVisible(),true);
   }finally{await combinedCtx.close()}
   // Pacote municipal simulado: abrir somente se manifesto e iframe estático
   // forem válidos; isso não afirma que os dados oficiais foram homologados.
