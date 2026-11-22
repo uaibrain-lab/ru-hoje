@@ -518,29 +518,33 @@ try {
       assert.ok(ui.width<=width+1,'Rolagem horizontal na aba Ônibus: '+JSON.stringify(ui));
       assert.ok(ui.mapHeight>=320,'O mapa precisa ter espaço útil: '+JSON.stringify(ui));
       await bus.locator('#quick-linhas').click();
-      const cycle=bus.locator('[data-line-filter-toggle]');
-      await cycle.waitFor({state:'visible'});
-      assert.equal(await cycle.getAttribute('data-current-filter'),'all');
+      const filterAll=bus.locator('[data-line-filter-mode="all"]');
+      const filterInternal=bus.locator('[data-line-filter-mode="internal"]');
+      const filterMunicipal=bus.locator('[data-line-filter-mode="external"]');
+      await filterAll.waitFor({state:'visible'});
+      assert.equal(await bus.locator('[data-line-filter-mode]').count(),3,
+        'Linhas precisa exibir os filtros Todas, Internos e Municipais');
+      assert.equal(await filterAll.getAttribute('aria-pressed'),'true');
       if(width<=759){
         assert.equal(await bus.locator('#map-source-switch').isVisible(),false,
           'Linhas aberto não deve duplicar o filtro sobre o mapa');
       }
-      const dimensions=await cycle.evaluate(n=>({
+      const dimensions=await bus.locator('.bus-line-filters').evaluate(n=>({
         height:n.getBoundingClientRect().height,width:n.getBoundingClientRect().width
       }));
-      assert.ok(dimensions.height>=44&&dimensions.width>=90,
-        'Filtro Linhas precisa ser discreto mas tocável: '+JSON.stringify(dimensions));
+      assert.ok(dimensions.height>=40&&dimensions.width>=180,
+        'Filtro de Linhas deve ser visível e tocável: '+JSON.stringify(dimensions));
       assert.match(await bus.locator('#bus-lines-list .bus-line-group').first().innerText(),/Internos/);
       assert.equal(await bus.locator('#bus-lines-list [data-line]').count()>0,true);
-      await cycle.click();
-      assert.equal(await cycle.getAttribute('data-current-filter'),'internal');
+      await filterInternal.click();
+      assert.equal(await filterInternal.getAttribute('aria-pressed'),'true');
       assert.equal(await bus.locator('#bus-lines-list [data-externo-code]').count(),0);
-      await cycle.click();
-      assert.equal(await cycle.getAttribute('data-current-filter'),'external');
+      await filterMunicipal.click();
+      assert.equal(await filterMunicipal.getAttribute('aria-pressed'),'true');
       assert.equal(await bus.locator('#bus-lines-list [data-line]').count(),0);
       assert.match(await bus.locator('#bus-lines-list .bus-line-group').first().innerText(),/Municipais/);
-      await cycle.click();
-      assert.equal(await cycle.getAttribute('data-current-filter'),'all');
+      await filterAll.click();
+      assert.equal(await filterAll.getAttribute('aria-pressed'),'true');
       assert.match(await bus.locator('#bus-lines-list .bus-line-group').first().innerText(),/Internos/);
       if(width===390){
         // Recolher Linhas devolve o filtro ao mapa; reabrir devolve à lista.
@@ -560,7 +564,7 @@ try {
           return {loc:b('#loc'),mapFilter:b('#map-filter-toggle'),
             zoom:b('.leaflet-control-zoom'),status:b('#map-data-status'),
             offline:b('#map-basemap-notice'),sheet:b('#sheet'),
-            search:b('.bus-line-search'),listFilter:b('[data-line-filter-toggle]')};
+            search:b('.bus-line-search'),listFilter:b('.bus-line-filters')};
         });
         for(const key of ['loc','mapFilter','zoom','status','sheet','search','listFilter'])
           assert.ok(blocks[key],`Layout Ônibus sem ${key}: ${JSON.stringify(blocks)}`);
@@ -570,9 +574,10 @@ try {
           'Filtro e zoom se sobrepõem: '+JSON.stringify(blocks));
         assert.ok(blocks.mapFilter.bottom+8<=blocks.status.top,
           'Filtro sobrepõe status do mapa: '+JSON.stringify(blocks));
-        assert.ok(blocks.search.right+7<=blocks.listFilter.left&&
-          Math.abs(blocks.search.top-blocks.listFilter.top)<=8,
-          'Busca e filtro de Linhas devem compartilhar a mesma faixa: '+JSON.stringify(blocks));
+        assert.ok(blocks.search.bottom<=blocks.listFilter.top+3&&
+          blocks.listFilter.top-blocks.search.bottom<=18&&
+          blocks.listFilter.width>=blocks.search.width-8,
+          'Busca e filtros devem ocupar faixas compactas separadas, sem buscas duplicadas: '+JSON.stringify(blocks));
         if(blocks.offline&&!blocks.offline.hidden){
           assert.ok(blocks.status.bottom+3<=blocks.offline.top,
             'Avisos do mapa sobrepostos: '+JSON.stringify(blocks));
