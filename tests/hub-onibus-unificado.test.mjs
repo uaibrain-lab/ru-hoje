@@ -42,7 +42,8 @@ test('a aba Ônibus substitui Interno sem acrescentar quinta aba no Hub',async()
   assert.match(interno,/radius:5.5,color:'#7556c9'/);
   assert.match(interno,/lines-filter-in-sheet/);
   assert.match(interno,/visibility:hidden;opacity:0;pointer-events:none/);
-  assert.match(interno,/Municipais BH:/);
+  assert.match(interno,/Dados municipais indisponíveis/);
+  assert.doesNotMatch(interno,/UFMG \\+ BH ·/);
   assert.match(interno,/class="gps-bus-shape"/);
   assert.match(interno,/if\(busPins&&map\.hasLayer\(busPins\)\)map\.removeLayer\(busPins\)/);
   assert.match(interno,/mapMode=internal\?\(municipal\?'all':'internal'\):\(municipal\?'external':'none'\)/);
