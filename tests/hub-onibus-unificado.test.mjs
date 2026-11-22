@@ -52,6 +52,13 @@ test('a aba Ônibus substitui Interno sem acrescentar quinta aba no Hub',async()
   assert.match(interno,/function starRow\(/);
   assert.match(interno,/hub_onibus_linhas_favoritas_v1/);
   assert.match(interno,/hub_onibus_pontos_bh_favoritos_v1/);
+  assert.match(html,/aria-label="Ônibus: pontos, linhas e horários"/);
+  assert.doesNotMatch(html,/class="onibus-intro"/);
+  assert.doesNotMatch(html,/MOBILIDADE|UFMG \+ Belo Horizonte|Voltar às linhas|Externo BH/);
+  const css=await read('public/assets/styles.css');
+  assert.doesNotMatch(css,/\.onibus-intro/);
+  assert.match(css,/grid-template-rows:minmax\(0,1fr\);overflow:hidden;padding:0/);
+  assert.match(css,/\.onibus-panel \.interno-frame\{display:block;width:100%;height:calc\(100dvh - 122px\)/);
   assert.match(html,/<span>Ônibus<\/span>/);
   assert.equal((html.match(/id="tab-(menu|interno|festas|sobre)"/g)||[]).length,4);
   assert.match(html,/id="interno-frame"[^>]*src="\/interno"/);
