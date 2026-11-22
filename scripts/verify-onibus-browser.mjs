@@ -29,6 +29,22 @@ try {
               stopSequence:12,at:new Date(now+180000).toISOString(),
               lastFeedUpdateAt:new Date(now).toISOString(),eventType:'arrival'}]})});
       });
+    // Simular um alerta oficial vigente só no celular; desktop testa falha segura.
+    await page.route('https://externo-bh-gps-free.hubufmg.workers.dev/api/alerts?*',
+      route=>{
+        if(width===1280)return route.fulfill({status:503,contentType:'application/json',
+          headers:{'Access-Control-Allow-Origin':'*'},
+          body:JSON.stringify({available:false,error:'ALERTS_UNAVAILABLE'})});
+        const now=Date.now();
+        return route.fulfill({status:200,contentType:'application/json',
+          headers:{'Access-Control-Allow-Origin':'*'},
+          body:JSON.stringify({available:true,source:'SUMOB_GTFS_RT_ALERTS',
+            fetchedAt:new Date(now).toISOString(),
+            feedTimestamp:new Date(now).toISOString(),
+            items:[{id:'synthetic-alert-01',title:'Ponto temporariamente transferido',
+              description:'Verifique o local de embarque.',effect:2,cause:3,
+              matchedRoutes:['5102'],matchedStops:['14791950']}]})});
+      });
     try{
       await page.goto(new URL(deepLink,base).href,{
         waitUntil:'domcontentloaded',timeout:30000
@@ -48,6 +64,14 @@ try {
       await frame.locator('#map-point-legend').waitFor({timeout:30000});
       await frame.locator('.municipal-detail-title').waitFor({timeout:30000});
       if(width===390){
+        const alertNotice=frame.locator('#service-alert-notification');
+        await alertNotice.waitFor({state:'visible',timeout:20000});
+        assert.match(await alertNotice.innerText(),/Ponto temporariamente transferido/);
+        assert.equal(await frame.locator('#municipal-service-alerts').isVisible(),true);
+        await frame.locator('#service-alert-notification-view').click();
+        assert.equal(await alertNotice.isVisible(),false,
+          'Ao consultar o aviso, a notificação deve ser recolhida');
+        assert.match(await frame.locator('#municipal-alert-rows').innerText(),/Verifique o local/);
         await frame.locator('#municipal-stop-realtime:not([hidden])').waitFor({timeout:20000});
         const txt=await frame.locator('#municipal-realtime-rows').innerText();
         assert.match(txt,/51/);
@@ -56,6 +80,9 @@ try {
         assert.match(await frame.locator('#municipal-timetable-title').innerText(),/tabela/);
       }else{
         await frame.locator('#municipal-stop-schedules .municipal-arrivals').waitFor({timeout:20000});
+        assert.equal(await frame.locator('#service-alert-notification').isVisible(),false,
+          'Sem fonte oficial não deve aparecer notificação inventada');
+        assert.equal(await frame.locator('#municipal-service-alerts').isVisible(),false);
         assert.equal(await frame.locator('#municipal-stop-realtime').isVisible(),false,
           'Worker indisponível não pode gerar ETA fictício');
         assert.match(await frame.locator('#municipal-timetable-title').innerText(),/programados/);
