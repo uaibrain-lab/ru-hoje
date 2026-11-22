@@ -736,11 +736,14 @@ function municipalStopView(id){
     '<span class="municipal-kind">Ponto municipal · Belo Horizonte</span>'+
     '<h2 class="municipal-detail-title">'+esc(name)+'</h2>'+
     '<small>Identificação '+esc(id)+'</small></div></div>'+
-    '<p class="municipal-detail-note">Horários programados do GTFS, sujeitos ao calendário. '+
-    'Os miniônibus no mapa indicam posições GPS recentes, não previsões de chegada.</p>'+
+    '<p class="municipal-detail-note">Quando disponíveis, as previsões oficiais em tempo real aparecem primeiro. '+
+    'O restante vem da tabela GTFS. Os miniônibus do mapa mostram posições GPS, não ETA por distância.</p>'+
     '<div class="municipal-detail-tools"><button type="button" data-municipal-list>'+
     'Ver todas as linhas (internos primeiro)</button></div>'+
-    '<h3>Próximos horários programados</h3>'+
+    '<section id="municipal-stop-realtime" class="municipal-realtime" aria-label="Chegadas previstas em tempo real" hidden>'+
+    '<h3>Chegadas previstas · tempo real</h3><div id="municipal-realtime-rows" class="municipal-arrivals"></div>'+
+    '<small>Fonte oficial SUMOB / GTFS-RT · previsão sujeita ao trânsito</small></section>'+
+    '<h3 id="municipal-timetable-title">Próximos horários programados</h3>'+
     '<div id="municipal-stop-schedules" role="status" aria-live="polite">'+
     '<p class="note">Consultando horários deste ponto…</p></div>'+
     '<h3>Linhas que atendem ao ponto</h3>'+
@@ -779,9 +782,79 @@ function municipalLineView(code){
       '<p class="note">Os pontos deste percurso estão indisponíveis agora.</p>')+
     '</div>';
 }
+const realtimePredictionsCache=new Map();
+async function populateMunicipalRealtime(id){
+  if(view.t!=='municipal-stop'||String(view.id)!==String(id)||document.hidden)return;
+  const section=document.getElementById('municipal-stop-realtime');
+  const rows=section?.querySelector('#municipal-realtime-rows');
+  if(!section||!rows)return;
+  const now=Date.now();
+  const cached=realtimePredictionsCache.get(String(id));
+  let result=cached&&now-cached.fetchedAt<25000?cached.value:null;
+  if(!result){
+    try{
+      const endpoint=new URL('https://externo-bh-gps-free.hubufmg.workers.dev/api/arrivals');
+      endpoint.searchParams.set('stop',String(id));
+      const response=await fetch(endpoint.href,{cache:'no-store'});
+      if(!response.ok)throw Error('OFFICIAL_ETA_UNAVAILABLE');
+      const data=await response.json();
+      if(!data||data.available!==true||data.source!=='SUMOB_GTFS_RT_TRIP_UPDATES'||
+         String(data.stopId)!==String(id)||!Array.isArray(data.items)||
+         data.items.length>36)throw Error('OFFICIAL_ETA_INVALID');
+      const feedTime=Date.parse(data.feedTimestamp||'');
+      const fetchedTime=Date.parse(data.fetchedAt||'');
+      if(!Number.isFinite(feedTime)||!Number.isFinite(fetchedTime)||
+         Math.abs(now-feedTime)>120000||Math.abs(now-fetchedTime)>120000)
+         throw Error('OFFICIAL_ETA_STALE');
+      result=data;
+    }catch{
+      // HTTPS, CORS, Worker ainda não publicado, feed vazio ou inválido:
+      // a tabela GTFS continua visível, sem inventar estimativas.
+      result=null;
+    }
+    realtimePredictionsCache.set(String(id),{fetchedAt:now,value:result});
+  }
+  if(view.t!=='municipal-stop'||String(view.id)!==String(id)||!rows.isConnected)return;
+  const routes=new Map();
+  for(const r of externalRoutes||[]){
+    routes.set(String(r.id),r); // GTFS route_id
+    if(!routes.has(String(r.code)))routes.set(String(r.code),r); // GTFS-RT usa código em algumas linhas
+  }
+  const serving=new Set((externalPatterns||[])
+    .filter(p=>p.stops?.includes(String(id))).map(p=>String(p.route)));
+  const found=[];
+  for(const item of result?.items||[]){
+    const route=routes.get(String(item.routeId||''));
+    if(!route||!serving.has(String(route.id))||
+       String(item.stopId)!==String(id)||!item.tripId)continue;
+    const time=Date.parse(String(item.at||''));
+    const feedTime=Date.parse(String(item.lastFeedUpdateAt||''));
+    if(!Number.isFinite(time)||!Number.isFinite(feedTime)||
+       time<Date.now()-30000||time>Date.now()+7200000||
+       Math.abs(Date.now()-feedTime)>120000)continue;
+    found.push({route,time,type:item.eventType==='arrival'?'arrival':'departure'});
+  }
+  found.sort((a,b)=>a.time-b.time);
+  if(!found.length){section.hidden=true;return;}
+  section.hidden=false;
+  const heading=document.getElementById('municipal-timetable-title');
+  if(heading)heading.textContent='Horários programados (tabela)';
+  rows.innerHTML=found.slice(0,9).map(item=>{
+    const minutes=Math.max(0,Math.ceil((item.time-Date.now())/60000));
+    const clock=new Date(item.time).toLocaleTimeString('pt-BR',{
+      timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'});
+    return '<button type="button" class="municipal-arrival" data-externo-code="'+esc(item.route.code)+'">'+
+      '<span class="municipal-code">'+esc(item.route.code)+'</span>'+
+      '<span class="municipal-destination">'+esc(item.route.name||'Linha municipal')+
+      '<small>'+(item.type==='departure'?'Partida prevista':'Chegada prevista')+
+      ' · '+clock+' · SUMOB</small></span>'+
+      '<span class="municipal-time">'+(minutes===0?'agora':minutes+' min')+'</span></button>';
+  }).join('');
+}
 async function populateMunicipalStop(id){
   if(view.t!=='municipal-stop'||String(view.id)!==String(id))return;
   await loadExternalLines();
+  void populateMunicipalRealtime(id);
   const destination=document.getElementById('municipal-stop-routes');
   if(destination&&view.t==='municipal-stop'&&String(view.id)===String(id)){
     const ids=new Map(externalRoutes.map(r=>[String(r.id),r]));
