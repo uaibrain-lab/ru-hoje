@@ -246,6 +246,64 @@ i{font-style:normal;font-size:14px;font-weight:400}
   .bus-line-tools{gap:7px}
   .bus-line-tools .bus-line-filters .filter-cycle{padding:8px 9px;gap:4px}
 }
+
+/* Acabamento do design system Ônibus — ritmo 8/12/16px, superfícies discretas,
+   contraste de texto e prioridade para as informações de linha/horário. */
+#sheet.lines-mode .bus-line-group{
+  margin:18px 0 11px;gap:12px;font-size:14px;font-weight:780;
+  letter-spacing:-.2px;line-height:1.35
+}
+#sheet.lines-mode .bus-line-group small{
+  color:var(--mut);font-size:12px;font-weight:550;letter-spacing:0;
+  text-align:right;line-height:1.35
+}
+#sheet.lines-mode .chips{gap:8px}
+#sheet.lines-mode .chips button{min-height:44px}
+#sheet.lines-mode #bus-lines-list .row{
+  min-height:72px;gap:12px;margin:0;
+  border:1px solid var(--line);border-left:3px solid var(--c,transparent);
+  border-radius:14px;background:var(--bg);padding:11px 12px;
+  transition:background-color .14s ease,border-color .14s ease,transform .14s ease;
+}
+#sheet.lines-mode #bus-lines-list .row .num{
+  width:42px;height:42px;border-radius:11px;font-size:19px;font-weight:780;
+}
+#sheet.lines-mode #bus-lines-list .row .info b{
+  font-size:15px;line-height:1.25;font-weight:750;letter-spacing:-.2px;
+}
+#sheet.lines-mode #bus-lines-list .row .info small{
+  display:block;font-size:12px;line-height:1.5;
+  color:var(--mut);margin-top:4px;
+}
+#sheet.lines-mode #bus-lines-list .row .eta b{
+  font-size:21px;line-height:1.15;letter-spacing:-.45px;font-weight:780;
+}
+#sheet.lines-mode #bus-lines-list .row .eta small{
+  margin-top:3px;font-size:11.5px;line-height:1.25;
+}
+#sheet.lines-mode #bus-lines-list .bus-code{
+  min-width:48px;padding:9px 7px;border-radius:11px;font-size:13px;
+}
+#sheet.lines-mode #bus-lines-list .bus-fav-row{gap:10px;margin:0 0 10px}
+#sheet.lines-mode #bus-lines-list .bus-fav-row>.star{
+  background:var(--bg);border-color:var(--line);color:var(--mut);
+}
+#sheet.lines-mode #bus-lines-list .bus-fav-row>.star.fav{color:#c68112}
+#sheet.lines-mode #bus-lines-list .row:focus-visible,
+#sheet.lines-mode #bus-lines-list .star:focus-visible{
+  outline:3px solid #2e90fa;outline-offset:2px;
+}
+#sheet.lines-mode .bus-line-note{font-size:12px;line-height:1.55;margin:14px 2px}
+#sheet.lines-mode .bus-line-hint{font-size:13px;line-height:1.55;margin:12px 2px}
+#sheet.lines-mode .bus-line-more{margin:12px 0;border-radius:12px;font-size:13px}
+@media(hover:hover){
+  #sheet.lines-mode #bus-lines-list .row:hover{
+    border-color:var(--mut);background:var(--bg2);
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  #sheet.lines-mode #bus-lines-list .row{transition:none}
+}
 </style>
 </head>
 <body>
