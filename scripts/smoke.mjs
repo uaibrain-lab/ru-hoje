@@ -774,15 +774,17 @@ try {
     await sheet.locator('.municipal-detail-title').getByText(/101/).waitFor({timeout:15000});
     assert.equal(await combined.locator('#externo-frame').count(),0,
       'Selecionar municipal não deve trocar para segundo aplicativo');
+    await combined.waitForFunction(()=>new URL(location.href).searchParams.get('linha')==='101',
+      {timeout:10000});
     assert.equal(new URL(combined.url()).searchParams.get('tipo'),'externo');
-    assert.equal(new URL(combined.url()).searchParams.get('linha'),'101');
     assert.equal(await sheet.locator('.municipal-direction-list').count(),1);
     assert.equal(await sheet.locator('[data-municipal-pattern]').count(),1);
     await sheet.locator('[data-municipal-list]').click();
     await sheet.locator('[data-line-filter-toggle]').waitFor({state:'visible'});
     assert.equal(await sheet.locator('[data-line-filter-toggle]').getAttribute('data-current-filter'),'all');
     assert.match(await sheet.locator('#bus-lines-list .bus-line-group').first().innerText(),/Internos/);
-    assert.equal(new URL(combined.url()).searchParams.get('tipo'),null);
+    await combined.waitForFunction(()=>new URL(location.href).searchParams.get('tipo')===null,
+      {timeout:10000});
     await sheet.locator('#quick-pontos').click();
     await sheet.locator('[data-ext-stop="14784087"]').waitFor({state:'visible',timeout:15000});
     const internalStopStar=sheet.locator('#list [data-fav-stop-list]').nth(1);
@@ -792,7 +794,8 @@ try {
       .getAttribute('data-fav-stop-list'),stopId,'Ponto favorito deve subir sem seção especial');
     await sheet.locator('[data-ext-stop="14784087"]').click();
     await sheet.locator('.municipal-detail-title').getByText('Av. Campus Principal').waitFor();
-    assert.equal(new URL(combined.url()).searchParams.get('ponto'),'14784087');
+    await combined.waitForFunction(()=>new URL(location.href).searchParams.get('ponto')==='14784087',
+      {timeout:10000});
     assert.equal(await sheet.locator('#map-point-legend').count(),1);
     assert.equal(await sheet.locator('#map-source-switch').isVisible(),true);
     await sheet.locator('[data-municipal-list]').click();
