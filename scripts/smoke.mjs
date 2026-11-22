@@ -502,6 +502,33 @@ try {
       assert.equal(await cycle.getAttribute('data-current-filter'),'all');
       assert.match(await bus.locator('#bus-lines-list .bus-line-group').first().innerText(),/Internos/);
       if(width===390){
+        // Teste geométrico: controles no mapa e ferramentas em Linhas não se sobrepõem.
+        const blocks=await bus.locator('body').evaluate(()=>{
+          const b=selector=>{const n=document.querySelector(selector);if(!n)return null;
+            const r=n.getBoundingClientRect();return {left:r.left,right:r.right,
+              top:r.top,bottom:r.bottom,width:r.width,height:r.height,hidden:n.hidden};};
+          return {loc:b('#loc'),mapFilter:b('#map-filter-toggle'),
+            zoom:b('.leaflet-control-zoom'),status:b('#map-data-status'),
+            offline:b('#map-basemap-notice'),sheet:b('#sheet'),
+            search:b('.bus-line-search'),listFilter:b('[data-line-filter-toggle]')};
+        });
+        for(const key of ['loc','mapFilter','zoom','status','sheet','search','listFilter'])
+          assert.ok(blocks[key],`Layout Ônibus sem ${key}: ${JSON.stringify(blocks)}`);
+        assert.ok(blocks.loc.right+8<=blocks.mapFilter.left,
+          'Localização e filtro se sobrepõem: '+JSON.stringify(blocks));
+        assert.ok(blocks.mapFilter.right+3<=blocks.zoom.left,
+          'Filtro e zoom se sobrepõem: '+JSON.stringify(blocks));
+        assert.ok(blocks.mapFilter.bottom+8<=blocks.status.top,
+          'Filtro sobrepõe status do mapa: '+JSON.stringify(blocks));
+        assert.ok(blocks.search.right+7<=blocks.listFilter.left&&
+          Math.abs(blocks.search.top-blocks.listFilter.top)<=8,
+          'Busca e filtro de Linhas devem compartilhar a mesma faixa: '+JSON.stringify(blocks));
+        if(blocks.offline&&!blocks.offline.hidden){
+          assert.ok(blocks.status.bottom+3<=blocks.offline.top,
+            'Avisos do mapa sobrepostos: '+JSON.stringify(blocks));
+          assert.ok(blocks.offline.bottom+12<=blocks.sheet.top,
+            'Aviso do mapa coberto pelo painel: '+JSON.stringify(blocks));
+        }
         await fs.mkdir(path.resolve(ROOT,'../qa-results/menu-compact'),{recursive:true});
         await mobile.screenshot({path:path.resolve(ROOT,'../qa-results/menu-compact/onibus-linhas-390.png')});
       }
