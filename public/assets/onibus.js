@@ -101,7 +101,8 @@ async function loadExterno({force=false}={}){
     await checkSource();
     if(!active()||selected()!=='externo')return;
     if(frameReady){revealExterno();return;}
-    if(!frame.getAttribute('src'))frame.setAttribute('src',EXTERNO);
+    if(!frame.getAttribute('src')||force)
+      frame.setAttribute('src',EXTERNO+(force?'?reload='+Date.now():''));
     // Mantém feedback visível até o iframe sinalizar o documento estático.
   }catch(error){
     if(!active()||selected()!=='externo')return;

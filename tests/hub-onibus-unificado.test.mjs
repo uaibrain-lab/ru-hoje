@@ -15,6 +15,10 @@ test('a aba Ônibus substitui Interno sem acrescentar quinta aba no Hub',async()
   assert.match(html,/id="tab-interno"[^>]*aria-controls="interno-page"/);
   assert.match(html,/id="onibus-filter-interno"/);
   assert.match(html,/id="onibus-filter-externo"/);
+  assert.match(html,/id="onibus-empty-title"/);
+  assert.match(html,/id="onibus-back-interno"/);
+  assert.match(html,/class="onibus-source-chip"/);
+  assert.match(html,/id="onibus-description"[^>]*aria-live="polite"/);
   assert.match(html,/<span>Ônibus<\/span>/);
   assert.equal((html.match(/id="tab-(menu|interno|festas|sobre)"/g)||[]).length,4);
   assert.match(html,/id="interno-frame"[^>]*src="\/interno"/);
@@ -26,6 +30,10 @@ test('links canônicos e legados preservam filtro sem falsificar tipo',()=>{
   assert.equal(modeFromSearch('?aba=onibus&tipo=externo'),'externo');
   assert.equal(modeFromSearch('?aba=interno'),'interno');
   assert.equal(modeFromSearch('?tipo=desconhecido'),'interno');
+  const module=await read('public/assets/onibus.js');
+  assert.ok(module.includes('CHECK_AGE_MS=5*60*1000'));
+  assert.ok(module.includes("['ArrowLeft','ArrowRight','Home','End']"));
+  assert.ok(module.includes("dataset?.appMode==='free-static'"));
 });
 
 test('manifest GTFS municipal é validado antes de montar iframe',()=>{

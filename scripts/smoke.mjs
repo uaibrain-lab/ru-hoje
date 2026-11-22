@@ -473,6 +473,40 @@ try {
       await mobile.locator('#tab-interno').click();
       const bus=mobile.frameLocator('#interno-frame');
       await bus.locator('#q').waitFor({state:'visible',timeout:15000});
+      const ui=await mobile.evaluate(()=>{
+        const rect=id=>document.getElementById(id)?.getBoundingClientRect();
+        const a=rect('onibus-filter-interno'),b=rect('onibus-filter-externo'),f=rect('interno-frame');
+        return {pageWidth:document.documentElement.scrollWidth,viewport:innerWidth,
+          touchHeights:[a?.height,b?.height],touchWidths:[a?.width,b?.width],
+          iframeHeight:f?.height,source:document.getElementById('onibus-source-label')?.textContent,
+          pressed:document.getElementById('onibus-filter-interno')?.getAttribute('aria-pressed')};
+      });
+      assert.ok(ui.pageWidth<=width+1,'Rolagem horizontal na aba Ônibus: '+JSON.stringify(ui));
+      assert.ok(ui.touchHeights.every(x=>x>=44),'Filtros pequenos: '+JSON.stringify(ui));
+      assert.ok(ui.touchWidths.every(x=>x>=105),'Filtros estreitos: '+JSON.stringify(ui));
+      assert.ok(ui.iframeHeight>=320,'Pouco espaço de mapa: '+JSON.stringify(ui));
+      assert.equal(ui.pressed,'true');
+      assert.equal(ui.source,'Campus UFMG');
+      if(width===390){
+        await fs.mkdir(path.resolve(ROOT,'../qa-results/menu-compact'),{recursive:true});
+        await mobile.screenshot({path:path.resolve(ROOT,'../qa-results/menu-compact/onibus-interno-390.png')});
+      }
+      await mobile.locator('#onibus-filter-externo').click();
+      await mobile.locator('#onibus-empty-title').getByText('Externo BH ainda não disponível').waitFor({timeout:10000});
+      assert.equal(await mobile.locator('#externo-frame').isVisible(),false);
+      assert.equal(await mobile.locator('#onibus-externo-retry').isVisible(),true);
+      assert.equal(new URL(mobile.url()).searchParams.get('tipo'),'externo');
+      if(width===390){
+        await mobile.screenshot({path:path.resolve(ROOT,'../qa-results/menu-compact/onibus-externo-indisponivel-390.png')});
+      }
+      await mobile.locator('#onibus-filter-externo').focus();
+      await mobile.keyboard.press('ArrowLeft');
+      assert.equal(await mobile.locator('#onibus-filter-interno').getAttribute('aria-pressed'),'true');
+      assert.equal(new URL(mobile.url()).searchParams.get('tipo'),null);
+      await mobile.locator('#onibus-filter-externo').click();
+      await mobile.locator('#onibus-back-interno').click();
+      assert.equal(await mobile.locator('#onibus-filter-interno').getAttribute('aria-pressed'),'true');
+      await bus.locator('#q').waitFor({state:'visible'});
       assert.equal(await bus.locator('#sheet').evaluate(e=>e.classList.contains('peek')),false,
         'Busca do Interno deve abrir sem painel recolhido');
       assert.equal(menuRequests,0,'Interno não deve disparar consulta FUMP');
@@ -483,6 +517,29 @@ try {
       await mobile.close();
     }
   }finally{await mobileContext.close();}
+  // Pacote municipal simulado: abrir somente se manifesto e iframe estático
+  // forem válidos; isso não afirma que os dados oficiais foram homologados.
+  const busValidCtx=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
+  await busValidCtx.addInitScript(()=>{
+    try{localStorage.setItem('ruhoje:restaurant:v1','setorial-i');}catch{}
+  });
+  try{
+    const validPage=await busValidCtx.newPage();
+    await validPage.route('**/externo/catalog/manifest.json',route=>route.fulfill({
+      status:200,contentType:'application/json',
+      body:JSON.stringify({gtfsVersion:'synthetic-qa',routes:2,stops:2,
+        stopTimeRows:4,feedStartDate:'20260101',feedEndDate:'20261231'})
+    }));
+    await validPage.route('**/externo/',route=>route.fulfill({
+      status:200,contentType:'text/html',
+      body:'<!doctype html><html data-app-mode="free-static"><head><title>Externo QA</title></head><body><main>Mapa Externo em teste</main></body></html>'
+    }));
+    await validPage.goto(url+'?aba=onibus&tipo=externo',{waitUntil:'domcontentloaded'});
+    await validPage.locator('#externo-frame').waitFor({state:'visible',timeout:15000});
+    assert.equal(await validPage.locator('#onibus-empty').isVisible(),false);
+    assert.equal(await validPage.frameLocator('#externo-frame').locator('main').innerText(),'Mapa Externo em teste');
+    assert.equal(await validPage.locator('#onibus-source-label').innerText(),'Belo Horizonte');
+  }finally{await busValidCtx.close();}
   // Primeira visita por link direto não deve bloquear Festas com o seletor de RU.
   const firstVisit=await browser.newContext({serviceWorkers:'block'});
   try{
