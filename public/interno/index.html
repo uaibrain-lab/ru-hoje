@@ -495,6 +495,17 @@ i{font-style:normal;font-size:14px;font-weight:400}
   #map-feedback{left:12px;right:auto;align-items:stretch}
 }
 #map-data-status[hidden]{display:none!important}
+
+/* Avisos oficiais só ocupam espaço quando há evento ativo no percurso ou ponto. */
+.municipal-service-alerts:not([hidden]){margin:8px 0 16px;padding:11px 12px;
+  border:1px solid #deb66c;border-left:3px solid #c88e22;
+  border-radius:11px;background:var(--bg2);color:var(--ink)}
+.municipal-service-alerts h3{font-size:13px;margin:0 0 8px}
+.municipal-service-alerts small{font-size:10px;color:var(--mut)}
+.municipal-service-alert{padding:5px 0}
+.municipal-service-alert+.municipal-service-alert{border-top:1px solid var(--line)}
+.municipal-service-alert strong{font-size:12px}
+.municipal-service-alert p{font-size:12px;margin:4px 0;white-space:pre-wrap}
 </style>
 </head>
 <body>
@@ -740,6 +751,9 @@ function municipalStopView(id){
     'O restante vem da tabela GTFS. Os miniônibus do mapa mostram posições GPS, não ETA por distância.</p>'+
     '<div class="municipal-detail-tools"><button type="button" data-municipal-list>'+
     'Ver todas as linhas (internos primeiro)</button></div>'+
+    '<section id="municipal-service-alerts" class="municipal-service-alerts" aria-label="Alertas oficiais de serviço" hidden>'+
+    '<h3>Avisos de serviço</h3><div id="municipal-alert-rows"></div>'+
+    '<small>Fonte: SUMOB · GTFS-Realtime</small></section>'+
     '<section id="municipal-stop-realtime" class="municipal-realtime" aria-label="Chegadas previstas em tempo real" hidden>'+
     '<h3>Chegadas previstas · tempo real</h3><div id="municipal-realtime-rows" class="municipal-arrivals"></div>'+
     '<small>Fonte oficial SUMOB / GTFS-RT · previsão sujeita ao trânsito</small></section>'+
@@ -770,6 +784,9 @@ function municipalLineView(code){
     'Veículos GPS aparecem no mapa quando há posições recentes disponíveis.</p>'+
     '<div class="municipal-detail-tools"><button type="button" data-municipal-list>'+
     'Todas as linhas (internos primeiro)</button></div>'+
+    '<section id="municipal-service-alerts" class="municipal-service-alerts" aria-label="Alertas oficiais de serviço" hidden>'+
+    '<h3>Avisos de serviço</h3><div id="municipal-alert-rows"></div>'+
+    '<small>Fonte: SUMOB · GTFS-Realtime</small></section>'+
     (variants.length?'<h3>Sentidos e percursos</h3><div class="municipal-direction-list" role="group" aria-label="Selecionar sentido">'+
       variants.slice(0,12).map((p,i)=>'<button type="button" data-municipal-pattern="'+esc(p.id)+
       '" aria-pressed="'+String(String(active)===String(p.id))+'">'+
@@ -781,6 +798,56 @@ function municipalLineView(code){
       '<span aria-hidden="true">›</span></button>').join(''):
       '<p class="note">Os pontos deste percurso estão indisponíveis agora.</p>')+
     '</div>';
+}
+const alertResultsCache=new Map();
+async function populateMunicipalAlerts(){
+  const isStop=view.t==='municipal-stop',isLine=view.t==='municipal-line';
+  if((!isStop&&!isLine)||document.hidden)return;
+  const key=isStop?'stop:'+String(view.id):'line:'+String(view.code);
+  const section=document.getElementById('municipal-service-alerts');
+  const list=section?.querySelector('#municipal-alert-rows');
+  if(!section||!list)return;
+  await loadExternalLines();
+  if(!section.isConnected)return;
+  const stopId=isStop?String(view.id):null;
+  const routeIds=isLine
+    ?new Set(externalRoutes.filter(r=>r.code.toUpperCase()===String(view.code).toUpperCase())
+      .map(r=>String(r.id)))
+    :new Set((externalPatterns||[])
+      .filter(p=>p.stops?.includes(stopId)).map(p=>String(p.route)));
+  const codes=externalRoutes.filter(r=>routeIds.has(String(r.id)));
+  const ids=[...new Set(codes.flatMap(r=>[String(r.id),String(r.code)]))].slice(0,25);
+  const endpoint=new URL('https://externo-bh-gps-free.hubufmg.workers.dev/api/alerts');
+  if(stopId)endpoint.searchParams.set('stop',stopId);
+  if(ids.length)endpoint.searchParams.set('routes',ids.join(','));
+  if(!stopId&&!ids.length)return;
+  const now=Date.now(),cached=alertResultsCache.get(key);
+  let data=cached&&now-cached.ts<25000?cached.data:null;
+  if(!data){
+    try{
+      const response=await fetch(endpoint.href,{cache:'no-store'});
+      if(!response.ok)throw Error('SERVICE_ALERTS_NOT_AVAILABLE');
+      const value=await response.json();
+      if(value?.available!==true||value.source!=='SUMOB_GTFS_RT_ALERTS'||
+         !Array.isArray(value.items)||value.items.length>15||
+         Math.abs(Date.now()-Date.parse(value.feedTimestamp||''))>600000)
+         throw Error('SERVICE_ALERTS_INVALID');
+      data=value;
+    }catch{
+      data={items:[]}; // Não afirmar "sem alertas" se o Worker falhou.
+    }
+    alertResultsCache.set(key,{ts:now,data});
+  }
+  if(!list.isConnected||(isStop&&(view.t!=='municipal-stop'||String(view.id)!==stopId))||
+    (isLine&&(view.t!=='municipal-line'||String(view.code).toUpperCase()!==key.slice(5).toUpperCase())))return;
+  const items=data.items.filter(a=>a&&typeof a.title==='string'&&a.title.trim()&&
+    a.title.length<=450&&typeof a.description==='string'&&a.description.length<=450)
+    .slice(0,4);
+  section.hidden=items.length===0;
+  if(!items.length)return;
+  list.innerHTML=items.map(a=>'<div class="municipal-service-alert">'+
+    '<strong>'+esc(a.title)+'</strong>'+
+    (a.description?'<p>'+esc(a.description)+'</p>':'')+'</div>').join('');
 }
 const realtimePredictionsCache=new Map();
 async function populateMunicipalRealtime(id){
@@ -854,6 +921,7 @@ async function populateMunicipalRealtime(id){
 async function populateMunicipalStop(id){
   if(view.t!=='municipal-stop'||String(view.id)!==String(id))return;
   await loadExternalLines();
+  void populateMunicipalAlerts();
   void populateMunicipalRealtime(id);
   const destination=document.getElementById('municipal-stop-routes');
   if(destination&&view.t==='municipal-stop'&&String(view.id)===String(id)){
@@ -1021,6 +1089,7 @@ function render(){
     view.t==='municipal-line'?municipalLineView(view.code):nearView());
   el.scrollTop=0;
   if(view.t==='municipal-stop')void populateMunicipalStop(view.id);
+  if(view.t==='municipal-line')void populateMunicipalAlerts();
 }
 
 // No celular a busca inicia acessível, com estados intermediário/recolhido/expandido sem recriar o mapa.
