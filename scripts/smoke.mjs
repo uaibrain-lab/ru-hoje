@@ -606,6 +606,23 @@ try {
      assert.equal(await mapFilter.getAttribute('data-current-filter'),'all');
      await sheet.locator('#map-data-status').getByText(/GPS ao vivo:/).waitFor({timeout:15000});
     assert.equal(await sheet.locator('.gps-bus-pin').count(),1);
+    // Mobile compacto real: a aba deve continuar utilizável mesmo dentro do
+    // iframe do Hub, que tem largura interna menor que a tela de 320 px.
+    await combined.setViewportSize({width:320,height:740});
+    const narrow=await sheet.locator('body').evaluate(()=>{
+      const rect=q=>{const n=document.querySelector(q);if(!n)return null;
+        const r=n.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width}};
+      return {width:innerWidth,scrollWidth:document.documentElement.scrollWidth,
+        loc:rect('#loc'),filter:rect('#map-filter-toggle'),
+        zoom:rect('.leaflet-control-zoom')};
+    });
+    assert.ok(narrow.loc&&narrow.filter&&narrow.zoom,'Faltou controle essencial em 320px');
+    assert.ok(narrow.scrollWidth<=narrow.width+1,'Rolagem horizontal interna em 320px: '+JSON.stringify(narrow));
+    assert.ok(narrow.loc.right+6<=narrow.filter.left,'Localização sobrepõe filtro em 320px: '+JSON.stringify(narrow));
+    assert.ok(narrow.filter.right+3<=narrow.zoom.left,'Filtro sobrepõe zoom em 320px: '+JSON.stringify(narrow));
+    await fs.mkdir(path.resolve(ROOT,'../qa-results/menu-compact'),{recursive:true});
+    await combined.screenshot({path:path.resolve(ROOT,'../qa-results/menu-compact/onibus-320.png')});
+    await combined.setViewportSize({width:390,height:844});
     await sheet.locator('#quick-linhas').click();
     const stars=sheet.locator('#bus-lines-list [data-fav-list-line^="int:"]');
     await stars.nth(1).waitFor({state:'visible'});
