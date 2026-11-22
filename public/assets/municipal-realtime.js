@@ -58,9 +58,12 @@ export function projectOfficialDelays(relativeUpdates,rows,{stopId,calendar,now=
        !/^[A-Za-z0-9_.:-]{1,90}$/.test(String(u.tripId||''))||
        !/^[A-Za-z0-9_.:-]{1,70}$/.test(String(u.routeId||''))||
        !Number.isSafeInteger(u.observedStopSequence)||u.observedStopSequence<0||
-       !/^[0-9]{1,20}$/.test(String(u.observedStopId||''))||
-       !Number.isSafeInteger(u.delaySeconds)||Math.abs(u.delaySeconds)>7200)
+       !/^[0-9]{1,20}$/.test(String(u.observedStopId||'')))
        continue;
+    const marker=u.kind==='NO_DATA'||u.kind==='SKIPPED';
+    if((u.kind!==undefined&&u.kind!=='DELAY'&&!marker)||
+       (!marker&&(!Number.isSafeInteger(u.delaySeconds)||
+         Math.abs(u.delaySeconds)>7200)))continue;
     const stamp=Date.parse(String(u.lastFeedUpdateAt||''));
     if(!Number.isFinite(stamp)||stamp<now-120000||stamp>now+60000)continue;
     const start=startTimeSeconds(u.startTime);
@@ -79,21 +82,30 @@ export function projectOfficialDelays(relativeUpdates,rows,{stopId,calendar,now=
     const candidates=byTrip.get(String(tid)+'|'+String(rid)+'|'+start);
     if(!candidates)continue;
     // Preserve distinct service days, including 24:xx departures after midnight.
-    const bestByDate=new Map();
+    const bestByDate=new Map(),skippedDates=new Set();
     for(const u of candidates){
-      if(sequence<u.observedStopSequence||
-         (sequence===u.observedStopSequence&&
-          String(u.observedStopId)!==String(stopId)))continue;
+      if(sequence<u.observedStopSequence)continue;
+      if(u.kind==='SKIPPED'){
+        if(sequence===u.observedStopSequence&&
+           String(u.observedStopId)===String(stopId))
+           skippedDates.add(u.startDate);
+        // A skipped stop does NOT block propagation beyond that stop.
+        continue;
+      }
+      if(sequence===u.observedStopSequence&&
+         String(u.observedStopId)!==String(stopId))continue;
       const state=bestByDate.get(u.startDate);
       if(!state||u.observedStopSequence>state.u.observedStopSequence)
         bestByDate.set(u.startDate,{u,conflict:false});
       else if(u.observedStopSequence===state.u.observedStopSequence&&
-        (u.delaySeconds!==state.u.delaySeconds||
+        (u.delaySeconds!==state.u.delaySeconds||u.kind!==state.u.kind||
          u.observedStopId!==state.u.observedStopId))
         state.conflict=true; // contradictory official records: no ETA
     }
     for(const [date,{u,conflict}] of bestByDate){
-      if(conflict)continue;
+      // NO_DATA terminates propagation until a subsequent time/delay
+      // update; SKIPPED means the selected stop will not be served.
+      if(conflict||u.kind==='NO_DATA'||skippedDates.has(date))continue;
       const day=serviceDay(date);
       if(!serviceActive(service,day,calendar))continue;
       const serviceMidnight=Date.parse(day+'T00:00:00-03:00');
