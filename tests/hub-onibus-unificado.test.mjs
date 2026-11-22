@@ -24,6 +24,14 @@ test('a aba Ônibus substitui Interno sem acrescentar quinta aba no Hub',async()
   assert.match(interno,/\['external','Externas'\]/);
   assert.ok(interno.indexOf("Internos <small>")<interno.indexOf("Externos <small>"));
   assert.match(interno,/hub:onibus:external-line/);
+  assert.match(interno,/id="map-source-switch"/);
+  assert.match(interno,/data-map-mode="all" aria-pressed="true"/);
+  assert.match(interno,/data-map-mode="internal"/);
+  assert.match(interno,/data-map-mode="external"/);
+  assert.doesNotMatch(interno,/function favRows\(/);
+  assert.match(interno,/function starRow\(/);
+  assert.match(interno,/hub_onibus_linhas_favoritas_v1/);
+  assert.match(interno,/hub_onibus_pontos_bh_favoritos_v1/);
   assert.match(html,/<span>Ônibus<\/span>/);
   assert.equal((html.match(/id="tab-(menu|interno|festas|sobre)"/g)||[]).length,4);
   assert.match(html,/id="interno-frame"[^>]*src="\/interno"/);
@@ -37,6 +45,8 @@ test('links canônicos e legados preservam filtro sem falsificar tipo',async()=>
   assert.equal(modeFromSearch('?tipo=desconhecido'),'interno');
   const module=await read('public/assets/onibus.js');
   assert.ok(module.includes("e.data?.type==='hub:onibus:external-line'"));
+  assert.ok(module.includes("e.data?.type==='hub:onibus:external-stop'"));
+  assert.ok(module.includes("function focusExternalStop()"));
   assert.ok(module.includes("frame.loading='eager'"));
   assert.ok(module.includes("dataset?.appMode==='free-static'"));
 });

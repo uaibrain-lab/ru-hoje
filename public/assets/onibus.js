@@ -3,7 +3,7 @@
  */
 const $=id=>document.getElementById(id);
 const EXTERNO='/externo/';
-let verified=null,pending=null,frameReady=false,selectedCode='';
+let verified=null,pending=null,frameReady=false,selectedCode='',selectedStopId='',selectedStopName='';
 export function modeFromSearch(query=''){return new URLSearchParams(query).get('tipo')==='externo'?'externo':'interno'}
 export function localServiceDay(date=new Date()){
   const x=Object.fromEntries(new Intl.DateTimeFormat('en-US',{
@@ -36,8 +36,13 @@ function changeView(external){
 function changeUrl(external,code,push){
   if(!push)return;
   const u=new URL(location.href);u.searchParams.set('aba','onibus');
-  if(external){u.searchParams.set('tipo','externo');if(code)u.searchParams.set('linha',code);}
-  else{u.searchParams.delete('tipo');u.searchParams.delete('linha');}
+  if(external){
+    u.searchParams.set('tipo','externo');
+    if(code)u.searchParams.set('linha',code);else u.searchParams.delete('linha');
+    u.searchParams.delete('ponto');
+  }else{
+    u.searchParams.delete('tipo');u.searchParams.delete('linha');u.searchParams.delete('ponto');
+  }
   history.pushState({hubTab:'interno',external},'',u);
 }
 function showEmpty(kind){
@@ -72,11 +77,46 @@ function focusRoute(code){
   observer.observe(options,{childList:true});
   setTimeout(()=>observer.disconnect(),12000);
 }
+function focusExternalStop(){
+  if(!frameReady||!selectedStopId||!selectedStopName)return;
+  const doc=$('externo-frame')?.contentDocument;
+  const input=doc?.getElementById('stopInput'),
+    results=doc?.getElementById('stopSearchResult');
+  if(!input||!results)return;
+  doc.getElementById('quick-pontos')?.click();
+  input.value=selectedStopName;
+  input.dispatchEvent(new doc.defaultView.Event('input',{bubbles:true}));
+  let completed=false;
+  const wanted=selectedStopName.toLocaleLowerCase('pt-BR');
+  const pick=()=>{
+    if(completed||!showingExternal())return false;
+    const buttons=[...results.querySelectorAll('button')];
+    const same=buttons.find(b=>b.textContent.toLocaleLowerCase('pt-BR').includes(wanted));
+    if(!same)return false;
+    completed=true;same.click();return true;
+  };
+  if(pick())return;
+  const observer=new MutationObserver(()=>{if(pick())observer.disconnect()});
+  observer.observe(results,{childList:true,subtree:true});
+  // Avoid dangling observers if the search is unavailable.
+  setTimeout(()=>observer.disconnect(),10000);
+}
+function openExternalStop(id,name){
+  if(!/^[0-9]{1,20}$/.test(id)||!name||name.length>160)return;
+  openExternal('',true);
+  selectedStopId=id;selectedStopName=name;
+  $('onibus-external-line').textContent='· '+name;
+  const u=new URL(location.href);
+  u.searchParams.set('ponto',id);
+  history.replaceState(history.state,'',u);
+  if(frameReady)focusExternalStop();
+}
 function showMap(){
   if(!active()||!showingExternal())return;
   $('onibus-empty').hidden=true;$('externo-frame').hidden=false;
   $('onibus-externo').setAttribute('aria-busy','false');
   focusRoute(selectedCode);
+  focusExternalStop();
 }
 async function checkCatalog(){
   const today=localServiceDay();
@@ -111,12 +151,13 @@ async function loadExternal(force=false){
 }
 function openExternal(code='',push=true){
   selectedCode=String(code||'').slice(0,30);
+  selectedStopId='';selectedStopName='';
   $('onibus-external-line').textContent=selectedCode?'· '+selectedCode:'';
   changeView(true);changeUrl(true,selectedCode,push);
   void loadExternal();
 }
 function returnToLines(push=true){
-  changeView(false);selectedCode='';changeUrl(false,'',push);
+  changeView(false);selectedCode='';selectedStopId='';selectedStopName='';changeUrl(false,'',push);
 }
 export function activateOnibus(){
   if(!active())return;
@@ -132,6 +173,9 @@ export function initOnibus(){
     if(e.origin!==location.origin||e.source!==$('interno-frame')?.contentWindow)return;
     if(e.data?.type==='hub:onibus:external-line'&&typeof e.data.code==='string'&&e.data.code.length<=30)
       openExternal(e.data.code,true);
+    else if(e.data?.type==='hub:onibus:external-stop'&&
+      typeof e.data.id==='string'&&typeof e.data.name==='string')
+      openExternalStop(e.data.id,e.data.name);
   });
   $('externo-frame')?.addEventListener('load',()=>{
     try{frameReady=$('externo-frame')?.contentDocument?.documentElement?.dataset?.appMode==='free-static'}

@@ -500,10 +500,10 @@ function renderTransportMap(){
   if(mapMode==='external')map.removeLayer(internalPins);
   else if(!map.hasLayer(internalPins))internalPins.addTo(map);
   municipalPins.clearLayers();
-  if(busPins)busPins.clearLayers();
+  if(mapMode==='internal'&&busPins)busPins.clearLayers();
   if(mapMode==='internal'){mapStatus('49 pontos internos · GPS exclusivo do Externo BH');return}
   if(!externalStops){mapStatus('Externo BH: '+(externalState==='loading'?'carregando pontos…':'dados indisponíveis'));return}
-  if(map.getZoom()<12){mapStatus('Aproxime o mapa para visualizar os pontos municipais');return}
+  if(map.getZoom()<12){if(busPins)busPins.clearLayers();mapStatus('Aproxime o mapa para visualizar os pontos municipais');return}
   const bounds=map.getBounds().pad(.13),center=map.getCenter();
   const nearby=Object.entries(externalStops).filter(([id,p])=>Array.isArray(p)&&
     Number.isFinite(+p[1])&&Number.isFinite(+p[2])&&bounds.contains([+p[1],+p[2]]));
