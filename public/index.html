@@ -95,26 +95,7 @@
         <div class="onibus-panel" id="onibus-interno">
           <iframe id="interno-frame" class="interno-frame" title="Ônibus — pontos e linhas internas e municipais" src="/interno" loading="lazy" allow="geolocation"></iframe>
         </div>
-        <div class="onibus-panel onibus-external-panel" id="onibus-externo" hidden>
-          <div class="onibus-external-bar">
-            <button type="button" id="onibus-back-interno" aria-label="Voltar à lista de linhas">← Voltar às linhas</button>
-            <span class="onibus-external-label">Externo BH <strong id="onibus-external-line"></strong></span>
-          </div>
-          <div class="onibus-external-view">
-            <section class="onibus-empty" id="onibus-empty" aria-labelledby="onibus-empty-title" aria-live="polite">
-              <div class="onibus-empty-icon" aria-hidden="true"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="5" y="3" width="14" height="16" rx="3"/><path d="M5 11h14M8 19v2m8-2v2"/><circle cx="8" cy="15" r=".6"/><circle cx="16" cy="15" r=".6"/></svg></div>
-              <span class="onibus-empty-overline" id="onibus-empty-overline">VERIFICANDO DADOS</span>
-              <h3 id="onibus-empty-title">Preparando o Externo BH</h3>
-              <p id="onibus-externo-status">Conferindo a disponibilidade dos horários municipais.</p>
-              <div class="onibus-empty-actions">
-                <button type="button" class="onibus-action-primary" id="onibus-externo-retry" hidden>Tentar novamente</button>
-                <button type="button" class="onibus-action-secondary" id="onibus-back-interno-secondary">Voltar às linhas</button>
-              </div>
-              <p class="onibus-empty-note">Posições GPS em tempo real quando disponíveis; horários de chegada são programados, não ETAs.</p>
-            </section>
-            <iframe id="externo-frame" class="interno-frame externo-frame" title="Externo BH — linhas municipais e metrô" loading="lazy" allow="geolocation" hidden></iframe>
-          </div>
-        </div>
+
       </div>
     </section>
 
