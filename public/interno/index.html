@@ -518,7 +518,12 @@ function renderTransportMap(){
         id,name:String(p[0]||'')},location.origin));
   }
   const suffix=nearby.length>selected.length?' · amplie para ver mais pontos':'';
-  mapStatus('UFMG + BH · '+selected.length+' pontos municipais no mapa'+suffix);
+  // Não sobrescrever uma posição GPS validada ao alternar o filtro.
+  // Contar somente os veículos que permanecem dentro do mapa atual.
+  const recentVisible=gpsLast&&Date.now()-gpsLast<45000&&busPins?
+    busPins.getLayers().filter(layer=>layer.getLatLng&&map.getBounds().contains(layer.getLatLng())).length:0;
+  mapStatus(recentVisible?'GPS ao vivo: '+recentVisible+' ônibus próximos · até 2 min':
+    'UFMG + BH · '+selected.length+' pontos municipais no mapa'+suffix);
   void updateGpsNearMap(selected);
 }
 async function loadMapMunicipal(){
