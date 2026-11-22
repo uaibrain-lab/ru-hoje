@@ -1011,14 +1011,12 @@ async function populateMunicipalRealtime(id){
   // against exactly matched trip_id, route_id, service day and stop_sequence.
   if(result?.relativeUpdates?.length&&selectedRoutes.length){
     try{
-      const {tripDelaysForStop}=await import('/assets/municipal-realtime.js');
-      // Translate only known public line codes back into their exact
-      // static route_id; unknown codes cannot produce an ETA.
-      const normalized=result.relativeUpdates.flatMap(update=>{
-        const route=routes.get(String(update?.routeId||''));
-        if(!route||!serving.has(String(route.id)))return [];
-        return [{...update,routeId:String(route.id)}];
-      });
+      const {tripDelaysForStop,normalizeTripDelayRoutes}=
+        await import('/assets/municipal-realtime.js');
+      // Route IDs from SUMOB are public line codes. Only aliases unambiguously
+      // resolved to the exact static GTFS route are eligible for prediction.
+      const normalized=normalizeTripDelayRoutes(
+        result.relativeUpdates,externalRoutes,serving);
       const derived=await tripDelaysForStop(id,normalized,{now:Date.now()});
       if(view.t!=='municipal-stop'||String(view.id)!==String(id)||!rows.isConnected)return;
       for(const update of derived){
