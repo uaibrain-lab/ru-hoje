@@ -811,7 +811,7 @@ try {
     await validPage.route('https://tile.openstreetmap.org/**',route=>route.abort());
     await validPage.route('**/externo/catalog/manifest.json',route=>route.fulfill({
       status:200,contentType:'application/json',
-      body:JSON.stringify({gtfsVersion:'synthetic-qa',routes:2,stops:2,
+      body:JSON.stringify({gtfsVersion:'synthetic-qa',routes:1,stops:1,
         stopTimeRows:4,feedStartDate:'20260101',feedEndDate:'20261231'})
     }));
     await validPage.route('**/externo/catalog/routes.json',route=>route.fulfill({
