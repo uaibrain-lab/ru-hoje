@@ -33,7 +33,7 @@ test('a aba Ônibus substitui Interno sem acrescentar quinta aba no Hub',async()
   assert.match(interno,/id="map-point-legend"/);
   assert.match(interno,/role="group" aria-label="Filtrar linhas por origem"/);
   assert.match(interno,/data-line-filter-mode/);
-  assert.match(interno,/radius:8/);
+  assert.match(interno,/radius:7/);
   assert.match(interno,/radius:5.5,color:'#7556c9'/);
   assert.match(interno,/lines-filter-in-sheet/);
   assert.match(interno,/visibility:hidden;opacity:0;pointer-events:none/);
