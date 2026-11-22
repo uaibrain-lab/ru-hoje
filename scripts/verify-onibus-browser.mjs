@@ -23,11 +23,32 @@ try {
       assert.equal(await page.locator('#externo-frame').count(),0,
         'A interface externa duplicada reapareceu');
       const frame=page.frameLocator('#interno-frame');
-      await frame.locator('#map-filter-toggle').waitFor({timeout:30000});
+      await frame.locator('#map-point-legend').waitFor({timeout:30000});
       await frame.locator('.municipal-detail-title').waitFor({timeout:30000});
       assert.equal(await frame.locator('#map-point-legend').count(),1);
       assert.equal(await frame.locator('.map-legend-symbol--internal').count(),1);
       assert.equal(await frame.locator('.map-legend-symbol--municipal').count(),1);
+      assert.equal(await frame.locator('#map-filter-toggle').count(),0,
+        'Botão flutuante Todos deve ser removido');
+      const internalEye=frame.locator('#toggle-internal-points');
+      const municipalEye=frame.locator('#toggle-municipal-points');
+      assert.equal(await internalEye.getAttribute('aria-pressed'),'true');
+      assert.equal(await municipalEye.getAttribute('aria-pressed'),'true');
+      assert.equal(await internalEye.innerText(),'Internos');
+      assert.equal(await municipalEye.innerText(),'Municipais');
+      assert.equal(await frame.locator('#map-data-status').isVisible(),false,
+        'Status UFMG + BH não pode aparecer na interface');
+      await municipalEye.click();
+      assert.equal(await municipalEye.getAttribute('aria-pressed'),'false');
+      assert.equal(await internalEye.getAttribute('aria-pressed'),'true',
+        'Ocultar municipais não pode ocultar internos');
+      await internalEye.click();
+      assert.equal(await internalEye.getAttribute('aria-pressed'),'false');
+      await municipalEye.click();
+      assert.equal(await municipalEye.getAttribute('aria-pressed'),'true',
+        'Municipais devem poder ser exibidos com internos ocultos');
+      await internalEye.click();
+      assert.equal(await internalEye.getAttribute('aria-pressed'),'true');
       assert.equal(await frame.locator('#quick-linhas').isVisible(),true,
         'Linhas deve ser acessível mesmo com um ponto selecionado');
       await frame.locator('#quick-linhas').click();
