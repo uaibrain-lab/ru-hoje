@@ -93,6 +93,13 @@ try {
           'O painel não atualizou previsões após 30s com foco no botão');
         assert.equal(await firstETA.evaluate(node=>node===document.activeElement),true,
           'Atualização periódica não deve deslocar foco do botão de chegada');
+        const beforeForeground=arrivalCalls;
+        await frame.locator('body').evaluate(()=>document.dispatchEvent(
+          new Event('visibilitychange')));
+        for(let n=0;n<30&&arrivalCalls<=beforeForeground;n++)
+          await new Promise(resolve=>setTimeout(resolve,100));
+        assert.ok(arrivalCalls>beforeForeground,
+          'Ao voltar ao aplicativo as previsões devem atualizar imediatamente');
       }else{
         await frame.locator('#municipal-stop-schedules .municipal-arrivals').waitFor({timeout:20000});
         assert.equal(await frame.locator('#service-alert-notification').isVisible(),false,
