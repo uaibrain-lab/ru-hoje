@@ -102,3 +102,34 @@ test('código público 51 da SUMOB corresponde somente ao route_id 562134 do GTF
     catalog,new Set(['562134','562999'])),[],
     'Código público duplicado entre linhas atendendo o ponto não pode virar ETA');
 });
+
+test('um atraso em parada futura não substitui o atraso da parada anterior',()=>{
+  const stops=[
+    ['T-51','562134','307679',16,19*3600+7*60,19*3600],
+    ['T-51','562134','307679',29,19*3600+25*60,19*3600]
+  ];
+  const readings=[
+    upstream({observedStopSequence:12,observedStopId:'14780000',delaySeconds:120}),
+    upstream({observedStopSequence:25,observedStopId:'14781000',delaySeconds:600})
+  ];
+  const out=projectOfficialDelays(readings,stops,{stopId:stop,calendar:cal,now});
+  assert.equal(out.length,2);
+  assert.equal(out.find(x=>x.stopSequence===16).delaySeconds,120,
+    'O destino antes da observação 25 precisa usar a observação 12');
+  assert.equal(out.find(x=>x.stopSequence===29).delaySeconds,600,
+    'O destino depois da observação 25 deve usar o atraso mais próximo');
+});
+test('atrasos contraditórios na mesma parada não geram previsão inventada',()=>{
+  const conflict=[
+    upstream({observedStopSequence:12,delaySeconds:120}),
+    upstream({observedStopSequence:12,delaySeconds:800})
+  ];
+  assert.deepEqual(projectOfficialDelays(conflict,[row],{stopId:stop,calendar:cal,now}),[]);
+  const extraObservation=upstream({observedStopSequence:14,
+    observedStopId:'14783000',delaySeconds:240});
+  const result=projectOfficialDelays([...conflict,extraObservation],[row],
+    {stopId:stop,calendar:cal,now});
+  assert.equal(result.length,1);
+  assert.equal(result[0].delaySeconds,240,
+    'Uma observação posterior e inequívoca pode recuperar a previsão');
+});
