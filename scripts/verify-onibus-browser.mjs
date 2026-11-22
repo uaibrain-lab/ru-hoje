@@ -14,6 +14,21 @@ try {
       serviceWorkers:'block'});
     const errors=[];
     page.on('pageerror',error=>errors.push(error.message));
+    await page.route('https://externo-bh-gps-free.hubufmg.workers.dev/api/arrivals?stop=*',
+      route=>{
+        if(width===1280)return route.fulfill({status:503,contentType:'application/json',
+          headers:{'Access-Control-Allow-Origin':'*'},
+          body:JSON.stringify({available:false,error:'ARRIVALS_UNAVAILABLE'})});
+        const now=Date.now();
+        return route.fulfill({status:200,contentType:'application/json',
+          headers:{'Access-Control-Allow-Origin':'*'},
+          body:JSON.stringify({available:true,source:'SUMOB_GTFS_RT_TRIP_UPDATES',
+            stopId:'14791950',fetchedAt:new Date(now).toISOString(),
+            feedTimestamp:new Date(now).toISOString(),
+            items:[{tripId:'test-trip-51',routeId:'562134',stopId:'14791950',
+              stopSequence:12,at:new Date(now+180000).toISOString(),
+              lastFeedUpdateAt:new Date(now).toISOString(),eventType:'arrival'}]})});
+      });
     try{
       await page.goto(new URL(deepLink,base).href,{
         waitUntil:'domcontentloaded',timeout:30000
@@ -32,6 +47,19 @@ try {
       const frame=page.frameLocator('#interno-frame');
       await frame.locator('#map-point-legend').waitFor({timeout:30000});
       await frame.locator('.municipal-detail-title').waitFor({timeout:30000});
+      if(width===390){
+        await frame.locator('#municipal-stop-realtime:not([hidden])').waitFor({timeout:20000});
+        const txt=await frame.locator('#municipal-realtime-rows').innerText();
+        assert.match(txt,/51/);
+        assert.match(txt,/Chegada prevista/);
+        assert.match(txt,/SUMOB/);
+        assert.match(await frame.locator('#municipal-timetable-title').innerText(),/tabela/);
+      }else{
+        await frame.locator('#municipal-stop-schedules .municipal-arrivals').waitFor({timeout:20000});
+        assert.equal(await frame.locator('#municipal-stop-realtime').isVisible(),false,
+          'Worker indisponível não pode gerar ETA fictício');
+        assert.match(await frame.locator('#municipal-timetable-title').innerText(),/programados/);
+      }
       assert.equal(await frame.locator('#map-point-legend').count(),1);
       assert.equal(await frame.locator('.map-legend-symbol--internal').count(),1);
       assert.equal(await frame.locator('.map-legend-symbol--municipal').count(),1);
