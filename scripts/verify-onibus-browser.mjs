@@ -16,10 +16,11 @@ try {
     page.on('pageerror',error=>errors.push(error.message));
     if(width===390)await page.clock.install({time:new Date()});
     let arrivalCalls=0;
+    let forceArrivalUnavailable=false;
     await page.route('https://externo-bh-gps-free.hubufmg.workers.dev/api/arrivals?stop=*',
       route=>{
         arrivalCalls++;
-        if(width===1280)return route.fulfill({status:503,contentType:'application/json',
+        if(width===1280||forceArrivalUnavailable)return route.fulfill({status:503,contentType:'application/json',
           headers:{'Access-Control-Allow-Origin':'*'},
           body:JSON.stringify({available:false,error:'ARRIVALS_UNAVAILABLE'})});
         const now=Date.now();
@@ -100,6 +101,18 @@ try {
           await new Promise(resolve=>setTimeout(resolve,100));
         assert.ok(arrivalCalls>beforeForeground,
           'Ao voltar ao aplicativo as previsões devem atualizar imediatamente');
+        // If SUMOB goes unavailable while a keyboard user is focused on an ETA,
+        // a stale live time must disappear rather than remain clickable.
+        forceArrivalUnavailable=true;
+        await frame.locator('body').evaluate(()=>document.dispatchEvent(
+          new Event('visibilitychange')));
+        await frame.locator('#municipal-stop-realtime').waitFor({
+          state:'hidden',timeout:15000
+        });
+        assert.match(await frame.locator('#municipal-timetable-title').innerText(),
+          /horários programados/i);
+        assert.ok(arrivalCalls>beforeForeground+1,
+          'Teste de fallback não consultou o Worker simulado');
       }else{
         await frame.locator('#municipal-stop-schedules .municipal-arrivals').waitFor({timeout:20000});
         assert.equal(await frame.locator('#service-alert-notification').isVisible(),false,
