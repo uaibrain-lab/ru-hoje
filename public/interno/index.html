@@ -834,6 +834,11 @@ function municipalLineView(code){
       '<p class="note">Os pontos deste percurso estão indisponíveis agora.</p>')+
     '</div>';
 }
+// In Firebase staging, use an entirely separate Workers Free instance.
+ // Never route a staging-only experimental API through production Worker.
+const SUMOB_WORKER_BASE=location.hostname==='hubufmg--homologacao-exbdd4qe.web.app'
+  ?'https://externo-bh-gps-eta-qa.hubufmg.workers.dev'
+  :'https://externo-bh-gps-free.hubufmg.workers.dev';
 const alertResultsCache=new Map();
 const serviceAlertNotice=document.getElementById('service-alert-notification');
 const announcedServiceAlerts=new Set();
@@ -907,7 +912,7 @@ async function populateMunicipalAlerts(){
       .filter(p=>p.stops?.includes(stopId)).map(p=>String(p.route)));
   const codes=externalRoutes.filter(r=>routeIds.has(String(r.id)));
   const ids=[...new Set(codes.flatMap(r=>[String(r.id),String(r.code)]))].slice(0,25);
-  const endpoint=new URL('https://externo-bh-gps-free.hubufmg.workers.dev/api/alerts');
+  const endpoint=new URL(SUMOB_WORKER_BASE+'/api/alerts');
   if(stopId)endpoint.searchParams.set('stop',stopId);
   if(ids.length)endpoint.searchParams.set('routes',ids.join(','));
   if(!stopId&&!ids.length)return;
@@ -967,7 +972,7 @@ async function populateMunicipalRealtime(id){
   let result=cached&&now-cached.fetchedAt<25000?cached.value:null;
   if(!result){
     try{
-      const endpoint=new URL('https://externo-bh-gps-free.hubufmg.workers.dev/api/arrivals');
+      const endpoint=new URL(SUMOB_WORKER_BASE+'/api/arrivals');
       endpoint.searchParams.set('stop',String(id));
       if(selectedRoutes.length)endpoint.searchParams.set('routes',selectedRoutes.join(','));
       const response=await fetch(endpoint.href,{cache:'no-store'});
