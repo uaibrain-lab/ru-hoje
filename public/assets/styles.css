@@ -1299,3 +1299,19 @@ dialog{background:var(--card);color:var(--ink);border-color:var(--line)}
   .festas-page .festa-action,
   .sobre-page .pwa-install-manual{transition:none}
 }
+
+/* Páginas curtas com rodapé no fim útil da viewport, não no meio da tela.
+   O mapa mantém seu layout próprio; Cardápio segue altura natural. */
+.site-wrap:has(#festas-page:not([hidden])),
+.site-wrap:has(#sobre-page:not([hidden])){
+  display:flex;flex-direction:column;min-height:100dvh;
+}
+.site-wrap:has(#festas-page:not([hidden]))>.footer,
+.site-wrap:has(#sobre-page:not([hidden]))>.footer{
+  margin-top:auto;padding-top:var(--ui-space-6);
+}
+@media(hover:none){
+  .bandeco-tabs button:not([aria-current="page"]):hover{
+    background:transparent;color:var(--muted);box-shadow:none
+  }
+}

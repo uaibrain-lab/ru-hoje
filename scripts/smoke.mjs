@@ -497,6 +497,7 @@ try {
       assert.ok(aboutLayout.gaps.every(g=>g>=12),'Seções Sobre amontoadas: '+JSON.stringify(aboutLayout));
       assert.ok(aboutLayout.textSize>=14,'Texto Sobre pequeno: '+JSON.stringify(aboutLayout));
       if(width===390){
+        await mobile.waitForTimeout(230); // aguardar transição visual da barra inferior
         await mobile.screenshot({path:path.resolve(ROOT,'../qa-results/menu-compact/alltabs-sobre-390.png')});
       }
       await mobile.goBack();
@@ -618,15 +619,21 @@ try {
     assert.ok(festDesktop.headingBottom+8<festDesktop.cardTop,
       'Hierarquia desktop de Festas sem respiro: '+JSON.stringify(festDesktop));
     await fs.mkdir(path.resolve(ROOT,'../qa-results/menu-compact'),{recursive:true});
+    await design.waitForTimeout(230);
+    const navFest=await design.locator('#bandeco-navigation button[id^="tab-"]').evaluateAll(nodes=>
+      nodes.filter(x=>x.getAttribute('aria-current')==='page').map(x=>x.id));
+    assert.deepEqual(navFest,['tab-festas'],'Festas deve ser o único item selecionado no desktop');
     await design.screenshot({path:path.resolve(ROOT,'../qa-results/menu-compact/alltabs-festas-1280.png')});
     await design.locator('#tab-sobre').click();
     await design.mouse.move(1,1);
     assert.equal(await design.locator('.sobre-topic').count(),3);
     assert.equal(await design.locator('#tab-sobre').getAttribute('aria-current'),'page');
     assert.equal(await design.locator('#tab-festas').getAttribute('aria-current'),'false');
+    await design.waitForTimeout(230);
     await design.screenshot({path:path.resolve(ROOT,'../qa-results/menu-compact/alltabs-sobre-1280.png')});
     await design.locator('#tab-menu').click();
     assert.equal(await design.locator('#tab-menu').getAttribute('aria-current'),'page');
+    await design.waitForTimeout(230);
     await design.screenshot({path:path.resolve(ROOT,'../qa-results/menu-compact/alltabs-cardapio-1280.png')});
   }finally{await designContext.close()}
   // Integração real de eventos: clicar linha municipal na lista unificada
