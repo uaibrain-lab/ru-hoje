@@ -32,6 +32,6 @@ test('o controlador não solicita permissão de push e preserva ação nativa no
 
 test('o novo controlador é pré-cacheado e as versões de atualização coincidem', () => {
   assert.match(sw, /'\/assets\/pwa-install\.js'/);
-  assert.match(sw, /hub-v290-20261122-onibus-sem-cabecalho/);
-  assert.match(read('public/assets/app.js'), /hub-v290-20261122-onibus-sem-cabecalho/);
+  assert.match(sw, /hub-v291-20261122-onibus-alertas-sumob/);
+  assert.match(read('public/assets/app.js'), /hub-v291-20261122-onibus-alertas-sumob/);
 });
