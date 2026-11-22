@@ -9,6 +9,7 @@ on:
       - scripts/verify-onibus-preview.mjs
       - scripts/hub-legacy-externo-alias.mjs
       - scripts/verify-onibus-browser.mjs
+      - scripts/verify-onibus-realtime-browser.mjs
       - scripts/smoke.mjs
       - tests/hub-onibus-unificado.test.mjs
       - tests/municipal-realtime.test.mjs
@@ -123,6 +124,7 @@ jobs:
             sleep 1
           done
           HUB_QA_URL=http://127.0.0.1:8765/ node scripts/verify-onibus-browser.mjs
+          HUB_QA_URL=http://127.0.0.1:8765/ node scripts/verify-onibus-realtime-browser.mjs
           echo HUB_ONIBUS_BROWSER_GATE_OK
 
       - name: Disponibilizar pacote integral de homologação
