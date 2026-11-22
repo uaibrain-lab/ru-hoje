@@ -28,7 +28,7 @@ try {
       assert.equal(await frame.locator('#map-point-legend').count(),1);
       assert.equal(await frame.locator('.map-legend-symbol--internal').count(),1);
       assert.equal(await frame.locator('.map-legend-symbol--municipal').count(),1);
-      await frame.locator('#quick-linhas').click();
+      await frame.locator('[data-municipal-list]').click();
       await frame.locator('#line-q').waitFor({timeout:15000});
       assert.equal(await frame.locator('#line-q').count(),1,
         'Existe mais de uma busca de linhas');
