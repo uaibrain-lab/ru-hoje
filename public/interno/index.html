@@ -957,7 +957,12 @@ async function populateMunicipalRealtime(id){
   }
   const serving=new Set((externalPatterns||[])
     .filter(p=>p.stops?.includes(String(id))).map(p=>String(p.route)));
-  const selectedRoutes=[...serving].filter(r=>/^[A-Za-z0-9_.:-]{1,70}$/.test(r)).slice(0,25);
+  // SUMOB TripUpdates uses the public route short name, not necessarily
+  // the numeric GTFS route_id stored in the offline catalogue.
+  const selectedRoutes=[...new Set((externalRoutes||[])
+    .filter(r=>serving.has(String(r.id)))
+    .map(r=>String(r.code||'').trim())
+    .filter(r=>/^[A-Za-z0-9_.:-]{1,70}$/.test(r)))].slice(0,25);
   const cached=realtimePredictionsCache.get(String(id));
   let result=cached&&now-cached.fetchedAt<25000?cached.value:null;
   if(!result){
@@ -1007,7 +1012,14 @@ async function populateMunicipalRealtime(id){
   if(result?.relativeUpdates?.length&&selectedRoutes.length){
     try{
       const {tripDelaysForStop}=await import('/assets/municipal-realtime.js');
-      const derived=await tripDelaysForStop(id,result.relativeUpdates,{now:Date.now()});
+      // Translate only known public line codes back into their exact
+      // static route_id; unknown codes cannot produce an ETA.
+      const normalized=result.relativeUpdates.flatMap(update=>{
+        const route=routes.get(String(update?.routeId||''));
+        if(!route||!serving.has(String(route.id)))return [];
+        return [{...update,routeId:String(route.id)}];
+      });
+      const derived=await tripDelaysForStop(id,normalized,{now:Date.now()});
       if(view.t!=='municipal-stop'||String(view.id)!==String(id)||!rows.isConnected)return;
       for(const update of derived){
         const route=routes.get(String(update.routeId));
