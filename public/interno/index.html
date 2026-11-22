@@ -331,8 +331,34 @@ let fav=[];try{fav=JSON.parse(localStorage.getItem('bandeco_interno_favoritos_v1
 const saveFav=()=>{try{localStorage.setItem('bandeco_interno_favoritos_v1',JSON.stringify(fav))}catch(e){}};
 let externalFav=[];try{externalFav=JSON.parse(localStorage.getItem('hub_onibus_pontos_bh_favoritos_v1')||'[]')}catch{}
 let lineFav=[];try{lineFav=JSON.parse(localStorage.getItem('hub_onibus_linhas_favoritas_v1')||'[]')}catch{}
-const saveExtFav=()=>{try{localStorage.setItem('hub_onibus_pontos_bh_favoritos_v1',JSON.stringify(externalFav))}catch{}};
-const saveLineFav=()=>{try{localStorage.setItem('hub_onibus_linhas_favoritas_v1',JSON.stringify(lineFav))}catch{}};
+const SHARED_EXTERNAL_KEY='hubufmg-externo-favorites-v1';
+function sharedExternal(){
+  try{const data=JSON.parse(localStorage.getItem(SHARED_EXTERNAL_KEY)||'{}');
+    return data&&typeof data==='object'&&!Array.isArray(data)?data:{};}
+  catch{return {}}
+}
+function storeSharedExternal(field,values){
+  try{const data=sharedExternal();data[field]=values;
+    localStorage.setItem(SHARED_EXTERNAL_KEY,JSON.stringify(data));}
+  catch{/* Favoritos continuam no dispositivo atual quando armazenamento estiver bloqueado. */}
+}
+function syncSharedExternal(){
+  const data=sharedExternal();
+  if(Array.isArray(data.stops))externalFav=data.stops.map(String);
+  if(Array.isArray(data.routes))
+    lineFav=[...lineFav.filter(code=>code.startsWith('int:')),
+             ...data.routes.map(code=>'ext:'+String(code))];
+}
+syncSharedExternal();
+const saveExtFav=()=>{try{localStorage.setItem('hub_onibus_pontos_bh_favoritos_v1',JSON.stringify(externalFav))}catch{};
+  storeSharedExternal('stops',externalFav)};
+const saveLineFav=()=>{try{localStorage.setItem('hub_onibus_linhas_favoritas_v1',JSON.stringify(lineFav))}catch{};
+  storeSharedExternal('routes',lineFav.filter(code=>code.startsWith('ext:')).map(code=>code.slice(4)))};
+window.addEventListener('storage',event=>{
+  if(event.key!==SHARED_EXTERNAL_KEY)return;
+  syncSharedExternal();
+  if(view.t==='home')repaintFavorites();
+});
 function starRow(html,id,on,name,key){
   return '<div class="bus-fav-row">'+html+'<button type="button" class="star'+(on?' fav':'')+
     '" data-'+key+'="'+esc(id)+'" aria-pressed="'+on+'" aria-label="'+
@@ -714,7 +740,11 @@ el.addEventListener('input',e=>{
 });
 window.addEventListener('message',e=>{
   if(e.origin!==window.location.origin||e.source!==window.parent)return;
-  if(e.data?.type==='hub:onibus:resume-lines'&&tab!=='linhas')pickQuickTab('linhas');
+  if(e.data?.type==='hub:onibus:resume-lines'){
+    syncSharedExternal();
+    if(tab!=='linhas')pickQuickTab('linhas');
+    else if(view.t==='home')repaintFavorites();
+  }
 });
 document.getElementById('loc').addEventListener('click',locate);
 // Atualizar horários apenas quando necessários, preservando foco, busca e popovers.
