@@ -25,12 +25,12 @@
       }
     })();
   </script>
-  <link rel="stylesheet" href="/assets/styles.css?v=hub-20261117-menu-compact" />
+  <link rel="stylesheet" href="/assets/styles.css?v=hub-20261122-onibus-v1" />
   <title>Hub UFMG</title>
   <script src="/config.js" defer></script>
   <script src="/assets/pwa-install.js?v=hub-20261117-menu-compact" defer></script>
-  <script src="/assets/app.js?v=hub-20261117-menu-compact" type="module"></script>
-  <script src="/assets/festas.js?v=hub-20261117-menu-compact" type="module"></script>
+  <script src="/assets/app.js?v=hub-20261122-onibus-v1" type="module"></script>
+  <script src="/assets/festas.js?v=hub-20261122-onibus-v1" type="module"></script>
 </head>
 <body>
   <div class="site-wrap">
@@ -48,7 +48,7 @@
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v8a3 3 0 0 0 6 0V3M8 3v18M17 3v18M17 3c-3 1-4 5-4 8h4"/></svg><span>Cardápio</span>
       </button>
       <button type="button" id="tab-interno" aria-current="false" aria-controls="interno-page">
-        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16V6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5V16"/><path d="M3 16h18v3H3zM7 19v2m10-2v2M7 9h10M7 12h10"/><circle cx="7" cy="16" r="1"/><circle cx="17" cy="16" r="1"/></svg><span>Interno</span>
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16V6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5V16"/><path d="M3 16h18v3H3zM7 19v2m10-2v2M7 9h10M7 12h10"/><circle cx="7" cy="16" r="1"/><circle cx="17" cy="16" r="1"/></svg><span>Ônibus</span>
       </button>
       <button type="button" id="tab-festas" aria-current="false" aria-controls="festas-page">
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m4 20 3.2-10L14 17l-10 3ZM14.5 3l.5 2m5 3-2 .4M7 4l.6 2M19 15l2 .5M13 8l3-3M4 8l-2 1"/><path d="m7 10 7 7"/></svg><span>Festas</span>
@@ -86,9 +86,36 @@
       </section>
     </main>
 
-    <section id="interno-page" class="interno-page" aria-labelledby="interno-heading" hidden>
-      <h2 id="interno-heading" class="sr-only">Interno</h2>
-      <iframe id="interno-frame" class="interno-frame" title="Interno UFMG — pontos, linhas e horários" src="/interno" loading="lazy" allow="geolocation"></iframe>
+    <section id="interno-page" class="interno-page onibus-page" aria-labelledby="interno-heading" hidden>
+      <div class="onibus-intro">
+        <div><span class="onibus-overline">MOBILIDADE</span><h2 id="interno-heading">Ônibus <span>UFMG + Belo Horizonte</span></h2></div>
+        <span class="onibus-intro-icon"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="5" y="3" width="14" height="16" rx="3"/><path d="M5 11h14M8 19v2m8-2v2"/><circle cx="8" cy="15" r=".6"/><circle cx="16" cy="15" r=".6"/></svg></span>
+      </div>
+      <div class="onibus-content">
+        <div class="onibus-panel" id="onibus-interno">
+          <iframe id="interno-frame" class="interno-frame" title="Ônibus — pontos e linhas internas e municipais" src="/interno" loading="lazy" allow="geolocation"></iframe>
+        </div>
+        <div class="onibus-panel onibus-external-panel" id="onibus-externo" hidden>
+          <div class="onibus-external-bar">
+            <button type="button" id="onibus-back-interno" aria-label="Voltar à lista de linhas">← Voltar às linhas</button>
+            <span class="onibus-external-label">Externo BH <strong id="onibus-external-line"></strong></span>
+          </div>
+          <div class="onibus-external-view">
+            <section class="onibus-empty" id="onibus-empty" aria-labelledby="onibus-empty-title" aria-live="polite">
+              <div class="onibus-empty-icon" aria-hidden="true"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="5" y="3" width="14" height="16" rx="3"/><path d="M5 11h14M8 19v2m8-2v2"/><circle cx="8" cy="15" r=".6"/><circle cx="16" cy="15" r=".6"/></svg></div>
+              <span class="onibus-empty-overline" id="onibus-empty-overline">VERIFICANDO DADOS</span>
+              <h3 id="onibus-empty-title">Preparando o Externo BH</h3>
+              <p id="onibus-externo-status">Conferindo a disponibilidade dos horários municipais.</p>
+              <div class="onibus-empty-actions">
+                <button type="button" class="onibus-action-primary" id="onibus-externo-retry" hidden>Tentar novamente</button>
+                <button type="button" class="onibus-action-secondary" id="onibus-back-interno-secondary">Voltar às linhas</button>
+              </div>
+              <p class="onibus-empty-note">Posições GPS em tempo real quando disponíveis; horários de chegada são programados, não ETAs.</p>
+            </section>
+            <iframe id="externo-frame" class="interno-frame externo-frame" title="Externo BH — linhas municipais e metrô" loading="lazy" allow="geolocation" hidden></iframe>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section id="festas-page" class="festas-page" aria-labelledby="festas-heading" hidden>

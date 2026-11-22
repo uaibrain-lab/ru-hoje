@@ -114,3 +114,29 @@ test('cardápio oficial chega ao aplicativo pelo servidor local com data verific
     else globalThis.location=old;
   }
 });
+
+test('GPS ao vivo da prévia tem relay local fixo e sem credenciais',async()=>{
+  const observed=[];
+  await withPreview(async(url,options)=>{
+    observed.push({url,options});
+    return new Response(JSON.stringify({available:true,source:'GTFS_RT',
+      fetchedAt:'2026-11-22T18:00:00Z',records:[]}),{
+      status:200,headers:{'Content-Type':'application/json'}
+    });
+  },async origin=>{
+    const ok=await fetch(origin+'/__hub_gps?source=GTFS_RT&routes=5102,5201');
+    assert.equal(ok.status,200);
+    assert.equal((await ok.json()).source,'GTFS_RT');
+    assert.equal(observed.length,1);
+    assert.equal(observed[0].url,
+      'https://externo-bh-gps-free.hubufmg.workers.dev/api/gps?source=GTFS_RT&routes=5102%2C5201');
+    assert.equal(observed[0].options.headers.Origin,'https://hubufmg.web.app');
+    for(const q of ['?source=GTFS_RT&routes=','?source=GTFS_RT&routes=5102&url=evil',
+        '?source=PBH&routes=5102','?source=GTFS_RT&routes=5102,5102']){
+      assert.equal((await fetch(origin+'/__hub_gps'+q)).status,400);
+    }
+    assert.equal((await fetch(origin+'/__hub_gps?source=GTFS_RT&routes=5102',
+      {method:'POST'})).status,405);
+    assert.equal(observed.length,1);
+  });
+});

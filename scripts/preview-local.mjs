@@ -90,16 +90,53 @@ async function relayOfficialApi(url,req,res,fetchFn){
   }
   return true;
 }
+// Read-only GPS relay ONLY for the 127.0.0.1 development preview.
+// The SUMOB Worker allows https://hubufmg.web.app but not local browser Origin.
+// The relay sends no user coordinates, never accepts arbitrary URLs or methods.
+async function relayLocalGps(url,req,res,fetchFn){
+  if(url.pathname!=='/__hub_gps')return false;
+  if(req.method!=='GET'){
+    send(res,405,'Somente GET.');return true;
+  }
+  const routes=(url.searchParams.get('routes')||'').split(',');
+  if(url.searchParams.size!==2||url.searchParams.get('source')!=='GTFS_RT'||
+    routes.length<1||routes.length>30||routes.some(x=>!(/^[A-Za-z0-9_.:-]{1,70}$/).test(x))||
+    new Set(routes).size!==routes.length){
+    send(res,400,'Parâmetros GPS inválidos.');return true;
+  }
+  const target=new URL('https://externo-bh-gps-free.hubufmg.workers.dev/api/gps');
+  target.searchParams.set('source','GTFS_RT');target.searchParams.set('routes',routes.join(','));
+  try{
+    const response=await fetchFn(target.href,{method:'GET',cache:'no-store',redirect:'error',
+      headers:{Accept:'application/json',Origin:'https://hubufmg.web.app'},
+      signal:AbortSignal.timeout(15000)});
+    const data=await response.text();
+    if(data.length>400000){
+      send(res,502,'Resposta GPS excede limite.');return true;
+    }
+    send(res,response.status,data,'application/json; charset=utf-8',req.method);
+  }catch(error){
+    console.error('[PREVIEW] GPS SUMOB indisponível:',error?.name||'Error');
+    send(res,502,JSON.stringify({available:false,error:'GPS_WORKER_UNAVAILABLE'}),
+      'application/json; charset=utf-8');
+  }
+  return true;
+}
 export function createPreviewServer({fetchFn=fetch}={}){
   return http.createServer(async(req,res)=>{
     let url;
     try{url=new URL(req.url,'http://127.0.0.1');}
     catch{send(res,400,'URL inválida.');return;}
     if(await relayOfficialApi(url,req,res,fetchFn))return;
+    if(await relayLocalGps(url,req,res,fetchFn))return;
     if(req.method!=='GET'&&req.method!=='HEAD'){
       send(res,405,'Somente GET e HEAD.');return;
     }
     // Firebase Hosting usa cleanUrls. O Python http.server não implementa isso.
+    if(url.pathname==='/externo/index.html'){
+      res.writeHead(302,{Location:'/externo/'+url.search,'Cache-Control':'no-store'});
+      res.end();return;
+    }
     if(url.pathname==='/interno/index.html'){
       res.writeHead(302,{Location:'/interno'+url.search,'Cache-Control':'no-store'});
       res.end();return;
@@ -108,7 +145,8 @@ export function createPreviewServer({fetchFn=fetch}={}){
     try{
       const decoded=decodeURIComponent(url.pathname);
       const page=decoded==='/'?'/index.html':
-        (decoded==='/interno'||decoded==='/interno/')?'/interno/index.html':decoded;
+        (decoded==='/interno'||decoded==='/interno/')?'/interno/index.html':
+        (decoded==='/externo'||decoded==='/externo/')?'/externo/index.html':decoded;
       filePath=path.resolve(ROOT,'.'+page);
       if(!filePath.startsWith(ROOT+path.sep))throw new Error('Fora da pasta pública');
       const info=await stat(filePath);
@@ -118,6 +156,20 @@ export function createPreviewServer({fetchFn=fetch}={}){
     }
     try{
       let body=await readFile(filePath);
+      if(url.pathname==='/externo/live-gps.js'){
+        // Somente na resposta LOCAL; o pacote aprovado segue intacto.
+        // O Worker real restringe CORS às origens HTTPS do Hub, portanto
+        // a mesma API GTFS-RT é acessada por relay fixo em 127.0.0.1.
+        const source=body.toString('utf8');
+        const original="const request=new URL(cfg.endpoint);\n    request.searchParams.set('source','GTFS_RT');";
+        if(!source.includes(original)){
+          send(res,500,'GPS do Externo incompatível com o proxy local.');
+          return;
+        }
+        const replacement="const request=new URL(['localhost','127.0.0.1'].includes(location.hostname)"+
+          "?location.origin+'/__hub_gps':cfg.endpoint);\n    request.searchParams.set('source','GTFS_RT');";
+        body=Buffer.from(source.replace(original,replacement),'utf8');
+      }
       if(url.pathname==='/config.js'){
         // Apenas na resposta local: no repositório, config.js permanece intacto.
         const config=body.toString('utf8');

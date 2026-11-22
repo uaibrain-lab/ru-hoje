@@ -156,8 +156,14 @@ try {
   const expectedSetorialIIOrder = (clockParts.hour * 60 + clockParts.minute) >= 870 ? ['Jantar','Almoço'] : ['Almoço','Jantar'];
   assert.deepEqual(await page.locator('.meal-card h3').allTextContents(),expectedSetorialIIOrder);
   assert.equal(await page.locator('.meal-card').filter({hasText:'Café indevido'}).count(),0);
-  await page.locator('.date-card').last().click();
-  await page.getByText('Cardápio ainda não divulgado').waitFor();
+  // A última data do calendário cai ocasionalmente no fim de semana:
+  // não confundir "sem atendimento regular" com "cardápio não divulgado".
+  const lastCard=page.locator('.date-card').last();
+  const noRegularService=await lastCard.getAttribute('data-no-regular-service');
+  await lastCard.click();
+  await page.getByText(noRegularService==='true'
+    ? 'Sem atendimento regular previsto'
+    : 'Cardápio ainda não divulgado').waitFor();
   // O endpoint técnico JSON da FUMP não é oferecido como link ao visitante.
   assert.equal(await page.getByRole('link',{name:/Abrir resposta oficial deste RU\/data/i}).count(),0);
   assert.equal(await page.locator('.no-menu a[href*=":3003/"]').count(),0);
@@ -359,7 +365,7 @@ try {
     assert.deepEqual([...new Set(styles.map(x=>JSON.stringify(x)))],
       [JSON.stringify({fill:'#ffffff',stroke:'#334155',width:'2.5'})],
       'Os marcadores não podem ter aro azul nem variar o contorno');
-    assert.match(await bus.locator('body').evaluate(()=>document.title),/Interno/);
+    assert.match(await bus.locator('body').evaluate(()=>document.title),/Ônibus/);
     await busPage.waitForFunction(()=>!!navigator.serviceWorker.controller,null,{timeout:20000});
     await busPage.reload({waitUntil:'domcontentloaded'});
     await busPage.evaluate(()=>document.getElementById('restaurant-dialog')?.close());
@@ -380,7 +386,7 @@ try {
         const doc=frame?.contentDocument;
         return doc && doc!==window.__previousInternoDoc &&
           doc.readyState==='complete' && !!doc.querySelector('#sheet') &&
-          /Interno/.test(doc.title) &&
+          /Ônibus/.test(doc.title) &&
           frame.contentWindow.location.pathname==='/interno';
       }catch{return false;}
     },null,{timeout:20000});
@@ -401,7 +407,7 @@ try {
         const doc=frame?.contentDocument;
         return doc && doc!==window.__beforeOfflineDoc &&
           doc.readyState==='complete' && !!doc.querySelector('#sheet') &&
-          /Interno/.test(doc.title) &&
+          /Ônibus/.test(doc.title) &&
           frame.contentWindow.location.pathname==='/interno' &&
           frame.contentWindow.L?.version==='1.9.4' &&
           doc.querySelectorAll('path.interno-stop').length===49 &&
@@ -467,6 +473,82 @@ try {
       await mobile.locator('#tab-interno').click();
       const bus=mobile.frameLocator('#interno-frame');
       await bus.locator('#q').waitFor({state:'visible',timeout:15000});
+      const ui=await mobile.evaluate(()=>{
+        const f=document.getElementById('interno-frame')?.getBoundingClientRect();
+        return {viewport:innerWidth,width:document.documentElement.scrollWidth,
+          mapHeight:f?.height};
+      });
+      assert.ok(ui.width<=width+1,'Rolagem horizontal na aba Ônibus: '+JSON.stringify(ui));
+      assert.ok(ui.mapHeight>=320,'O mapa precisa ter espaço útil: '+JSON.stringify(ui));
+      await bus.locator('#quick-linhas').click();
+      const cycle=bus.locator('[data-line-filter-toggle]');
+      await cycle.waitFor({state:'visible'});
+      assert.equal(await cycle.getAttribute('data-current-filter'),'all');
+      if(width<=759){
+        assert.equal(await bus.locator('#map-source-switch').isVisible(),false,
+          'Linhas aberto não deve duplicar o filtro sobre o mapa');
+      }
+      const dimensions=await cycle.evaluate(n=>({
+        height:n.getBoundingClientRect().height,width:n.getBoundingClientRect().width
+      }));
+      assert.ok(dimensions.height>=44&&dimensions.width>=90,
+        'Filtro Linhas precisa ser discreto mas tocável: '+JSON.stringify(dimensions));
+      assert.match(await bus.locator('#bus-lines-list .bus-line-group').first().innerText(),/Internos/);
+      assert.equal(await bus.locator('#bus-lines-list [data-line]').count()>0,true);
+      await cycle.click();
+      assert.equal(await cycle.getAttribute('data-current-filter'),'internal');
+      assert.equal(await bus.locator('#bus-lines-list [data-externo-code]').count(),0);
+      await cycle.click();
+      assert.equal(await cycle.getAttribute('data-current-filter'),'external');
+      assert.equal(await bus.locator('#bus-lines-list [data-line]').count(),0);
+      assert.match(await bus.locator('#bus-lines-list .bus-line-group').first().innerText(),/Municipais/);
+      await cycle.click();
+      assert.equal(await cycle.getAttribute('data-current-filter'),'all');
+      assert.match(await bus.locator('#bus-lines-list .bus-line-group').first().innerText(),/Internos/);
+      if(width===390){
+        // Recolher Linhas devolve o filtro ao mapa; reabrir devolve à lista.
+        const toggle=bus.locator('#sheet-toggle');
+        await toggle.click(); // painel intermediário → ampliado
+        await toggle.click(); // ampliado → recolhido
+        assert.equal(await bus.locator('#map-source-switch').isVisible(),true,
+          'Mapa não pode perder o filtro quando Linhas é recolhido');
+        await toggle.click(); // recolhido → intermediário
+        assert.equal(await bus.locator('#map-source-switch').isVisible(),false,
+          'Filtro de Linhas não deve ser duplicado sobre mapa aberto');
+        // Teste geométrico: controles no mapa e ferramentas em Linhas não se sobrepõem.
+        const blocks=await bus.locator('body').evaluate(()=>{
+          const b=selector=>{const n=document.querySelector(selector);if(!n)return null;
+            const r=n.getBoundingClientRect();return {left:r.left,right:r.right,
+              top:r.top,bottom:r.bottom,width:r.width,height:r.height,hidden:n.hidden};};
+          return {loc:b('#loc'),mapFilter:b('#map-filter-toggle'),
+            zoom:b('.leaflet-control-zoom'),status:b('#map-data-status'),
+            offline:b('#map-basemap-notice'),sheet:b('#sheet'),
+            search:b('.bus-line-search'),listFilter:b('[data-line-filter-toggle]')};
+        });
+        for(const key of ['loc','mapFilter','zoom','status','sheet','search','listFilter'])
+          assert.ok(blocks[key],`Layout Ônibus sem ${key}: ${JSON.stringify(blocks)}`);
+        assert.ok(blocks.loc.right+8<=blocks.mapFilter.left,
+          'Localização e filtro se sobrepõem: '+JSON.stringify(blocks));
+        assert.ok(blocks.mapFilter.right+3<=blocks.zoom.left,
+          'Filtro e zoom se sobrepõem: '+JSON.stringify(blocks));
+        assert.ok(blocks.mapFilter.bottom+8<=blocks.status.top,
+          'Filtro sobrepõe status do mapa: '+JSON.stringify(blocks));
+        assert.ok(blocks.search.right+7<=blocks.listFilter.left&&
+          Math.abs(blocks.search.top-blocks.listFilter.top)<=8,
+          'Busca e filtro de Linhas devem compartilhar a mesma faixa: '+JSON.stringify(blocks));
+        if(blocks.offline&&!blocks.offline.hidden){
+          assert.ok(blocks.status.bottom+3<=blocks.offline.top,
+            'Avisos do mapa sobrepostos: '+JSON.stringify(blocks));
+          assert.ok(blocks.offline.bottom+12<=blocks.sheet.top,
+            'Aviso do mapa coberto pelo painel: '+JSON.stringify(blocks));
+        }
+        await fs.mkdir(path.resolve(ROOT,'../qa-results/menu-compact'),{recursive:true});
+        await mobile.screenshot({path:path.resolve(ROOT,'../qa-results/menu-compact/onibus-linhas-390.png')});
+      }
+      await bus.locator('#quick-pontos').click();
+      await bus.locator('#q').waitFor({state:'visible'});
+      assert.equal(await bus.locator('#map-source-switch').isVisible(),true,
+        'Em Pontos, o filtro flutuante do mapa deve estar disponível');
       assert.equal(await bus.locator('#sheet').evaluate(e=>e.classList.contains('peek')),false,
         'Busca do Interno deve abrir sem painel recolhido');
       assert.equal(menuRequests,0,'Interno não deve disparar consulta FUMP');
@@ -477,6 +559,144 @@ try {
       await mobile.close();
     }
   }finally{await mobileContext.close();}
+  // Integração real de eventos: clicar linha municipal na lista unificada
+  // abre a MESMA linha no iframe externo (dados 100% sintéticos do teste).
+  const combinedCtx=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
+  await combinedCtx.addInitScript(()=>{
+    try{localStorage.setItem('ruhoje:restaurant:v1','setorial-i')}catch{}
+  });
+  try{
+    const combined=await combinedCtx.newPage();
+    await combined.route('https://tile.openstreetmap.org/**',route=>route.abort());
+    await combined.route('**/externo/catalog/manifest.json',route=>route.fulfill({
+      status:200,contentType:'application/json',
+      body:JSON.stringify({gtfsVersion:'synthetic-qa',routes:2,stops:2,stopTimeRows:4,
+        feedStartDate:'20260101',feedEndDate:'20261231'})
+    }));
+    await combined.route('**/externo/catalog/routes.json',route=>route.fulfill({
+      status:200,contentType:'application/json',
+      body:JSON.stringify([{id:'R1',code:'101',name:'BH Centro'},
+        {id:'R2',code:'901',name:'BH Pampulha'}])
+    }));
+    // Reproduce a small official-style municipal area in the unified map.
+    await combined.route('**/externo/catalog/stops.json',route=>route.fulfill({
+      status:200,contentType:'application/json',
+      body:JSON.stringify({
+        '14784087':['Av. Campus Principal',-19.8694,-43.9672],
+        '14784088':['Av. Centro',-19.8697,-43.9676]
+      })
+    }));
+    await combined.route('**/externo/catalog/patterns.json',route=>route.fulfill({
+      status:200,contentType:'application/json',
+      body:JSON.stringify([{id:'p-qa',route:'R1',stops:['14784087','14784088']}])
+    }));
+    await combined.route('**/__hub_gps?**',route=>route.fulfill({
+      status:200,contentType:'application/json',
+      body:JSON.stringify({available:true,source:'GTFS_RT',
+        fetchedAt:new Date().toISOString(),
+        records:[{routeId:'101',vehicleId:'qa-vehicle-1',
+          latitude:-19.8694,longitude:-43.9672,lastGpsFixAt:new Date().toISOString()}]})
+    }));
+    await combined.route('**/externo/',route=>route.fulfill({
+      status:200,contentType:'text/html',
+      body:'<!doctype html><html data-app-mode="free-static"><head><title>Externo QA</title></head><body>'+
+        '<input id="lineInput"><datalist id="routeList"><option value="101"></option><option value="901"></option></datalist>'+
+        '<button id="goLine" onclick="document.getElementById(\'lineTitle\').textContent=document.getElementById(\'lineInput\').value;document.getElementById(\'lineExit\').hidden=false">Abrir linha</button>'+
+        '<button id="lineExit" hidden>Fechar</button><h3 id="lineTitle"></h3></body></html>'
+    }));
+    await combined.goto(url+'?aba=onibus',{waitUntil:'domcontentloaded'});
+    await combined.locator('#restaurant-dialog').evaluate(e=>e.close());
+    const sheet=combined.frameLocator('#interno-frame');
+    const mapFilter=sheet.locator('#map-filter-toggle');
+     await mapFilter.waitFor({state:'visible'});
+     assert.equal(await mapFilter.getAttribute('data-current-filter'),'all');
+     const target=await mapFilter.evaluate(n=>n.getBoundingClientRect().toJSON());
+     assert.ok(target.width<160&&target.height>=44,'Filtro do mapa deve ser compacto e tocável');
+     await mapFilter.click();
+     assert.equal(await mapFilter.getAttribute('data-current-filter'),'internal');
+     await mapFilter.click();
+     assert.equal(await mapFilter.getAttribute('data-current-filter'),'external');
+     assert.equal(await sheet.locator('#map-filter-label').innerText(),'Municipais');
+     await mapFilter.click();
+     assert.equal(await mapFilter.getAttribute('data-current-filter'),'all');
+     await sheet.locator('#map-data-status').getByText(/GPS ao vivo:/).waitFor({timeout:15000});
+    assert.equal(await sheet.locator('.gps-bus-pin').count(),1);
+    // Mobile compacto real: a aba deve continuar utilizável mesmo dentro do
+    // iframe do Hub, que tem largura interna menor que a tela de 320 px.
+    await combined.setViewportSize({width:320,height:740});
+    const narrow=await sheet.locator('body').evaluate(()=>{
+      const rect=q=>{const n=document.querySelector(q);if(!n)return null;
+        const r=n.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width}};
+      return {width:innerWidth,scrollWidth:document.documentElement.scrollWidth,
+        loc:rect('#loc'),filter:rect('#map-filter-toggle'),
+        zoom:rect('.leaflet-control-zoom')};
+    });
+    assert.ok(narrow.loc&&narrow.filter&&narrow.zoom,'Faltou controle essencial em 320px');
+    assert.ok(narrow.scrollWidth<=narrow.width+1,'Rolagem horizontal interna em 320px: '+JSON.stringify(narrow));
+    assert.ok(narrow.loc.right+6<=narrow.filter.left,'Localização sobrepõe filtro em 320px: '+JSON.stringify(narrow));
+    assert.ok(narrow.filter.right+3<=narrow.zoom.left,'Filtro sobrepõe zoom em 320px: '+JSON.stringify(narrow));
+    await fs.mkdir(path.resolve(ROOT,'../qa-results/menu-compact'),{recursive:true});
+    await combined.screenshot({path:path.resolve(ROOT,'../qa-results/menu-compact/onibus-320.png')});
+    await combined.setViewportSize({width:390,height:844});
+    await sheet.locator('#quick-linhas').click();
+    const stars=sheet.locator('#bus-lines-list [data-fav-list-line^="int:"]');
+    await stars.nth(1).waitFor({state:'visible'});
+    const favorite=await stars.nth(1).getAttribute('data-fav-list-line');
+    await stars.nth(1).click();
+    assert.equal(await sheet.locator('#bus-lines-list [data-fav-list-line]').first()
+      .getAttribute('data-fav-list-line'),favorite,'Linha marcada deve subir ao topo');
+    assert.equal(await sheet.locator('#bus-lines-list [data-fav-list-line="'+favorite+'"]')
+      .getAttribute('aria-pressed'),'true');
+
+    await sheet.locator('[data-externo-code="101"]').waitFor({state:'attached',timeout:15000});
+    assert.match(await sheet.locator('#bus-lines-list .bus-line-group').first().innerText(),/Internos/);
+    await sheet.locator('[data-externo-code="101"]').click();
+    await combined.locator('#externo-frame').waitFor({state:'visible',timeout:15000});
+    assert.equal(new URL(combined.url()).searchParams.get('tipo'),'externo');
+    assert.equal(new URL(combined.url()).searchParams.get('linha'),'101');
+    await combined.frameLocator('#externo-frame').locator('#lineTitle').getByText('101').waitFor({timeout:12000});
+    await combined.locator('#onibus-back-interno').click();
+    await sheet.locator('[data-line-filter-toggle]').waitFor({state:'visible'});
+    assert.equal(await sheet.locator('[data-line-filter-toggle]').getAttribute('data-current-filter'),'all');
+    assert.match(await sheet.locator('#bus-lines-list .bus-line-group').first().innerText(),/Internos/);
+    assert.equal(new URL(combined.url()).searchParams.get('tipo'),null);
+    await sheet.locator('#quick-pontos').click();
+    await sheet.locator('[data-ext-stop="14784087"]').waitFor({state:'visible',timeout:15000});
+    const internalStopStar=sheet.locator('#list [data-fav-stop-list]').nth(1);
+    const stopId=await internalStopStar.getAttribute('data-fav-stop-list');
+    await internalStopStar.click();
+    assert.equal(await sheet.locator('#list [data-fav-stop-list]').first()
+      .getAttribute('data-fav-stop-list'),stopId,'Ponto favorito deve subir sem seção especial');
+    await sheet.locator('[data-ext-stop="14784087"]').click();
+    await combined.locator('#onibus-externo').waitFor({state:'visible',timeout:10000});
+    assert.equal(new URL(combined.url()).searchParams.get('ponto'),'14784087');
+    assert.equal(await combined.locator('#onibus-external-line').textContent(),'· Av. Campus Principal');
+    await combined.locator('#onibus-back-interno').click();
+    assert.equal(await sheet.locator('#map-source-switch').isVisible(),true);
+  }finally{await combinedCtx.close()}
+  // Pacote municipal simulado: abrir somente se manifesto e iframe estático
+  // forem válidos; isso não afirma que os dados oficiais foram homologados.
+  const busValidCtx=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
+  await busValidCtx.addInitScript(()=>{
+    try{localStorage.setItem('ruhoje:restaurant:v1','setorial-i');}catch{}
+  });
+  try{
+    const validPage=await busValidCtx.newPage();
+    await validPage.route('**/externo/catalog/manifest.json',route=>route.fulfill({
+      status:200,contentType:'application/json',
+      body:JSON.stringify({gtfsVersion:'synthetic-qa',routes:2,stops:2,
+        stopTimeRows:4,feedStartDate:'20260101',feedEndDate:'20261231'})
+    }));
+    await validPage.route('**/externo/',route=>route.fulfill({
+      status:200,contentType:'text/html',
+      body:'<!doctype html><html data-app-mode="free-static"><head><title>Externo QA</title></head><body><main>Mapa Externo em teste</main></body></html>'
+    }));
+    await validPage.goto(url+'?aba=onibus&tipo=externo',{waitUntil:'domcontentloaded'});
+    await validPage.locator('#externo-frame').waitFor({state:'visible',timeout:15000});
+    assert.equal(await validPage.locator('#onibus-empty').isVisible(),false);
+    assert.equal(await validPage.frameLocator('#externo-frame').locator('main').innerText(),'Mapa Externo em teste');
+    assert.equal(await validPage.locator('#onibus-external-label').count(),0);
+  }finally{await busValidCtx.close();}
   // Primeira visita por link direto não deve bloquear Festas com o seletor de RU.
   const firstVisit=await browser.newContext({serviceWorkers:'block'});
   try{

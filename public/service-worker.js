@@ -3,10 +3,10 @@
  * Cache permanece disponível offline, mas nunca congela uma versão antiga
  * de app.js, config.js ou seus imports após um deploy.
  */
-const VERSION = 'hub-v285-20261117-menu-compact';
+const VERSION = 'hub-v286-20261122-onibus-interno-externo';
 const SHELL = [
   '/', '/index.html', '/interno', '/favicon.ico', '/config.js',
-  '/assets/app.js', '/assets/pwa-install.js', '/assets/vendor/leaflet-1.9.4.js',
+  '/assets/app.js', '/assets/onibus.js', '/assets/pwa-install.js', '/assets/vendor/leaflet-1.9.4.js',
   '/assets/vendor/leaflet-1.9.4.css', '/assets/fump-live.js', '/assets/fump-prefetch.js',
   '/assets/fump-parse.js', '/assets/dish-category.js',
   '/assets/date-availability.js', '/assets/festas.js',
@@ -24,7 +24,7 @@ const SHELL = [
   '/data/pratos-ingredientes.json'
 ];
 const CORE = [
-  '/', '/index.html', '/interno', '/config.js', '/assets/app.js', '/assets/pwa-install.js',
+  '/', '/index.html', '/interno', '/config.js', '/assets/app.js', '/assets/onibus.js', '/assets/pwa-install.js',
   // Mapa offline é parte essencial: instalação só é ativada com JS/CSS Leaflet.
   '/assets/vendor/leaflet-1.9.4.js', '/assets/vendor/leaflet-1.9.4.css',
   '/assets/fump-live.js', '/assets/fump-parse.js',
@@ -73,6 +73,8 @@ self.addEventListener('fetch', event => {
   if(event.request.method!=='GET') return;
   const url=new URL(event.request.url);
   if(url.origin!==self.location.origin) return; // Nunca armazenar respostas da FUMP/Firestore.
+  // O Externo tem Service Worker próprio; nunca servir /index.html do RU como fallback aqui.
+  if(url.pathname==='/externo' || url.pathname.startsWith('/externo/')) return;
 
   // Firebase Hosting cleanUrls redireciona /interno/index.html para /interno.
   // A navegacao interceptada pelo SW antigo recebia um redirect opaco e

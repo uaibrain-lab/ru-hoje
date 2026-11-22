@@ -585,7 +585,7 @@ function initTheme() {
  */
 function setupPwaUpdates() {
   if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
-  const releaseKey='ruhoje:sw-refresh:hub-v285-20261117-menu-compact';
+  const releaseKey='ruhoje:sw-refresh:hub-v286-20261122-onibus-interno-externo';
   const hadController=!!navigator.serviceWorker.controller;
   let reloadRequested=false;
   let reloading=false;
@@ -621,7 +621,7 @@ function setupPwaUpdates() {
 
 function isMenuActive(){
   const initialTab=new URLSearchParams(window.location.search).get('aba');
-  return !$('bandeco-main')?.hidden && !['interno','festas','sobre'].includes(initialTab);
+  return !$('bandeco-main')?.hidden && !['interno','onibus','festas','sobre'].includes(initialTab);
 }
 function boot() {
   initTheme();
