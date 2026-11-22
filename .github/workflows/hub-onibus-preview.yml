@@ -9,8 +9,10 @@ on:
       - scripts/verify-onibus-preview.mjs
       - scripts/hub-legacy-externo-alias.mjs
       - scripts/verify-onibus-browser.mjs
+      - scripts/smoke.mjs
       - public/interno/index.html
       - public/assets/onibus.js
+      - public/assets/app.js
       - public/index.html
       - public/service-worker.js
   workflow_dispatch:
