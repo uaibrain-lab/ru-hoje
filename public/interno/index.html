@@ -949,11 +949,13 @@ async function populateMunicipalAlerts(){
   notifyMunicipalAlerts(key,items);
 }
 const realtimePredictionsCache=new Map();
+let realtimeRequestSequence=0;
 async function populateMunicipalRealtime(id){
   if(view.t!=='municipal-stop'||String(view.id)!==String(id)||document.hidden)return;
   const section=document.getElementById('municipal-stop-realtime');
   const rows=section?.querySelector('#municipal-realtime-rows');
   if(!section||!rows)return;
+  const requestSequence=++realtimeRequestSequence;
   const now=Date.now();
   const routes=new Map();
   for(const r of externalRoutes||[]){
@@ -995,9 +997,13 @@ async function populateMunicipalRealtime(id){
       // programados. Nunca simule ETA por distância em linha reta.
       result=null;
     }
+    // Slow network responses must not overwrite a newer update, including
+    // the immediate refresh after returning to the app.
+    if(requestSequence!==realtimeRequestSequence)return;
     realtimePredictionsCache.set(String(id),{fetchedAt:now,value:result});
   }
-  if(view.t!=='municipal-stop'||String(view.id)!==String(id)||!rows.isConnected)return;
+  if(requestSequence!==realtimeRequestSequence||view.t!=='municipal-stop'||
+     String(view.id)!==String(id)||!rows.isConnected||document.hidden)return;
   const found=[],seenTrip=new Set();
   for(const item of result?.items||[]){
     const route=routes.get(String(item.routeId||''));
@@ -1023,7 +1029,8 @@ async function populateMunicipalRealtime(id){
       const normalized=normalizeTripDelayRoutes(
         result.relativeUpdates,externalRoutes,serving);
       const derived=await tripDelaysForStop(id,normalized,{now:Date.now()});
-      if(view.t!=='municipal-stop'||String(view.id)!==String(id)||!rows.isConnected)return;
+      if(requestSequence!==realtimeRequestSequence||view.t!=='municipal-stop'||
+         String(view.id)!==String(id)||!rows.isConnected||document.hidden)return;
       for(const update of derived){
         const route=routes.get(String(update.routeId));
         if(!route||!serving.has(String(route.id))||seenTrip.has(update.tripId))
@@ -1037,12 +1044,21 @@ async function populateMunicipalRealtime(id){
       // mantém os horários GTFS já disponíveis no painel.
     }
   }
-  if(view.t!=='municipal-stop'||String(view.id)!==String(id)||!rows.isConnected)return;
+  if(requestSequence!==realtimeRequestSequence||view.t!=='municipal-stop'||
+     String(view.id)!==String(id)||!rows.isConnected||document.hidden)return;
   found.sort((a,b)=>a.time-b.time||a.route.code.localeCompare(b.route.code));
+  if(!found.length){
+    // Even a focused stale ETA must disappear when the source reports no
+    // valid prediction. Accessibility cannot justify displaying wrong times.
+    section.hidden=true;
+    rows.replaceChildren();
+    const heading=document.getElementById('municipal-timetable-title');
+    if(heading)heading.textContent='Próximos horários programados';
+    return;
+  }
   // Never replace a focused arrival button while the rider navigates with
   // a keyboard or screen reader. A subsequent refresh will update the rows.
   if(rows.contains(document.activeElement))return;
-  if(!found.length){section.hidden=true;return;}
   section.hidden=false;
   const heading=document.getElementById('municipal-timetable-title');
   if(heading)heading.textContent='Horários programados (tabela)';
