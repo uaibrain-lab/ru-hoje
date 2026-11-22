@@ -585,7 +585,7 @@ function initTheme() {
  */
 function setupPwaUpdates() {
   if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
-  const releaseKey='ruhoje:sw-refresh:hub-v290-20261122-onibus-sem-cabecalho';
+  const releaseKey='ruhoje:sw-refresh:hub-v291-20261122-onibus-alertas-sumob';
   const hadController=!!navigator.serviceWorker.controller;
   let reloadRequested=false;
   let reloading=false;
