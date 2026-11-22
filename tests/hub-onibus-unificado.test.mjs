@@ -15,33 +15,56 @@ test('a aba Ônibus substitui Interno sem acrescentar quinta aba no Hub',async()
   assert.match(html,/id="tab-interno"[^>]*aria-controls="interno-page"/);
   assert.doesNotMatch(html,/id="onibus-filter-interno"/);
   assert.doesNotMatch(html,/id="onibus-filter-externo"/);
-  assert.match(html,/id="onibus-back-interno"/);
-  assert.match(html,/id="onibus-empty-title"/);
+  assert.doesNotMatch(html,/id="onibus-back-interno"/);
+  assert.doesNotMatch(html,/id="onibus-empty-title"/);
   const interno=await read('public/interno/index.html');
-  assert.match(interno,/data-line-filter-toggle/);
-  assert.match(interno,/id="map-filter-toggle"/);
-  assert.match(interno,/data-current-filter="all"/);
+  assert.match(interno,/data-line-filter-mode/);
+  assert.doesNotMatch(interno,/id="map-filter-toggle"/);
+  assert.match(interno,/id="toggle-internal-points"/);
+  assert.match(interno,/id="toggle-municipal-points"/);
+  assert.match(interno,/class="eye-closed"/);
+  assert.match(interno,/function toggleMapLayer\(source\)/);
+  assert.match(interno,/aria-label="Camadas de pontos"/);
+  assert.doesNotMatch(interno,/UFMG \+ BH ·/);
   assert.match(interno,/FILTER_MODES=\['all','internal','external'\]/);
   assert.match(interno,/external:'Municipais'/);
   assert.ok(interno.indexOf("Internos <small>")<interno.indexOf("Municipais <small>"));
   assert.doesNotMatch(interno,/data-map-mode="external"/);
   assert.doesNotMatch(interno,/>Externos|>Externas/);
-  assert.match(interno,/hub:onibus:external-line/);
+  assert.match(interno,/hub:onibus:unified-selection/);
+  assert.match(interno,/function municipalStopView\(/);
+  assert.match(interno,/function municipalLineView\(/);
+  assert.match(interno,/function openMunicipal\(/);
+  assert.match(interno,/id="map-point-legend"/);
+  assert.match(interno,/role="group" aria-label="Filtrar linhas por origem"/);
+  assert.match(interno,/data-line-filter-mode/);
+  assert.match(interno,/radius:7/);
+  assert.match(interno,/radius:5.5,color:'#7556c9'/);
   assert.match(interno,/lines-filter-in-sheet/);
   assert.match(interno,/visibility:hidden;opacity:0;pointer-events:none/);
-  assert.match(interno,/Municipais BH:/);
+  assert.match(interno,/Dados municipais indisponíveis/);
+  assert.doesNotMatch(interno,/UFMG \\+ BH ·/);
   assert.match(interno,/class="gps-bus-shape"/);
-  assert.match(interno,/if\(mapMode==='internal'&&map\.hasLayer\(busPins\)\)map\.removeLayer\(busPins\)/);
+  assert.match(interno,/if\(busPins&&map\.hasLayer\(busPins\)\)map\.removeLayer\(busPins\)/);
+  assert.match(interno,/mapMode=internal\?\(municipal\?'all':'internal'\):\(municipal\?'external':'none'\)/);
   assert.match(interno,/Number\(v\.heading\)/);
   assert.doesNotMatch(interno,/function favRows\(/);
   assert.match(interno,/function starRow\(/);
   assert.match(interno,/hub_onibus_linhas_favoritas_v1/);
   assert.match(interno,/hub_onibus_pontos_bh_favoritos_v1/);
+  assert.match(html,/aria-label="Ônibus: pontos, linhas e horários"/);
+  assert.doesNotMatch(html,/class="onibus-intro"/);
+  assert.doesNotMatch(html,/MOBILIDADE|UFMG \+ Belo Horizonte|Voltar às linhas|Externo BH/);
+  const css=await read('public/assets/styles.css');
+  assert.doesNotMatch(css,/\.onibus-intro/);
+  assert.match(css,/grid-template-rows:minmax\(0,1fr\);overflow:hidden;padding:0/);
+  assert.match(css,/\.onibus-panel \.interno-frame\{display:block;width:100%;height:calc\(100dvh - 122px\)/);
   assert.match(html,/<span>Ônibus<\/span>/);
   assert.equal((html.match(/id="tab-(menu|interno|festas|sobre)"/g)||[]).length,4);
   assert.match(html,/id="interno-frame"[^>]*src="\/interno"/);
-  assert.match(html,/id="externo-frame"[^>]*hidden/);
-  assert.doesNotMatch(html,/id="externo-frame"[^>]*src=/);
+  assert.doesNotMatch(html,/id="externo-frame"/);
+  assert.equal((html.match(/id="interno-frame"/g)||[]).length,1);
+  assert.match(html,/id="interno-frame"[^>]*title="Ônibus — pontos e linhas internas e municipais"/);
 });
 
 test('links canônicos e legados preservam filtro sem falsificar tipo',async()=>{
@@ -49,14 +72,15 @@ test('links canônicos e legados preservam filtro sem falsificar tipo',async()=>
   assert.equal(modeFromSearch('?aba=interno'),'interno');
   assert.equal(modeFromSearch('?tipo=desconhecido'),'interno');
   const module=await read('public/assets/onibus.js');
-  assert.ok(module.includes("e.data?.type==='hub:onibus:external-line'"));
-  assert.ok(module.includes("e.data?.type==='hub:onibus:external-stop'"));
-  assert.ok(module.includes("function focusExternalStop()"));
-  assert.ok(module.includes("frame.loading='eager'"));
-  assert.ok(module.includes("dataset?.appMode==='free-static'"));
+  assert.ok(module.includes("type:FOCUS_STOP"));
+  assert.ok(module.includes("type:FOCUS_LINE"));
+  assert.ok(module.includes("hub:onibus:unified-selection"));
+  assert.ok(module.includes("if(stop&&/^[0-9]{1,20}$/.test(stop))"));
+  assert.ok(module.includes("if($('onibus-interno'))$('onibus-interno').hidden=false"));
+  assert.ok(!module.includes("frame.loading='eager'"));
 });
 
-test('manifest GTFS municipal é validado antes de montar iframe',()=>{
+test('manifest GTFS municipal é validado antes de montar o catálogo local',()=>{
   const sample={gtfsVersion:'202611161919',routes:326,stops:9925,stopTimeRows:6691004,
     feedStartDate:'20261101',feedEndDate:'20261231'};
   assert.ok(validExternoManifest(sample,'20261122'));
@@ -173,4 +197,20 @@ test('staging rejeita pacote sem prova recente do feed GPS SUMOB',async()=>{
     await writeFile(file,JSON.stringify(qa));
     await assert.rejects(validateExternoPackage(dir,'20261122'),/QA_NOT_APPROVED/);
   });
+});
+
+test('deploy completo exige Worker ETA QA validado antes do Firebase preview',async()=>{
+  const script=await read('scripts/Publicar-Onibus-ETA-Homologacao-Completa.ps1');
+  assert.match(script,/feat\/eta-tripupdates-sumob-20261122/);
+  assert.match(script,/a11b2cad98508a31be69dff6148817bef1f26004/);
+  assert.match(script,/checkout --detach \$sha/);
+  assert.doesNotMatch(script,/checkout --force/);
+  assert.match(script,/status --porcelain/);
+  assert.match(script,/remote get-url origin/);
+  assert.match(script,/Publicar-ETA-Worker-Homologacao\.ps1/);
+  assert.match(script,/Worker QA nao validado\. Firebase Hosting NAO foi publicado/);
+  assert.match(script,/Publicar-Homologacao\.ps1/);
+  assert.ok(script.indexOf("& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $workerScript")<
+    script.indexOf("& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $hostingScript"));
+  assert.doesNotMatch(script,/--env production|--project\s+hubufmg-prod|hosting:deploy/);
 });

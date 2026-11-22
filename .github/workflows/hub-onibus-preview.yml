@@ -1,0 +1,142 @@
+name: Hub Ônibus - pacote completo e homologação isolada
+
+on:
+  push:
+    branches:
+      - fix/hub-onibus-unificado-sem-duplicacao-20261122
+    paths:
+      - .github/workflows/hub-onibus-preview.yml
+      - scripts/verify-onibus-preview.mjs
+      - scripts/hub-legacy-externo-alias.mjs
+      - scripts/verify-onibus-browser.mjs
+      - scripts/verify-onibus-realtime-browser.mjs
+      - scripts/smoke.mjs
+      - tests/hub-onibus-unificado.test.mjs
+      - tests/municipal-realtime.test.mjs
+      - public/assets/municipal-realtime.js
+      - public/assets/municipal-schedules.js
+      - public/interno/index.html
+      - public/assets/onibus.js
+      - public/assets/app.js
+      - public/index.html
+      - public/service-worker.js
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: ID opcional de run aprovado do Externo BH (artefato GPS miniônibus)
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: hub-onibus-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-preview:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Identificar pacote municipal aprovado do Externo BH
+        id: package
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REQUESTED_RUN: ${{ inputs.source_run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_repo=uaibrain-lab/onibusexternobh
+          run_id="$REQUESTED_RUN"
+          if [[ -z "$run_id" ]]; then
+            run_id="$(gh api "repos/$source_repo/actions/runs?per_page=100" --jq '
+              [.workflow_runs[] |
+               select(.name == "Externo BH V1 - pacote municipal para Hub (sem deploy)") |
+               select(.conclusion == "success") |
+               select(.head_branch == "feat/eta-tripupdates-sumob-20261122" or
+                      .head_branch == "fix/hub-hml-firebase-cleanurls-20261122" or
+                      .head_branch == "feat/hub-v1-gps-minibus-package-20261122") |
+               .id][0] // empty
+            ')"
+          fi
+          if [[ ! "$run_id" =~ ^[0-9]+$ ]]; then
+            echo 'Nenhum pacote GPS municipal aprovado foi encontrado' >&2
+            exit 1
+          fi
+          gh api "repos/$source_repo/actions/runs/$run_id" --jq '
+            select(.name == "Externo BH V1 - pacote municipal para Hub (sem deploy)" and
+                   .conclusion == "success" and
+                   (.head_branch == "feat/eta-tripupdates-sumob-20261122" or
+                    .head_branch == "fix/hub-hml-firebase-cleanurls-20261122" or
+                    .head_branch == "feat/hub-v1-gps-minibus-package-20261122")) |
+            .id' | grep -qx "$run_id"
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "PACOTE_EXTERNO_APROVADO_RUN=$run_id"
+
+      - name: Baixar catálogo validado e preservar todos os arquivos
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN: ${{ steps.package.outputs.run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/externo"
+          gh run download "$SOURCE_RUN" -R uaibrain-lab/onibusexternobh \
+            -n externo-hub-v1-gps-mini-onibus -D "$RUNNER_TEMP/externo"
+          test -s "$RUNNER_TEMP/externo/catalog/manifest.json"
+          test -s "$RUNNER_TEMP/externo/catalog/stops.json"
+          test -s "$RUNNER_TEMP/externo/catalog/arrivals/index.json"
+          node scripts/stage-externo.mjs "$RUNNER_TEMP/externo"
+          node scripts/hub-legacy-externo-alias.mjs
+          node scripts/verify-onibus-preview.mjs
+          echo HUB_ONIBUS_CATALOGO_COMPLETO_VALIDADO
+
+      - name: Testar regressões do Hub e instalar Chromium
+        run: |
+          npm ci --no-audit --no-fund
+          node --test tests/hub-onibus-unificado.test.mjs tests/municipal-realtime.test.mjs
+          npx playwright install --with-deps chromium
+
+      - name: Verificar interface real com catálogo municipal em HTTP
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m http.server 8765 --bind 127.0.0.1 --directory public >/tmp/hub-onibus-qa.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          for i in {1..25}; do
+            if curl -fsS http://127.0.0.1:8765/externo/catalog/manifest.json >/dev/null; then break; fi
+            sleep 1
+          done
+          HUB_QA_URL=http://127.0.0.1:8765/ node scripts/verify-onibus-browser.mjs
+          HUB_QA_URL=http://127.0.0.1:8765/ node scripts/verify-onibus-realtime-browser.mjs
+          echo HUB_ONIBUS_BROWSER_GATE_OK
+
+      - name: Disponibilizar pacote integral de homologação
+        uses: actions/upload-artifact@v4
+        with:
+          name: hub-onibus-homologacao-com-catalogo
+          path: public/
+          retention-days: 7
+          compression-level: 0
+          if-no-files-found: error
+
+      - name: Entrega apenas para deploy manual de homologação
+        run: |
+          echo 'HUB_ONIBUS_ZIP_PRONTO_PARA_DEPLOY_MANUAL'
+          echo 'Nenhum Firebase deploy é executado por este workflow.'

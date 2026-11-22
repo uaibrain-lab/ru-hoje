@@ -398,21 +398,177 @@ i{font-style:normal;font-size:14px;font-weight:400}
   #map-source-switch{transition:none}
   .filter-cycle:active{transform:none}
 }
+
+/* Legenda permanente e inequívoca: círculo vazado = interno; roxo = municipal. */
+#map-point-legend{display:flex;flex-wrap:wrap;gap:6px 13px;
+  border-top:1px solid var(--line);padding-top:6px;margin-top:6px;
+  font-size:11px;color:var(--mut);line-height:1.3;font-weight:650}
+#map-point-legend>span{display:inline-flex;align-items:center;gap:5px}
+#map-point-legend>span[hidden]{display:none}
+.map-legend-symbol{flex:none;width:12px;height:12px;border-radius:50%}
+.map-legend-symbol--internal{border:2.5px solid #334155;background:#fff}
+.map-legend-symbol--municipal{background:#7556c9;border:1px solid #fff;box-shadow:0 0 0 1px #7556c9}
+.municipal-kind{display:inline-flex;align-items:center;gap:7px;color:#7556c9;font-size:12px;font-weight:750;margin-bottom:6px}
+.municipal-kind::before{content:"";width:10px;height:10px;border-radius:50%;background:#7556c9}
+.municipal-detail-title{font-size:clamp(19px,5vw,23px);line-height:1.25;letter-spacing:-.03em;margin:4px 0 11px;overflow-wrap:anywhere}
+.municipal-detail-head{display:flex;gap:10px;align-items:flex-start;margin:0 0 10px}
+.municipal-detail-head .back{flex:none;width:44px;height:44px;border:1px solid var(--line)}
+.municipal-detail-head>div{flex:1;min-width:0}
+.municipal-detail-note{font-size:12px;color:var(--mut);line-height:1.55;margin:6px 0 12px}
+.municipal-detail-tools{margin:10px 0 16px;display:flex;gap:8px;flex-wrap:wrap}
+.municipal-detail-tools button{border:1px solid var(--line);border-radius:999px;min-height:44px;padding:8px 13px;background:var(--bg2);font-size:12px;font-weight:700}
+.municipal-arrivals{display:grid;gap:8px;margin:0 0 14px}
+.municipal-arrival{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:13px;background:var(--bg);text-align:left;width:100%;min-height:54px}
+.municipal-code{flex:none;min-width:46px;border-radius:9px;padding:7px 5px;text-align:center;font-size:12px;font-weight:850;color:#fff;background:#7556c9}
+.municipal-destination{min-width:0;flex:1;overflow-wrap:anywhere;font-size:12.5px;line-height:1.35}
+.municipal-time{flex:none;font-size:14px;font-weight:850;font-variant-numeric:tabular-nums}
+.municipal-direction-list{display:flex;gap:7px;overflow:auto;max-width:100%;scrollbar-width:thin;margin:10px 0 15px}
+.municipal-direction-list button{flex:none;border:1px solid var(--line);border-radius:999px;min-height:44px;padding:8px 12px;background:var(--bg);color:var(--mut);font-size:12px}
+.municipal-direction-list button[aria-pressed="true"]{background:#7556c9;color:#fff;border-color:#7556c9}
+.municipal-stops-list{display:grid;gap:8px;margin:12px 0}
+.municipal-stops-list .municipal-arrival{border-left:3px solid #7556c9}
+ .municipal-list-pin{background:#7556c9;border-color:#7556c9!important;
+  width:14px;height:14px;border-radius:50%;box-shadow:0 0 0 1px #fff}
+
+/* Filtro explícito e tabs acessíveis também na consulta de um ponto. */
+#sheet.detail .sheet-head{display:flex}
+#sheet.detail .sheet-identity{display:none}
+#sheet.detail .quick-tabs{display:flex;justify-content:flex-start}
+#sheet.detail .sheet-head{padding:4px 14px 8px}
+.bus-line-tools{display:flex;flex-direction:column;align-items:stretch;gap:8px;margin:3px 0 12px}
+.bus-line-tools .bus-line-search{flex:none;width:100%;min-height:46px}
+.bus-line-tools .bus-line-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;gap:5px;margin:0}
+.bus-line-tools .bus-line-filters .filter-option{display:flex;align-items:center;justify-content:center;gap:4px;min-width:0;min-height:42px;padding:7px 4px;border:1px solid var(--line);border-radius:10px;background:var(--bg2);color:var(--mut);font-size:clamp(11px,2.9vw,13px);font-weight:750;line-height:1.2}
+.bus-line-tools .bus-line-filters .filter-option[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.bus-line-tools .bus-line-filters .filter-option:focus-visible{outline:3px solid #2e90fa;outline-offset:2px}
+#sheet.lines-mode .bus-line-tools{position:sticky;top:-8px;z-index:4;background:var(--bg);padding:8px 0 10px}
+.map-legend-symbol--internal{width:13px;height:13px;border:3px solid #334155;background:#fff}
+.map-legend-symbol--municipal{width:13px;height:13px;border:1px solid #fff;background:#7556c9;box-shadow:0 0 0 1px #7556c9}
+@media(max-width:759px){#sheet.detail:not(.peek){height:min(62dvh,540px)}}
+/* Geolocalização compacta no canto superior direito, imediatamente abaixo
+   do controle Leaflet de zoom (topright), sem sobreposição. */
+#top{top:calc(89px + env(safe-area-inset-top,0px));right:10px;left:auto;padding:0}
+#loc{display:grid;place-items:center;min-width:44px;width:44px;height:44px;min-height:44px;
+  padding:0;gap:0;border-radius:12px;box-shadow:0 3px 12px #0002}
+#loc .ic{width:21px;height:21px}
+
+/* Camadas compactas, sem título nem números redundantes sobre o mapa. */
+#map-source-switch{display:none!important}
+#map-feedback{
+  position:fixed;top:calc(12px + env(safe-area-inset-top,0px));
+  left:12px;right:auto;z-index:490;
+  display:block;width:174px;max-width:calc(100vw - 110px);
+  padding:4px 10px;background:var(--bg);border:1px solid var(--line);
+  border-radius:15px;box-shadow:0 3px 12px #0002;
+  pointer-events:auto;
+}
+#map-point-legend{
+  display:grid;grid-template-columns:minmax(0,1fr);gap:0;
+  border:0;padding:0;margin:0;width:100%;
+  font-size:13px;line-height:1.3;color:var(--ink);
+}
+#map-point-legend .map-layer-toggle{
+  display:flex;align-items:center;justify-content:flex-start;gap:8px;
+  width:100%;min-width:0;min-height:44px;
+  border:0;border-radius:0;background:transparent;
+  padding:6px 2px;text-align:left;color:var(--ink);
+  font-weight:700;font-size:13px;
+}
+#map-point-legend .map-layer-toggle+.map-layer-toggle{border-top:1px solid var(--line)}
+.map-layer-toggle svg{width:19px;height:19px;flex:none}
+.map-layer-toggle .eye-closed{display:none}
+.map-layer-toggle[aria-pressed="false"] .eye-open{display:none}
+.map-layer-toggle[aria-pressed="false"] .eye-closed{display:block}
+.map-layer-toggle[aria-pressed="false"] span,
+.map-layer-toggle[aria-pressed="false"] .map-legend-symbol{opacity:.45}
+.map-layer-toggle:focus-visible{outline:2px solid #2e90fa;outline-offset:-2px;border-radius:8px}
+#map-feedback #map-basemap-notice:not([hidden]){
+  border-top:1px solid var(--line);padding-top:6px;margin-top:2px;
+}
+#map-data-status.map-sr-only{
+  position:absolute!important;width:1px!important;height:1px!important;
+  padding:0!important;margin:-1px!important;overflow:hidden!important;
+  clip:rect(0,0,0,0)!important;white-space:nowrap!important;
+  border:0!important;pointer-events:none!important;
+}
+@media(min-width:760px){
+  #map-feedback{left:12px;right:auto;align-items:stretch}
+}
+#map-data-status[hidden]{display:none!important}
+
+/* Notificação contextual e discreta: não ocupa o mapa nem pede permissão de push. */
+#sheet{isolation:isolate}
+.service-alert-notification:not([hidden]){
+  display:flex;align-items:center;gap:8px;flex:none;
+  margin:0 11px 6px;padding:8px 10px;min-height:46px;
+  border:1px solid #dfbb77;border-left:3px solid #b87915;
+  border-radius:11px;background:var(--bg2);color:var(--ink);
+  box-shadow:0 4px 12px #00000012;
+}
+.service-alert-notification-icon{display:grid;place-items:center;
+  width:25px;height:25px;flex:none;border-radius:50%;
+  color:#6b4700;background:#fbe5b9;font-weight:900;font-size:13px}
+.service-alert-notification-content{flex:1;min-width:0;display:grid;gap:2px}
+.service-alert-notification-content strong{font-size:12px;line-height:1.3;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.service-alert-notification-content small{font-size:11px;color:var(--mut);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.service-alert-notification button{flex:none;min-height:38px;
+  border:0;border-radius:8px;padding:5px 8px;background:transparent;
+  color:var(--ink);font-weight:750;cursor:pointer}
+.service-alert-notification button:focus-visible{outline:2px solid #2e90fa;outline-offset:1px}
+#service-alert-notification-dismiss{font-size:20px;line-height:1}
+@media(max-width:370px){.service-alert-notification:not([hidden]){gap:4px;margin:0 7px 5px;padding:6px}
+  .service-alert-notification-content strong{max-width:140px}}
+/* Avisos oficiais só ocupam espaço quando há evento ativo no percurso ou ponto. */
+.municipal-service-alerts:not([hidden]){margin:8px 0 16px;padding:11px 12px;
+  border:1px solid #deb66c;border-left:3px solid #c88e22;
+  border-radius:11px;background:var(--bg2);color:var(--ink)}
+.municipal-service-alerts h3{font-size:13px;margin:0 0 8px}
+.municipal-service-alerts small{font-size:10px;color:var(--mut)}
+.municipal-service-alert{padding:5px 0}
+.municipal-service-alert+.municipal-service-alert{border-top:1px solid var(--line)}
+.municipal-service-alert strong{font-size:12px}
+.municipal-service-alert p{font-size:12px;margin:4px 0;white-space:pre-wrap}
 </style>
 </head>
 <body>
 <div id="map"></div>
-<div id="map-source-switch">
-  <button type="button" id="map-filter-toggle" class="filter-cycle" data-current-filter="all"
-    aria-label="Filtrar mapa: Todos. Toque para ver Internos" title="Filtrar mapa: Todos. Toque para ver Internos">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16l-6.5 8v5l-3 2v-7L4 5z"/></svg><span id="map-filter-label">Todos</span><span class="filter-next" aria-hidden="true">↻</span>
-  </button>
-</div>
-<div id="map-feedback" aria-label="Estado do mapa">
-  <p id="map-data-status" role="status" aria-live="polite">Carregando pontos de BH…</p>
+<div id="map-feedback" aria-label="Exibir ou ocultar os pontos no mapa">
+  <div id="map-point-legend" role="group" aria-label="Camadas de pontos">
+    <button type="button" class="map-layer-toggle" id="toggle-internal-points"
+      aria-label="Ocultar pontos internos" title="Ocultar pontos internos" aria-pressed="true">
+      <svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M2 12s3.7-6 10-6 10 6 10 6-3.7 6-10 6S2 12 2 12z"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+      <svg class="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 3l18 18M10.6 6.1A10.6 10.6 0 0 1 12 6c6.3 0 10 6 10 6a17.2 17.2 0 0 1-3.1 3.5M6.2 6.4C3.6 8.2 2 12 2 12s3.7 6 10 6c1.6 0 3-.4 4.2-1"/>
+      </svg>
+      <i class="map-legend-symbol map-legend-symbol--internal" aria-hidden="true"></i>
+      <span>Internos</span>
+    </button>
+    <button type="button" class="map-layer-toggle" id="toggle-municipal-points"
+      aria-label="Ocultar pontos municipais" title="Ocultar pontos municipais" aria-pressed="true">
+      <svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M2 12s3.7-6 10-6 10 6 10 6-3.7 6-10 6S2 12 2 12z"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+      <svg class="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 3l18 18M10.6 6.1A10.6 10.6 0 0 1 12 6c6.3 0 10 6 10 6a17.2 17.2 0 0 1-3.1 3.5M6.2 6.4C3.6 8.2 2 12 2 12s3.7 6 10 6c1.6 0 3-.4 4.2-1"/>
+      </svg>
+      <i class="map-legend-symbol map-legend-symbol--municipal" aria-hidden="true"></i>
+      <span>Municipais</span>
+    </button>
+  </div>
   <p id="map-basemap-notice" role="status" hidden>Mapa-base indisponível · horários acessíveis</p>
 </div>
-<div id="top"><button class="fab" id="loc" aria-label="Encontrar ponto perto de mim"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/></svg>Perto de mim</button></div>
+<p id="map-data-status" hidden></p>
+<div id="top"><button class="fab" id="loc" type="button" aria-label="Encontrar ponto perto de mim" title="Minha localização"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/></svg></button></div>
 <section id="sheet" aria-label="Consulta de linhas e pontos do Interno UFMG">
   <button type="button" id="grab" aria-label="Recolher painel" aria-expanded="true" aria-controls="body"></button>
   <div class="sheet-head" id="sheet-head">
@@ -422,6 +578,17 @@ i{font-style:normal;font-size:14px;font-weight:400}
       <button type="button" id="quick-linhas" aria-pressed="false">Linhas</button>
     </div>
     <button type="button" class="sheet-toggle" id="sheet-toggle" aria-label="Recolher painel" aria-expanded="true" aria-controls="body"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+  </div>
+  <div id="service-alert-notification" class="service-alert-notification" role="status"
+       aria-live="polite" aria-atomic="true" hidden>
+    <span class="service-alert-notification-icon" aria-hidden="true">!</span>
+    <span class="service-alert-notification-content">
+      <strong id="service-alert-notification-title"></strong>
+      <small id="service-alert-notification-description"></small>
+    </span>
+    <button type="button" id="service-alert-notification-view" aria-label="Ver aviso de serviço">Ver</button>
+    <button type="button" id="service-alert-notification-dismiss"
+      aria-label="Dispensar notificação de serviço" title="Dispensar">×</button>
   </div>
   <div id="body" aria-hidden="false"></div>
 </section>
@@ -447,9 +614,7 @@ let cat=dow()===6?'sabado':'diasUteis',tab='pontos',q='',view={t:'home'},hist=[]
 let mapMode='all',externalStops=null,externalPatterns=null;
 const FILTER_MODES=['all','internal','external'];
 const FILTER_LABELS={all:'Todos',internal:'Internos',external:'Municipais'};
-const FILTER_ICON="<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16l-6.5 8v5l-3 2v-7L4 5z\"/></svg>";
-function nextFilter(mode){return FILTER_MODES[(FILTER_MODES.indexOf(mode)+1)%FILTER_MODES.length]}
-function filterHint(context,mode){return 'Filtrar '+context+': '+FILTER_LABELS[mode]+'. Toque para ver '+FILTER_LABELS[nextFilter(mode)]}
+// O filtro de Linhas é independente da visibilidade de camadas no mapa.
 
 let internalPins=null,municipalPins=null,busPins=null,gpsLast=0,gpsBusy=false,gpsCount=0;
 
@@ -541,7 +706,7 @@ function arrRow(a,id,hero){const {l,ts}=a,live=isLive(),has=ts.length;
   const more=ts.slice(1,4).map(fm).join(' · ');
   return `<button class="${hero?'next':'row'}" style="--c:${l.corHex}" data-line="${l.idRota}" data-focus="${id}"><span class="num" style="background:${l.corHex}">${l.linha}</span><span class="info"><b>${title(l)}</b><small>${esc(variant(l))}${more?'<br>Depois: '+more:''}</small></span><span class="eta">${has?eta(ts[0]):'<b style="font-size:15px">Sem saídas</b>'}<small>${sub}</small></span></button>`}
 
-const banner=()=>dow()===0?'<p class="note">Hoje é domingo e os dados não têm linhas internas. Escolha outro tipo de dia para ver horários.</p>':(!isLive()?`<p class="note">Mostrando horários de ${CATS.find(c=>c[0]===cat)[1].toLowerCase()}, sem previsão para agora.</p>`:'');
+const banner=()=>dow()===0?'<p class="note">Domingo: as linhas internas não operam hoje. Os horários abaixo são para consulta dos dias selecionados.</p>':(!isLive()?`<p class="note">Mostrando horários de ${CATS.find(c=>c[0]===cat)[1].toLowerCase()}, sem previsão para agora.</p>`:'');
 const catBar=()=>`<div class="chips">${CATS.map(c=>`<button data-cat="${c[0]}" class="${c[0]===cat?'on':''}">${c[1]}</button>`).join('')}</div>`;
 const disclaimer='<p class="note">Previsão estimada pela grade de horários e pelo tempo entre pontos. Não usa GPS, então atrasos e trânsito não entram.</p>';
 const ic=(p,f)=>`<svg class="ic" viewBox="0 0 24 24" fill="${f||'none'}" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
@@ -606,6 +771,386 @@ function lineView(){const l=byId(view.id),o=offs(l),n=now(),live=isLive();
   <h3>Saídas de ${esc(stopName(S[l.itinerarioParadasIds[0]]))}</h3><div class="grid" style="--c:${l.corHex}">${grid}</div>
   <h3>${cap}</h3><div class="tl" style="--c:${l.corHex}">${sl}</div>${disclaimer}`}
 
+
+/* Um painel municipal dentro do Hub — a mesma busca/filtro da UFMG.
+ * O detalhamento só aparece quando o usuário escolhe uma linha ou um ponto. */
+const municipalBack='<button class="back back--icon" data-back aria-label="Voltar à lista" title="Voltar à lista">'+
+  ic('<path d="M15 18l-6-6 6-6"/>')+'</button>';
+function municipalStopView(id){
+  const p=externalStops?.[id],name=p?.[0]||'Ponto municipal';
+  return '<div class="municipal-detail-head">'+municipalBack+'<div>'+
+    '<span class="municipal-kind">Ponto municipal · Belo Horizonte</span>'+
+    '<h2 class="municipal-detail-title">'+esc(name)+'</h2>'+
+    '<small>Identificação '+esc(id)+'</small></div></div>'+
+    '<p class="municipal-detail-note">Quando disponíveis, as previsões oficiais em tempo real aparecem primeiro. '+
+    'O restante vem da tabela GTFS. Os miniônibus do mapa mostram posições GPS, não ETA por distância.</p>'+
+    '<div class="municipal-detail-tools"><button type="button" data-municipal-list>'+
+    'Ver todas as linhas (internos primeiro)</button></div>'+
+    '<section id="municipal-service-alerts" class="municipal-service-alerts" aria-label="Alertas oficiais de serviço" hidden>'+
+    '<h3>Avisos de serviço</h3><div id="municipal-alert-rows"></div>'+
+    '<small>Fonte: SUMOB · GTFS-Realtime</small></section>'+
+    '<section id="municipal-stop-realtime" class="municipal-realtime" aria-label="Chegadas previstas em tempo real" hidden>'+
+    '<h3>Chegadas estimadas · dados ao vivo</h3><div id="municipal-realtime-rows" class="municipal-arrivals"></div>'+
+    '<small>Fonte oficial SUMOB / GTFS-RT · horário direto ou tabela corrigida pelo atraso</small></section>'+
+    '<h3 id="municipal-timetable-title">Próximos horários programados</h3>'+
+    '<div id="municipal-stop-schedules" role="status" aria-live="polite">'+
+    '<p class="note">Consultando horários deste ponto…</p></div>'+
+    '<h3>Linhas que atendem ao ponto</h3>'+
+    '<div id="municipal-stop-routes" class="municipal-arrivals">'+
+    '<p class="note">Carregando linhas municipais…</p></div>';
+}
+function municipalLinePatterns(code){
+  const route=externalRoutes.find(r=>r.code.toUpperCase()===String(code).toUpperCase());
+  if(!route||!externalPatterns)return [];
+  return externalPatterns.filter(p=>String(p.route)===String(route.id)&&
+    Array.isArray(p.stops)&&p.stops.length)
+    .sort((a,b)=>(Number(b.tripCount)||0)-(Number(a.tripCount)||0));
+}
+function municipalLineView(code){
+  const route=externalRoutes.find(r=>r.code.toUpperCase()===String(code).toUpperCase());
+  const variants=municipalLinePatterns(code);
+  const selected=variants.find(p=>String(p.id)===String(view.pattern))||variants[0];
+  const active=selected?.id,stops=(selected?.stops||[]).filter(id=>externalStops?.[id]);
+  return '<div class="municipal-detail-head">'+municipalBack+'<div>'+
+    '<span class="municipal-kind">Linha municipal · Belo Horizonte</span>'+
+    '<h2 class="municipal-detail-title">'+esc(code)+' · '+esc(route?.name||'Linha municipal')+'</h2>'+
+    '</div></div>'+
+    '<p class="municipal-detail-note">Paradas e sentidos do GTFS oficial. '+
+    'Veículos GPS aparecem no mapa quando há posições recentes disponíveis.</p>'+
+    '<div class="municipal-detail-tools"><button type="button" data-municipal-list>'+
+    'Todas as linhas (internos primeiro)</button></div>'+
+    '<section id="municipal-service-alerts" class="municipal-service-alerts" aria-label="Alertas oficiais de serviço" hidden>'+
+    '<h3>Avisos de serviço</h3><div id="municipal-alert-rows"></div>'+
+    '<small>Fonte: SUMOB · GTFS-Realtime</small></section>'+
+    (variants.length?'<h3>Sentidos e percursos</h3><div class="municipal-direction-list" role="group" aria-label="Selecionar sentido">'+
+      variants.slice(0,12).map((p,i)=>'<button type="button" data-municipal-pattern="'+esc(p.id)+
+      '" aria-pressed="'+String(String(active)===String(p.id))+'">'+
+      esc(p.headsign||'Percurso '+(i+1))+'</button>').join('')+'</div>':'')+
+    '<h3>Pontos do percurso</h3><div class="municipal-stops-list">'+
+    (stops.length?stops.map(id=>'<button type="button" class="municipal-arrival" data-ext-stop="'+esc(id)+
+      '"><span class="map-legend-symbol map-legend-symbol--municipal" aria-hidden="true"></span>'+
+      '<span class="municipal-destination">'+esc(externalStops[id][0])+'</span>'+
+      '<span aria-hidden="true">›</span></button>').join(''):
+      '<p class="note">Os pontos deste percurso estão indisponíveis agora.</p>')+
+    '</div>';
+}
+// In Firebase staging, use an entirely separate Workers Free instance.
+ // Never route a staging-only experimental API through production Worker.
+const SUMOB_WORKER_BASE=location.hostname==='hubufmg--homologacao-exbdd4qe.web.app'
+  ?'https://externo-bh-gps-eta-qa.hubufmg.workers.dev'
+  :'https://externo-bh-gps-free.hubufmg.workers.dev';
+const alertResultsCache=new Map();
+const serviceAlertNotice=document.getElementById('service-alert-notification');
+const announcedServiceAlerts=new Set();
+const SERVICE_ALERT_SESSION_KEY='hub_municipal_service_alerts_announced_v1';
+try{
+  const stored=JSON.parse(sessionStorage.getItem(SERVICE_ALERT_SESSION_KEY)||'[]');
+  if(Array.isArray(stored))for(const id of stored.slice(-80)){
+    if(typeof id==='string'&&id.length<280)announcedServiceAlerts.add(id);
+  }
+}catch{ /* Private browsing and storage restrictions must never break the map. */ }
+function currentMunicipalAlertContext(){
+  return view.t==='municipal-stop'?'stop:'+String(view.id):
+    view.t==='municipal-line'?'line:'+String(view.code):'';
+}
+function hideServiceAlertNotice(){
+  serviceAlertNotice.hidden=true;
+  serviceAlertNotice.dataset.context='';
+}
+function notifyMunicipalAlerts(key,alerts){
+  if(document.hidden||currentMunicipalAlertContext()!==key||!alerts.length)return;
+  const unseen=alerts.filter(a=>{
+    const code=key+'|'+String(a.id||a.title||'').slice(0,150)+'|'+String(a.title||'').slice(0,120);
+    return !announcedServiceAlerts.has(code);
+  });
+  if(!unseen.length)return;
+  for(const a of unseen){
+    const code=key+'|'+String(a.id||a.title||'').slice(0,150)+'|'+String(a.title||'').slice(0,120);
+    announcedServiceAlerts.add(code);
+  }
+  // A lista é limitada para não crescer indefinidamente no mesmo navegador.
+  while(announcedServiceAlerts.size>80)
+    announcedServiceAlerts.delete(announcedServiceAlerts.values().next().value);
+  try{
+    sessionStorage.setItem(SERVICE_ALERT_SESSION_KEY,
+      JSON.stringify([...announcedServiceAlerts]));
+  }catch{ /* Sem armazenamento, a deduplicação em memória continua. */ }
+  serviceAlertNotice.dataset.context=key;
+  document.getElementById('service-alert-notification-title').textContent=
+    unseen.length===1?'Aviso de serviço: '+unseen[0].title:
+      unseen.length+' avisos de serviço neste '+(key.startsWith('stop:')?'ponto':'linha');
+  document.getElementById('service-alert-notification-description').textContent=
+    'SUMOB · toque em Ver para consultar';
+  serviceAlertNotice.hidden=false;
+}
+document.getElementById('service-alert-notification-dismiss')
+  .addEventListener('click',hideServiceAlertNotice);
+document.getElementById('service-alert-notification-view').addEventListener('click',()=>{
+  if(serviceAlertNotice.hidden)return;
+  const section=document.getElementById('municipal-service-alerts');
+  if(!section||section.hidden)return hideServiceAlertNotice();
+  setSheetState('full');
+  section.tabIndex=-1;
+  section.scrollIntoView({block:'nearest',behavior:'instant'});
+  section.focus({preventScroll:true});
+  hideServiceAlertNotice();
+});
+async function populateMunicipalAlerts(){
+  const isStop=view.t==='municipal-stop',isLine=view.t==='municipal-line';
+  if((!isStop&&!isLine)||document.hidden)return;
+  const key=isStop?'stop:'+String(view.id):'line:'+String(view.code);
+  const section=document.getElementById('municipal-service-alerts');
+  const list=section?.querySelector('#municipal-alert-rows');
+  if(!section||!list)return;
+  await loadExternalLines();
+  if(!section.isConnected)return;
+  const stopId=isStop?String(view.id):null;
+  const routeIds=isLine
+    ?new Set(externalRoutes.filter(r=>r.code.toUpperCase()===String(view.code).toUpperCase())
+      .map(r=>String(r.id)))
+    :new Set((externalPatterns||[])
+      .filter(p=>p.stops?.includes(stopId)).map(p=>String(p.route)));
+  const codes=externalRoutes.filter(r=>routeIds.has(String(r.id)));
+  const ids=[...new Set(codes.flatMap(r=>[String(r.id),String(r.code)]))].slice(0,25);
+  const endpoint=new URL(SUMOB_WORKER_BASE+'/api/alerts');
+  if(stopId)endpoint.searchParams.set('stop',stopId);
+  if(ids.length)endpoint.searchParams.set('routes',ids.join(','));
+  if(!stopId&&!ids.length)return;
+  const now=Date.now(),cached=alertResultsCache.get(key);
+  let data=cached&&now-cached.ts<25000?cached.data:null;
+  if(!data){
+    try{
+      const response=await fetch(endpoint.href,{cache:'no-store'});
+      if(!response.ok)throw Error('SERVICE_ALERTS_NOT_AVAILABLE');
+      const value=await response.json();
+      if(value?.available!==true||value.source!=='SUMOB_GTFS_RT_ALERTS'||
+         !Array.isArray(value.items)||value.items.length>15||
+         Math.abs(Date.now()-Date.parse(value.feedTimestamp||''))>600000)
+         throw Error('SERVICE_ALERTS_INVALID');
+      data=value;
+    }catch{
+      data={items:[]}; // Não afirmar "sem alertas" se o Worker falhou.
+    }
+    alertResultsCache.set(key,{ts:now,data});
+  }
+  if(!list.isConnected||(isStop&&(view.t!=='municipal-stop'||String(view.id)!==stopId))||
+    (isLine&&(view.t!=='municipal-line'||String(view.code).toUpperCase()!==key.slice(5).toUpperCase())))return;
+  const items=data.items.filter(a=>a&&typeof a.title==='string'&&a.title.trim()&&
+    a.title.length<=450&&typeof a.description==='string'&&a.description.length<=450)
+    .slice(0,4);
+  section.hidden=items.length===0;
+  if(!items.length){
+    if(serviceAlertNotice.dataset.context===key)hideServiceAlertNotice();
+    return;
+  }
+  list.innerHTML=items.map(a=>'<div class="municipal-service-alert">'+
+    '<strong>'+esc(a.title)+'</strong>'+
+    (a.description?'<p>'+esc(a.description)+'</p>':'')+'</div>').join('');
+  notifyMunicipalAlerts(key,items);
+}
+const realtimePredictionsCache=new Map();
+let realtimeRequestSequence=0;
+async function populateMunicipalRealtime(id){
+  if(view.t!=='municipal-stop'||String(view.id)!==String(id)||document.hidden)return;
+  const section=document.getElementById('municipal-stop-realtime');
+  const rows=section?.querySelector('#municipal-realtime-rows');
+  if(!section||!rows)return;
+  const requestSequence=++realtimeRequestSequence;
+  const now=Date.now();
+  const routes=new Map();
+  for(const r of externalRoutes||[]){
+    routes.set(String(r.id),r);
+    if(!routes.has(String(r.code)))routes.set(String(r.code),r);
+  }
+  const serving=new Set((externalPatterns||[])
+    .filter(p=>p.stops?.includes(String(id))).map(p=>String(p.route)));
+  // SUMOB TripUpdates uses the public route short name, not necessarily
+  // the numeric GTFS route_id stored in the offline catalogue.
+  const selectedRoutes=[...new Set((externalRoutes||[])
+    .filter(r=>serving.has(String(r.id)))
+    .map(r=>String(r.code||'').trim())
+    .filter(r=>/^[A-Za-z0-9_.:-]{1,70}$/.test(r)))].slice(0,25);
+  const cached=realtimePredictionsCache.get(String(id));
+  let result=cached&&now-cached.fetchedAt<25000?cached.value:null;
+  if(!result){
+    try{
+      const endpoint=new URL(SUMOB_WORKER_BASE+'/api/arrivals');
+      endpoint.searchParams.set('stop',String(id));
+      if(selectedRoutes.length)endpoint.searchParams.set('routes',selectedRoutes.join(','));
+      const response=await fetch(endpoint.href,{cache:'no-store'});
+      if(!response.ok)throw Error('OFFICIAL_ETA_UNAVAILABLE');
+      const data=await response.json();
+      if(!data||data.available!==true||data.source!=='SUMOB_GTFS_RT_TRIP_UPDATES'||
+         String(data.stopId)!==String(id)||!Array.isArray(data.items)||
+         data.items.length>36||
+         (data.relativeUpdates!==undefined&&
+          (!Array.isArray(data.relativeUpdates)||data.relativeUpdates.length>250)))
+         throw Error('OFFICIAL_ETA_INVALID');
+      const feedTime=Date.parse(data.feedTimestamp||'');
+      const fetchedTime=Date.parse(data.fetchedAt||'');
+      if(!Number.isFinite(feedTime)||!Number.isFinite(fetchedTime)||
+         Math.abs(now-feedTime)>120000||Math.abs(now-fetchedTime)>120000)
+         throw Error('OFFICIAL_ETA_STALE');
+      result=data;
+    }catch{
+      // Worker ausente ou feed inválido: mantenha somente os horários
+      // programados. Nunca simule ETA por distância em linha reta.
+      result=null;
+    }
+    // Slow network responses must not overwrite a newer update, including
+    // the immediate refresh after returning to the app.
+    if(requestSequence!==realtimeRequestSequence)return;
+    realtimePredictionsCache.set(String(id),{fetchedAt:now,value:result});
+  }
+  if(requestSequence!==realtimeRequestSequence||view.t!=='municipal-stop'||
+     String(view.id)!==String(id)||!rows.isConnected||document.hidden)return;
+  const found=[],seenTrip=new Set();
+  for(const item of result?.items||[]){
+    const route=routes.get(String(item.routeId||''));
+    if(!route||!serving.has(String(route.id))||
+       String(item.stopId)!==String(id)||!item.tripId)continue;
+    const time=Date.parse(String(item.at||''));
+    const feedTime=Date.parse(String(item.lastFeedUpdateAt||''));
+    if(!Number.isFinite(time)||!Number.isFinite(feedTime)||
+       time<Date.now()-30000||time>Date.now()+7200000||
+       Math.abs(Date.now()-feedTime)>120000)continue;
+    found.push({route,time,tripId:String(item.tripId),
+      type:item.eventType==='arrival'?'arrival':'departure',method:'absolute'});
+    seenTrip.add(String(item.tripId));
+  }
+  // SUMOB currently emits delays, not absolute arrival times: join only
+  // against exactly matched trip_id, route_id, service day and stop_sequence.
+  if(result?.relativeUpdates?.length&&selectedRoutes.length){
+    try{
+      const {tripDelaysForStop,normalizeTripDelayRoutes}=
+        await import('/assets/municipal-realtime.js');
+      // Route IDs from SUMOB are public line codes. Only aliases unambiguously
+      // resolved to the exact static GTFS route are eligible for prediction.
+      const normalized=normalizeTripDelayRoutes(
+        result.relativeUpdates,externalRoutes,serving);
+      const derived=await tripDelaysForStop(id,normalized,{now:Date.now()});
+      if(requestSequence!==realtimeRequestSequence||view.t!=='municipal-stop'||
+         String(view.id)!==String(id)||!rows.isConnected||document.hidden)return;
+      for(const update of derived){
+        const route=routes.get(String(update.routeId));
+        if(!route||!serving.has(String(route.id))||seenTrip.has(update.tripId))
+          continue;
+        found.push({route,time:update.at,tripId:update.tripId,
+          type:'arrival',method:'delay'});
+        seenTrip.add(update.tripId);
+      }
+    }catch{
+      // Índice offline ainda não integrado ou versão incompatível:
+      // mantém os horários GTFS já disponíveis no painel.
+    }
+  }
+  if(requestSequence!==realtimeRequestSequence||view.t!=='municipal-stop'||
+     String(view.id)!==String(id)||!rows.isConnected||document.hidden)return;
+  found.sort((a,b)=>a.time-b.time||a.route.code.localeCompare(b.route.code));
+  if(!found.length){
+    // Even a focused stale ETA must disappear when the source reports no
+    // valid prediction. Accessibility cannot justify displaying wrong times.
+    section.hidden=true;
+    rows.replaceChildren();
+    const heading=document.getElementById('municipal-timetable-title');
+    if(heading)heading.textContent='Próximos horários programados';
+    return;
+  }
+  // Never replace a focused arrival button while the rider navigates with
+  // a keyboard or screen reader. A subsequent refresh will update the rows.
+  if(rows.contains(document.activeElement))return;
+  section.hidden=false;
+  const heading=document.getElementById('municipal-timetable-title');
+  if(heading)heading.textContent='Horários programados (tabela)';
+  rows.innerHTML=found.slice(0,9).map(item=>{
+    const minutes=Math.max(0,Math.ceil((item.time-Date.now())/60000));
+    const clock=new Date(item.time).toLocaleTimeString('pt-BR',{
+      timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'});
+    const source=item.method==='delay'
+      ?'GTFS + atraso informado pela SUMOB':'Horário informado pela SUMOB';
+    return '<button type="button" class="municipal-arrival" data-externo-code="'+esc(item.route.code)+'">'+
+      '<span class="municipal-code">'+esc(item.route.code)+'</span>'+
+      '<span class="municipal-destination">'+esc(item.route.name||'Linha municipal')+
+      '<small>'+(item.type==='departure'?'Partida prevista':'Chegada prevista')+
+      ' · '+clock+' · '+source+'</small></span>'+
+      '<span class="municipal-time">'+(minutes===0?'agora':minutes+' min')+'</span></button>';
+  }).join('');
+}
+async function populateMunicipalStop(id){
+  if(view.t!=='municipal-stop'||String(view.id)!==String(id))return;
+  await loadExternalLines();
+  void populateMunicipalAlerts();
+  void populateMunicipalRealtime(id);
+  const destination=document.getElementById('municipal-stop-routes');
+  if(destination&&view.t==='municipal-stop'&&String(view.id)===String(id)){
+    const ids=new Map(externalRoutes.map(r=>[String(r.id),r]));
+    const routes=new Map();
+    for(const pattern of externalPatterns||[]){
+      if(!pattern.stops?.includes(String(id)))continue;
+      const line=ids.get(String(pattern.route));
+      if(line)routes.set(line.code,line);
+    }
+    const found=[...routes.values()].sort((a,b)=>a.code.localeCompare(b.code,'pt-BR',{numeric:true}));
+    destination.innerHTML=found.length?
+      found.map(r=>'<button type="button" class="municipal-arrival" data-externo-code="'+esc(r.code)+'">'+
+        '<span class="municipal-code">'+esc(r.code)+'</span>'+
+        '<span class="municipal-destination">'+esc(r.name)+'</span>'+
+        '<span aria-hidden="true">›</span></button>').join(''):
+      '<p class="note">Linhas deste ponto indisponíveis neste momento.</p>';
+  }
+  void refreshMunicipalSchedules(id);
+}
+async function refreshMunicipalSchedules(id){
+  if(view.t!=='municipal-stop'||String(view.id)!==String(id)||document.hidden)return;
+  const target=document.getElementById('municipal-stop-schedules');
+  if(!target||view.t!=='municipal-stop'||String(view.id)!==String(id))return;
+  try{
+    const {scheduledForStop}=await import('/assets/municipal-schedules.js');
+    const result=await scheduledForStop(id);
+    if(!target.isConnected||view.t!=='municipal-stop'||String(view.id)!==String(id))return;
+    if(target.contains(document.activeElement))return;
+    const rows=result.items||[];
+    target.innerHTML=result.expired?
+      '<p class="note">A validade do GTFS terminou. Horários não exibidos.</p>':
+      rows.length?'<div class="municipal-arrivals">'+rows.slice(0,12).map(r=>
+        '<button type="button" class="municipal-arrival" data-externo-code="'+esc(r.code)+'">'+
+        '<span class="municipal-code">'+esc(r.code)+'</span>'+
+        '<span class="municipal-destination">'+esc(r.destination||'Destino não informado')+'</span>'+
+        '<span class="municipal-time">'+
+        new Date(r.at).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'})+
+        '</span></button>').join('')+'</div>':
+      '<p class="note">Nenhum horário programado nas próximas cinco horas neste ponto.</p>';
+  }catch{
+    if(target.isConnected&&view.t==='municipal-stop'&&String(view.id)===String(id))
+      target.innerHTML='<p class="note">Horários programados indisponíveis agora. '+
+        'As linhas e os pontos continuam acessíveis.</p>';
+  }
+
+}
+async function openMunicipal(kind,value,{announce=true}={}){
+  const id=String(value||'');
+  if(kind==='stop'){
+    if(!/^[0-9]{1,20}$/.test(id))return;
+    if(!externalStops)await loadMapMunicipal();
+    if(!externalStops?.[id])return;
+  }else if(kind==='line'){
+    if(!/^[A-Za-z0-9_.:-]{1,30}$/.test(id))return;
+    if(!externalRoutes.length)await loadExternalLines();
+    if(!externalRoutes.some(r=>r.code.toUpperCase()===id.toUpperCase()))return;
+    if(!externalStops)await loadMapMunicipal();
+  }else return;
+  if(view.t==='municipal-'+kind&&String(kind==='line'?view.code:view.id)===id)return;
+  const target=kind==='stop'?{t:'municipal-stop',id}:{t:'municipal-line',code:id};
+  tab=kind==='stop'?'pontos':'linhas';
+  go(target);
+  if(announce)window.parent.postMessage({type:'hub:onibus:unified-selection',
+    kind,...(kind==='stop'?{id}:{code:id})},location.origin);
+}
+function returnToMunicipalList(){
+  hist=[];view={t:'home'};tab='linhas';apply();void loadExternalLines();
+  window.parent.postMessage({type:'hub:onibus:unified-selection',kind:'home'},location.origin);
+}
+
 function nearView(){
   if(near.s==='loading')return `${back}<h2>Buscando sua localização…</h2><small>Permita o acesso quando o navegador pedir.</small>`;
   if(near.s==='err')return `${back}<h2>Não achei sua localização</h2><p>${esc(near.m)}</p><button class="btn" data-home>Buscar ponto pelo nome</button>`;
@@ -615,11 +1160,11 @@ function nearView(){
 
 function stopsList(){
   const term=norm(q.trim());let out='';
-  if(mapMode!=='external'){
+  {
     const internal=D.paradas.filter(p=>norm(stopName(p)).includes(term)||norm(p.nome).includes(term))
       .sort((a,b)=>Number(fav.includes(b.idParada))-Number(fav.includes(a.idParada))||
         a.nome.localeCompare(b.nome,'pt'));
-    if(mapMode==='all')out+='<h3 class="bus-line-group">Internos <small>UFMG</small></h3>';
+    out+='<h3 class="bus-line-group">Internos <small>UFMG</small></h3>';
     out+=internal.map(p=>{
       const count=lines().filter(l=>offs(l)[p.idParada]!==undefined).length;
       const row='<button class="row" data-stop="'+esc(p.idParada)+'"><span class="pin"></span>'+
@@ -628,7 +1173,7 @@ function stopsList(){
       return starRow(row,p.idParada,fav.includes(p.idParada),stopName(p),'fav-stop-list');
     }).join('')||'<p>Nenhum ponto interno corresponde à busca.</p>';
   }
-  if(mapMode!=='internal'){
+  {
     out+='<h3 class="bus-line-group">Municipais <small>Belo Horizonte</small></h3>';
     if(externalStops){
       const center=map?.getCenter()||{lat:-19.8695,lng:-43.9675};
@@ -639,7 +1184,7 @@ function stopsList(){
           ((+b[1][1]-center.lat)**2+(+b[1][2]-center.lng)**2));
       const shown=items.slice(0,term?70:28);
       out+=shown.map(([id,p])=>starRow('<button class="row" data-ext-stop="'+esc(id)+'">'+
-        '<span class="pin" style="border-color:#7556c9"></span><span class="info"><b>'+
+        '<span class="pin municipal-list-pin" aria-hidden="true"></span><span class="info"><b>'+
         esc(p[0])+'</b><small>Municipal BH · horários e GPS</small></span></button>',
         id,externalFav.includes(id),p[0],'fav-ext-stop')).join('')||
         '<p>Nenhum ponto municipal corresponde à busca.</p>';
@@ -690,11 +1235,11 @@ function combinedLineRows(){
 function linesList(){
   return '<div class="bus-line-tools">'+
     '<label class="srch bus-line-search" for="line-q">'+ic('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>')+
-    '<input type="search" id="line-q" placeholder="Buscar linha" aria-label="Buscar linha por nome ou número" value="'+esc(lineQuery)+'"></label>'+
-    '<div class="bus-line-filters">'+
-    '<button type="button" class="filter-cycle" data-line-filter-toggle data-current-filter="'+lineFilter+
-    '" aria-label="'+filterHint('linhas',lineFilter)+'" title="'+filterHint('linhas',lineFilter)+'">'+
-    FILTER_ICON+'<span>'+FILTER_LABELS[lineFilter]+'</span><span class="filter-next" aria-hidden="true">↻</span></button>'+
+    '<input type="search" id="line-q" placeholder="Buscar linha (nome ou número)" aria-label="Buscar linha por nome ou número" value="'+esc(lineQuery)+'"></label>'+
+    '<div class="bus-line-filters" role="group" aria-label="Filtrar linhas por origem">'+
+    FILTER_MODES.map(mode=>'<button type="button" class="filter-option" data-line-filter-mode="'+mode+'"'+
+      ' aria-pressed="'+String(lineFilter===mode)+'" title="Exibir '+FILTER_LABELS[mode]+'">'+
+      (mode==='all'?'Todas':FILTER_LABELS[mode])+'</button>').join('')+
     '</div></div>'+
     (lineFilter==='external'?'':catBar())+
     '<div id="bus-lines-list">'+combinedLineRows()+'</div>';
@@ -702,9 +1247,16 @@ function linesList(){
 function home(){return `${tab==='pontos'?`<label class="srch">${ic('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>')}<input id="q" type="search" placeholder="Buscar ponto" aria-label="Buscar ponto pelo nome" value="${esc(q)}"></label><div id="list">${stopsList()}</div>`:linesList()}${tab==='pontos'?catBar():''}${banner()}`}
 
 function render(){
+  if(serviceAlertNotice.dataset.context&&
+     serviceAlertNotice.dataset.context!==currentMunicipalAlertContext())
+     hideServiceAlertNotice();
   const fallback=!window.L?'<p class="note" role="status">Mapa indisponível nesta conexão. Você ainda pode pesquisar pontos e consultar horários; para exibir o mapa, conecte-se à internet.</p>':'';
-  el.innerHTML=fallback+(view.t==='home'?home():view.t==='stop'?stopView(view.id):view.t==='line'?lineView():nearView());
+  el.innerHTML=fallback+(view.t==='home'?home():view.t==='stop'?stopView(view.id):
+    view.t==='line'?lineView():view.t==='municipal-stop'?municipalStopView(view.id):
+    view.t==='municipal-line'?municipalLineView(view.code):nearView());
   el.scrollTop=0;
+  if(view.t==='municipal-stop')void populateMunicipalStop(view.id);
+  if(view.t==='municipal-line')void populateMunicipalAlerts();
 }
 
 // No celular a busca inicia acessível, com estados intermediário/recolhido/expandido sem recriar o mapa.
@@ -746,19 +1298,31 @@ function pickQuickTab(t){
 // O mapa é progressivo: Leaflet local, rotas e horários disponíveis sem tiles.
 let map=null,route=null,sel=null,usr=null;
 const mapStatus=message=>{const n=document.getElementById('map-data-status');if(n)n.textContent=message};
+const visibleInternal=()=>mapMode==='all'||mapMode==='internal';
+const visibleMunicipal=()=>mapMode==='all'||mapMode==='external';
+function syncMapLayerButtons(){
+  for(const [source,visible] of [['internal',visibleInternal()],['municipal',visibleMunicipal()]]){
+    const button=document.getElementById(source==='internal'?'toggle-internal-points':'toggle-municipal-points');
+    const noun=source==='internal'?'internos':'municipais';
+    button.setAttribute('aria-pressed',String(visible));
+    button.title=(visible?'Ocultar':'Exibir')+' pontos '+noun;
+    button.setAttribute('aria-label',button.title);
+  }
+}
 function renderTransportMap(){
   if(!map||!internalPins||!municipalPins)return;
-  if(mapMode==='external')map.removeLayer(internalPins);
-  else if(!map.hasLayer(internalPins))internalPins.addTo(map);
+  if(visibleInternal()){
+    if(!map.hasLayer(internalPins))internalPins.addTo(map);
+  }else if(map.hasLayer(internalPins))map.removeLayer(internalPins);
   municipalPins.clearLayers();
-  // Oculta o GPS na visualização Internos sem apagar a última posição.
-  // Assim, ao voltar para Todos/Municipais, os ônibus reaparecem imediatamente.
-  if(busPins){
-    if(mapMode==='internal'&&map.hasLayer(busPins))map.removeLayer(busPins);
-    else if(mapMode!=='internal'&&!map.hasLayer(busPins))busPins.addTo(map);
+  if(!visibleMunicipal()){
+    if(map.hasLayer(municipalPins))map.removeLayer(municipalPins);
+    if(busPins&&map.hasLayer(busPins))map.removeLayer(busPins);
+    return;
   }
-  if(mapMode==='internal'){mapStatus('49 pontos internos · GPS disponível nos municipais');return}
-  if(!externalStops){mapStatus('Municipais BH: '+(externalState==='loading'?'carregando pontos…':'dados indisponíveis'));return}
+  if(!map.hasLayer(municipalPins))municipalPins.addTo(map);
+  if(busPins&&!map.hasLayer(busPins))busPins.addTo(map);
+  if(!externalStops){mapStatus('Dados municipais indisponíveis');return}
   if(map.getZoom()<12){if(busPins)busPins.clearLayers();mapStatus('Aproxime o mapa para visualizar os pontos municipais');return}
   const bounds=map.getBounds().pad(.13),center=map.getCenter();
   const nearby=Object.entries(externalStops).filter(([id,p])=>Array.isArray(p)&&
@@ -767,11 +1331,10 @@ function renderTransportMap(){
                      ((+b[1][1]-center.lat)**2+(+b[1][2]-center.lng)**2));
   const selected=nearby.slice(0,180);
   for(const [id,p] of selected){
-    L.circleMarker([+p[1],+p[2]],{radius:4.5,color:'#7556c9',
+    L.circleMarker([+p[1],+p[2]],{radius:5.5,color:'#7556c9',
       fillColor:'#7556c9',fillOpacity:.88,weight:1.2})
       .addTo(municipalPins).bindTooltip(String(p[0]||'Ponto municipal'))
-      .on('click',()=>window.parent.postMessage({type:'hub:onibus:external-stop',
-        id,name:String(p[0]||'')},location.origin));
+      .on('click',()=>{void openMunicipal('stop',id)});
   }
   const suffix=nearby.length>selected.length?' · amplie para ver mais pontos':'';
   // Não sobrescrever uma posição GPS validada ao alternar o filtro.
@@ -779,7 +1342,7 @@ function renderTransportMap(){
   const recentVisible=gpsLast&&Date.now()-gpsLast<45000&&busPins?
     busPins.getLayers().filter(layer=>layer.getLatLng&&map.getBounds().contains(layer.getLatLng())).length:0;
   mapStatus(recentVisible?'GPS ao vivo: '+recentVisible+' ônibus próximos · até 2 min':
-    'UFMG + BH · '+selected.length+' pontos municipais no mapa'+suffix);
+    selected.length+' pontos municipais visíveis'+suffix);
   void updateGpsNearMap(selected);
 }
 async function loadMapMunicipal(){
@@ -801,7 +1364,7 @@ async function loadMapMunicipal(){
 }
 async function updateGpsNearMap(marked){
   if(!map||!marked.length||!externalPatterns||!externalRoutes?.length||
-     mapMode==='internal'||gpsBusy||document.hidden||
+     !visibleMunicipal()||gpsBusy||document.hidden||
      (window.frameElement&&!window.frameElement.getClientRects().length))return;
   if(Date.now()-gpsLast<40000)return;
   const near=new Set(marked.map(x=>x[0]));
@@ -826,6 +1389,7 @@ async function updateGpsNearMap(marked){
     const data=await response.json();
     if(data.available!==true||data.source!=='GTFS_RT'||!Array.isArray(data.records))
       throw Error('GPS_UNAVAILABLE');
+    if(!visibleMunicipal())return;
     if(busPins)busPins.clearLayers();
     gpsCount=0;const now=Date.now(),visible=new Set(routeCodes);
     const seen=new Set();
@@ -856,22 +1420,26 @@ async function updateGpsNearMap(marked){
   }catch{mapStatus('GPS temporariamente indisponível · pontos e horários acessíveis')}
   finally{gpsBusy=false}
 }
-function changeMapMode(mode){
+function changeLineFilter(mode){
   if(!FILTER_MODES.includes(mode))return;
-  const focusWasLine=document.activeElement?.hasAttribute('data-line-filter-toggle');
-  mapMode=mode;lineFilter=mode;
-  const button=document.getElementById('map-filter-toggle');
-  button.dataset.currentFilter=mode;button.title=filterHint('mapa',mode);
-  button.setAttribute('aria-label',button.title);
-  document.getElementById('map-filter-label').textContent=FILTER_LABELS[mode];
-  renderTransportMap();
+  const focused=document.activeElement?.getAttribute('data-line-filter-mode');
+  lineFilter=mode;
   if(view.t==='home')render();
-  if(focusWasLine)el.querySelector('[data-line-filter-toggle]')?.focus();
-  if(mode!=='internal')void loadMapMunicipal();
+  if(focused!==null)el.querySelector('[data-line-filter-mode="'+mode+'"]')?.focus();
+  if(mode!=='internal')void loadExternalLines();
 }
-document.getElementById('map-filter-toggle').addEventListener('click',()=>{
-  changeMapMode(nextFilter(mapMode));
-});
+function toggleMapLayer(source){
+  if(source!=='internal'&&source!=='municipal')return;
+  const internal=source==='internal'?!visibleInternal():visibleInternal();
+  const municipal=source==='municipal'?!visibleMunicipal():visibleMunicipal();
+  mapMode=internal?(municipal?'all':'internal'):(municipal?'external':'none');
+  syncMapLayerButtons();
+  renderTransportMap();
+  if(municipal){gpsLast=0;void loadMapMunicipal();}
+}
+document.getElementById('toggle-internal-points').addEventListener('click',()=>toggleMapLayer('internal'));
+document.getElementById('toggle-municipal-points').addEventListener('click',()=>toggleMapLayer('municipal'));
+syncMapLayerButtons();
 if(window.L){
   map=L.map('map',{zoomControl:false}).setView([-19.8695,-43.9675],15);
   L.control.zoom({position:'topright'}).addTo(map);
@@ -918,7 +1486,7 @@ if(window.L){
   window.addEventListener('message',e=>{
     if(e.origin!==window.location.origin || !e.data || e.data.type!=='bandeco:interno:shown')return;
     invalidateMap();
-    if(externalStops&&mapMode!=='internal'){
+    if(externalStops&&visibleMunicipal()){
       // Voltou à aba Ônibus: consultar posição atual em vez de esperar 45 s.
       gpsLast=0;
       requestAnimationFrame(renderTransportMap);
@@ -939,6 +1507,22 @@ function apply(){if(route)route.clearLayers();if(sel)sel.clearLayers();
   if(view.t!=='home')setExpanded(true);else syncSheet();
   render();
   if(view.t==='stop'){select(view.id);focus([S[view.id].coordenadas])}
+  if(view.t==='municipal-stop'){
+    const p=externalStops?.[view.id];
+    if(p&&sel){sel.clearLayers();L.circleMarker([+p[1],+p[2]],{
+      radius:13,color:'#7556c9',weight:3,fill:false,interactive:false
+    }).addTo(sel);focus([[+p[1],+p[2]]])}
+  }
+  if(view.t==='municipal-line'){
+    const patterns=municipalLinePatterns(view.code);
+    const selected=patterns.find(p=>String(p.id)===String(view.pattern))||patterns[0];
+    const coords=(selected?.stops||[]).map(id=>externalStops?.[id])
+      .filter(Boolean).map(p=>[+p[1],+p[2]]);
+    if(sel)for(const pos of coords.slice(0,70))L.circleMarker(pos,{
+      radius:6,color:'#7556c9',weight:2,fillColor:'#fff',fillOpacity:1,interactive:false
+    }).addTo(sel);
+    if(coords.length)focus(coords)
+  }
   if(view.t==='line'){const l=byId(view.id);
     if(route){L.polyline(l.coordenadasTrajeto,{color:l.corHex,weight:6,opacity:.9}).addTo(route);
       l.itinerarioParadasIds.forEach(i=>L.circleMarker(S[i].coordenadas,{radius:5,color:l.corHex,weight:3,fillColor:'#fff',fillOpacity:1,interactive:false}).addTo(route));}
@@ -960,10 +1544,11 @@ el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
   if(d.sheetToggle!==undefined){setSheetState(sh.classList.contains('peek')?'mid':sh.classList.contains('full')?'peek':'full');}
   else if(d.stop)go({t:'stop',id:d.stop});
   else if(d.line)go({t:'line',id:d.line,focus:d.focus});
-   else if(d.extStop)window.parent.postMessage({type:'hub:onibus:external-stop',
-     id:d.extStop,name:String(externalStops?.[d.extStop]?.[0]||'')},location.origin);
-  else if(d.externoCode)window.parent.postMessage({type:'hub:onibus:external-line',code:d.externoCode},window.location.origin);
-  else if(d.lineFilterToggle!==undefined){changeMapMode(nextFilter(lineFilter));}
+   else if(d.extStop){void openMunicipal('stop',d.extStop)}
+  else if(d.externoCode){void openMunicipal('line',d.externoCode)}
+  else if(d.municipalPattern){view.pattern=d.municipalPattern;apply()}
+  else if(d.municipalList!==undefined){returnToMunicipalList()}
+  else if(d.lineFilterMode!==undefined){changeLineFilter(d.lineFilterMode);}
   else if(d.externalMore!==undefined){externalExpanded=true;repaintLineList()}
   else if(d.externalRetry!==undefined)void loadExternalLines(true);
   else if(d.tab){pickQuickTab(d.tab)}
@@ -978,7 +1563,12 @@ el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
     saveExtFav();repaintFavorites()}
   else if(d.fav){fav=fav.includes(d.fav)?fav.filter(x=>x!==d.fav):[...fav,d.fav];saveFav();render()}
   else if(d.info!==undefined){const content=b.parentElement.querySelector('[data-info-content]'),open=content?.hidden===true;if(content){content.hidden=!open;b.setAttribute('aria-expanded',String(open));}}
-  else if(d.back!==undefined){view=hist.pop()||{t:'home'};apply()}
+  else if(d.back!==undefined){
+    const wasMunicipal=view.t.startsWith('municipal-');
+    view=hist.pop()||{t:'home'};apply();
+    if(wasMunicipal&&view.t==='home')
+      window.parent.postMessage({type:'hub:onibus:unified-selection',kind:'home'},location.origin);
+  }
   else if(d.home!==undefined){hist=[];view={t:'home'};tab='pontos';apply()}});
 el.addEventListener('input',e=>{
   if(e.target.id==='q'){q=e.target.value;document.getElementById('list').innerHTML=stopsList()}
@@ -986,7 +1576,11 @@ el.addEventListener('input',e=>{
 });
 window.addEventListener('message',e=>{
   if(e.origin!==window.location.origin||e.source!==window.parent)return;
-  if(e.data?.type==='hub:onibus:resume-lines'){
+  if(e.data?.type==='hub:onibus:focus-municipal-stop')
+    void openMunicipal('stop',e.data.id,{announce:false});
+  else if(e.data?.type==='hub:onibus:focus-municipal-line')
+    void openMunicipal('line',e.data.code,{announce:false});
+  else if(e.data?.type==='hub:onibus:resume-lines'){
     syncSharedExternal();
     if(tab!=='linhas')pickQuickTab('linhas');
     else if(view.t==='home')repaintFavorites();
@@ -994,10 +1588,27 @@ window.addEventListener('message',e=>{
 });
 document.getElementById('loc').addEventListener('click',locate);
 // Atualizar horários apenas quando necessários, preservando foco, busca e popovers.
+let lastMunicipalScheduleCheck=Date.now();
 setInterval(()=>{
   if(document.hidden || (window.frameElement && !window.frameElement.getClientRects().length))return;
-  if(el.contains(document.activeElement))return;
-  if(view.t==='home')return;
+  // Keep live arrivals and official service alerts fresh while the rider
+  // reads the stop, even if a link or a search field currently has focus.
+  // Do not rebuild the entire panel: that would discard focus and scroll.
+  if(view.t==='municipal-stop'){
+    const id=String(view.id);
+    void populateMunicipalRealtime(id);
+    void populateMunicipalAlerts();
+    if(Date.now()-lastMunicipalScheduleCheck>=120000){
+      lastMunicipalScheduleCheck=Date.now();
+      void refreshMunicipalSchedules(id);
+    }
+    return;
+  }
+  if(view.t==='municipal-line'){
+    void populateMunicipalAlerts();
+    return;
+  }
+  if(view.t==='home'||el.contains(document.activeElement))return;
   const scroll=el.scrollTop;
   render();
   el.scrollTop=scroll;
@@ -1023,11 +1634,28 @@ el.addEventListener('touchend',e=>{
   else if(delta>35)setExpanded(false);
 },{passive:true});
 window.addEventListener('resize',syncSheet);
+// Retomar previsões imediatamente quando o passageiro retorna ao aplicativo,
+// sem aguardar os próximos 30 segundos ou exibir cache antigo do feed.
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden||(window.frameElement&&
+     !window.frameElement.getClientRects().length))return;
+  if(view.t==='municipal-stop'){
+    const id=String(view.id);
+    realtimePredictionsCache.delete(id);
+    alertResultsCache.delete('stop:'+id);
+    void populateMunicipalRealtime(id);
+    void populateMunicipalAlerts();
+    void refreshMunicipalSchedules(id);
+  }else if(view.t==='municipal-line'){
+    alertResultsCache.delete('line:'+String(view.code));
+    void populateMunicipalAlerts();
+  }
+});
 apply();
 void loadMapMunicipal();
 setInterval(()=>{
   if(!document.hidden&&(!window.frameElement||window.frameElement.getClientRects().length)&&
-     mapMode!=='internal'&&externalStops&&map){
+     visibleMunicipal()&&externalStops&&map){
     gpsLast=0;
     const bounds=map.getBounds();
     const selected=Object.entries(externalStops).filter(([id,p])=>
