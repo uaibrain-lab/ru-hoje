@@ -3,7 +3,7 @@
  * Cache permanece disponível offline, mas nunca congela uma versão antiga
  * de app.js, config.js ou seus imports após um deploy.
  */
-const VERSION = 'hub-v289-20261122-onibus-camadas-visiveis';
+const VERSION = 'hub-v290-20261122-onibus-sem-cabecalho';
 const SHELL = [
   '/', '/index.html', '/interno', '/favicon.ico', '/config.js',
   '/assets/app.js', '/assets/onibus.js', '/assets/municipal-schedules.js', '/assets/pwa-install.js', '/assets/vendor/leaflet-1.9.4.js',
