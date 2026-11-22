@@ -11,6 +11,9 @@ on:
       - scripts/verify-onibus-browser.mjs
       - scripts/smoke.mjs
       - tests/hub-onibus-unificado.test.mjs
+      - tests/municipal-realtime.test.mjs
+      - public/assets/municipal-realtime.js
+      - public/assets/municipal-schedules.js
       - public/interno/index.html
       - public/assets/onibus.js
       - public/assets/app.js
@@ -64,7 +67,8 @@ jobs:
               [.workflow_runs[] |
                select(.name == "Externo BH V1 - pacote municipal para Hub (sem deploy)") |
                select(.conclusion == "success") |
-               select(.head_branch == "fix/hub-hml-firebase-cleanurls-20261122" or
+               select(.head_branch == "feat/eta-tripupdates-sumob-20261122" or
+                      .head_branch == "fix/hub-hml-firebase-cleanurls-20261122" or
                       .head_branch == "feat/hub-v1-gps-minibus-package-20261122") |
                .id][0] // empty
             ')"
@@ -76,7 +80,8 @@ jobs:
           gh api "repos/$source_repo/actions/runs/$run_id" --jq '
             select(.name == "Externo BH V1 - pacote municipal para Hub (sem deploy)" and
                    .conclusion == "success" and
-                   (.head_branch == "fix/hub-hml-firebase-cleanurls-20261122" or
+                   (.head_branch == "feat/eta-tripupdates-sumob-20261122" or
+                    .head_branch == "fix/hub-hml-firebase-cleanurls-20261122" or
                     .head_branch == "feat/hub-v1-gps-minibus-package-20261122")) |
             .id' | grep -qx "$run_id"
           echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
@@ -103,7 +108,7 @@ jobs:
       - name: Testar regressões do Hub e instalar Chromium
         run: |
           npm ci --no-audit --no-fund
-          node --test tests/hub-onibus-unificado.test.mjs
+          node --test tests/hub-onibus-unificado.test.mjs tests/municipal-realtime.test.mjs
           npx playwright install --with-deps chromium
 
       - name: Verificar interface real com catálogo municipal em HTTP
