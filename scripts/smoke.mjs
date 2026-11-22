@@ -479,6 +479,11 @@ try {
       assert.ok(layout.titleSize>=16,`Título pequeno em ${width}px: ${layout.titleSize}px`);
       await mobile.locator('#tab-sobre').click();
       assert.equal(new URL(mobile.url()).searchParams.get('aba'),'sobre');
+      await mobile.mouse.move(1,1);
+      const activeNav=await mobile.locator('#bandeco-navigation button[id^="tab-"]').evaluateAll(
+        nodes=>nodes.filter(n=>n.getAttribute('aria-current')==='page').map(n=>n.id));
+      assert.deepEqual(activeNav,['tab-sobre'],
+        'Navegação precisa destacar somente a aba realmente visível');
       assert.equal(await mobile.locator('.sobre-topic').count(),3,
         'Sobre precisa de três regiões distintas');
       const aboutLayout=await mobile.evaluate(()=>{
@@ -586,6 +591,44 @@ try {
       await mobile.close();
     }
   }finally{await mobileContext.close();}
+  // Revisão desktop da navegação e hierarquia nas três abas públicas.
+  const designContext=await browser.newContext({
+    viewport:{width:1280,height:900},serviceWorkers:'block'
+  });
+  await designContext.addInitScript(()=>{
+    try{localStorage.setItem('ruhoje:restaurant:v1','setorial-i')}catch{}
+  });
+  try{
+    const design=await designContext.newPage();
+    await design.goto(url+'?aba=festas&festas-demo=1',{waitUntil:'domcontentloaded'});
+    await design.locator('.festa-card--compact').waitFor({state:'visible'});
+    const festDesktop=await design.evaluate(()=>{
+      const r=selector=>document.querySelector(selector).getBoundingClientRect();
+      return {width:document.documentElement.scrollWidth,
+        navRight:r('#bandeco-navigation').right,
+        headingLeft:r('.festas-section-header').left,
+        cardLeft:r('.festa-card--compact').left,
+        headingBottom:r('.festas-section-header').bottom,
+        cardTop:r('.festa-card--compact').top};
+    });
+    assert.ok(festDesktop.width<=1281,
+      'Festas desktop ultrapassou viewport: '+JSON.stringify(festDesktop));
+    assert.ok(festDesktop.navRight+12<festDesktop.cardLeft,
+      'Sidebar se sobrepõe às Festas: '+JSON.stringify(festDesktop));
+    assert.ok(festDesktop.headingBottom+8<festDesktop.cardTop,
+      'Hierarquia desktop de Festas sem respiro: '+JSON.stringify(festDesktop));
+    await fs.mkdir(path.resolve(ROOT,'../qa-results/menu-compact'),{recursive:true});
+    await design.screenshot({path:path.resolve(ROOT,'../qa-results/menu-compact/alltabs-festas-1280.png')});
+    await design.locator('#tab-sobre').click();
+    await design.mouse.move(1,1);
+    assert.equal(await design.locator('.sobre-topic').count(),3);
+    assert.equal(await design.locator('#tab-sobre').getAttribute('aria-current'),'page');
+    assert.equal(await design.locator('#tab-festas').getAttribute('aria-current'),'false');
+    await design.screenshot({path:path.resolve(ROOT,'../qa-results/menu-compact/alltabs-sobre-1280.png')});
+    await design.locator('#tab-menu').click();
+    assert.equal(await design.locator('#tab-menu').getAttribute('aria-current'),'page');
+    await design.screenshot({path:path.resolve(ROOT,'../qa-results/menu-compact/alltabs-cardapio-1280.png')});
+  }finally{await designContext.close()}
   // Integração real de eventos: clicar linha municipal na lista unificada
   // abre a MESMA linha no iframe externo (dados 100% sintéticos do teste).
   const combinedCtx=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
