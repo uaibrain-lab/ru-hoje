@@ -83,7 +83,7 @@ try{
     headers:{'Access-Control-Allow-Origin':'*'},
     body:JSON.stringify({available:false,error:'ALERTS_UNAVAILABLE'})
   }));
-  await page.goto(new URL('?aba=onibus&tipo=externo&ponto='+stopId,origin),{
+  await page.goto(new URL('?aba=onibus&tipo=externo&ponto='+stopId,origin).href,{
     waitUntil:'domcontentloaded',timeout:30000});
   const frame=page.frameLocator('#interno-frame');
   const live=frame.locator('#municipal-stop-realtime:not([hidden])');
