@@ -148,9 +148,13 @@ i{font-style:normal;font-size:14px;font-weight:400}
 .bus-line-note{font-size:11px;line-height:1.5;color:var(--mut);margin:8px 0}
 /* Ao entrar em Linhas, exibir os primeiros ônibus sem obrigar a expandir. */
 @media(max-width:759px){
-  #sheet.lines-mode:not(.peek):not(.full):not(.detail){
-    height:min(68dvh,560px)
-  }
+  #sheet.lines-mode:not(.peek):not(.full):not(.detail){height:min(68dvh,560px)}
+  /* Calendários em uma só faixa; mais espaço para os primeiros ônibus. */
+  #sheet.lines-mode .chips{display:flex;flex-wrap:nowrap;gap:5px;overflow-x:auto;
+    overscroll-behavior-x:contain;scrollbar-width:none;margin:7px 0 4px;padding-bottom:2px}
+  #sheet.lines-mode .chips::-webkit-scrollbar{display:none}
+  #sheet.lines-mode .chips button{flex:none;white-space:nowrap;
+    padding:8px 10px;min-height:42px;font-size:12px}
 }
 </style>
 </head>
@@ -350,7 +354,7 @@ function linesList(){
     [['all','Todas'],['internal','Internas'],['external','Externas']].map(([id,text])=>
     '<button type="button" data-line-filter="'+id+'" aria-pressed="'+(lineFilter===id)+'">'+text+'</button>').join('')+
     '</div><label class="srch bus-line-search" for="line-q">'+ic('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>')+
-    '<input type="search" id="line-q" placeholder="Buscar número ou nome da linha" value="'+esc(lineQuery)+'"></label>'+
+    '<input type="search" id="line-q" placeholder="Buscar nome ou número" value="'+esc(lineQuery)+'"></label>'+
     (lineFilter==='external'?'':catBar())+
     '<div id="bus-lines-list">'+combinedLineRows()+'</div>';
 }
