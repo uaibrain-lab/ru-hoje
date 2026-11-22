@@ -474,38 +474,35 @@ try {
       const bus=mobile.frameLocator('#interno-frame');
       await bus.locator('#q').waitFor({state:'visible',timeout:15000});
       const ui=await mobile.evaluate(()=>{
-        const rect=id=>document.getElementById(id)?.getBoundingClientRect();
-        const a=rect('onibus-filter-interno'),b=rect('onibus-filter-externo'),f=rect('interno-frame');
-        return {pageWidth:document.documentElement.scrollWidth,viewport:innerWidth,
-          touchHeights:[a?.height,b?.height],touchWidths:[a?.width,b?.width],
-          iframeHeight:f?.height,source:document.getElementById('onibus-source-label')?.textContent,
-          pressed:document.getElementById('onibus-filter-interno')?.getAttribute('aria-pressed')};
+        const f=document.getElementById('interno-frame')?.getBoundingClientRect();
+        return {viewport:innerWidth,width:document.documentElement.scrollWidth,
+          mapHeight:f?.height};
       });
-      assert.ok(ui.pageWidth<=width+1,'Rolagem horizontal na aba Ônibus: '+JSON.stringify(ui));
-      assert.ok(ui.touchHeights.every(x=>x>=44),'Filtros pequenos: '+JSON.stringify(ui));
-      assert.ok(ui.touchWidths.every(x=>x>=105),'Filtros estreitos: '+JSON.stringify(ui));
-      assert.ok(ui.iframeHeight>=320,'Pouco espaço de mapa: '+JSON.stringify(ui));
-      assert.equal(ui.pressed,'true');
-      assert.equal(ui.source,'Campus UFMG');
+      assert.ok(ui.width<=width+1,'Rolagem horizontal na aba Ônibus: '+JSON.stringify(ui));
+      assert.ok(ui.mapHeight>=320,'O mapa precisa ter espaço útil: '+JSON.stringify(ui));
+      await bus.locator('#quick-linhas').click();
+      const all=bus.locator('[data-line-filter="all"]'),
+        internal=bus.locator('[data-line-filter="internal"]'),
+        external=bus.locator('[data-line-filter="external"]');
+      await all.waitFor({state:'visible'});
+      assert.equal(await all.getAttribute('aria-pressed'),'true');
+      const options=await bus.locator('.bus-line-filters button').evaluateAll(nodes=>
+        nodes.map(n=>({height:n.getBoundingClientRect().height,width:n.getBoundingClientRect().width})));
+      assert.ok(options.every(o=>o.height>=44&&o.width>=62),'Filtro Linhas pequeno: '+JSON.stringify(options));
+      const firstGroup=await bus.locator('#bus-lines-list .bus-line-group').first().innerText();
+      assert.match(firstGroup,/Internos/,'A lista deve iniciar pelos internos');
+      assert.equal(await bus.locator('#bus-lines-list [data-line]').count()>0,true);
+      await external.click();
+      assert.equal(await bus.locator('#bus-lines-list [data-line]').count(),0);
+      await internal.click();
+      assert.equal(await bus.locator('#bus-lines-list [data-externo-code]').count(),0);
+      await all.click();
+      assert.match(await bus.locator('#bus-lines-list .bus-line-group').first().innerText(),/Internos/);
       if(width===390){
         await fs.mkdir(path.resolve(ROOT,'../qa-results/menu-compact'),{recursive:true});
-        await mobile.screenshot({path:path.resolve(ROOT,'../qa-results/menu-compact/onibus-interno-390.png')});
+        await mobile.screenshot({path:path.resolve(ROOT,'../qa-results/menu-compact/onibus-linhas-390.png')});
       }
-      await mobile.locator('#onibus-filter-externo').click();
-      await mobile.locator('#onibus-empty-title').getByText('Externo BH ainda não disponível').waitFor({timeout:10000});
-      assert.equal(await mobile.locator('#externo-frame').isVisible(),false);
-      assert.equal(await mobile.locator('#onibus-externo-retry').isVisible(),true);
-      assert.equal(new URL(mobile.url()).searchParams.get('tipo'),'externo');
-      if(width===390){
-        await mobile.screenshot({path:path.resolve(ROOT,'../qa-results/menu-compact/onibus-externo-indisponivel-390.png')});
-      }
-      await mobile.locator('#onibus-filter-externo').focus();
-      await mobile.keyboard.press('ArrowLeft');
-      assert.equal(await mobile.locator('#onibus-filter-interno').getAttribute('aria-pressed'),'true');
-      assert.equal(new URL(mobile.url()).searchParams.get('tipo'),null);
-      await mobile.locator('#onibus-filter-externo').click();
-      await mobile.locator('#onibus-back-interno').click();
-      assert.equal(await mobile.locator('#onibus-filter-interno').getAttribute('aria-pressed'),'true');
+      await bus.locator('#quick-pontos').click();
       await bus.locator('#q').waitFor({state:'visible'});
       assert.equal(await bus.locator('#sheet').evaluate(e=>e.classList.contains('peek')),false,
         'Busca do Interno deve abrir sem painel recolhido');
@@ -538,7 +535,7 @@ try {
     await validPage.locator('#externo-frame').waitFor({state:'visible',timeout:15000});
     assert.equal(await validPage.locator('#onibus-empty').isVisible(),false);
     assert.equal(await validPage.frameLocator('#externo-frame').locator('main').innerText(),'Mapa Externo em teste');
-    assert.equal(await validPage.locator('#onibus-source-label').innerText(),'Belo Horizonte');
+    assert.equal(await validPage.locator('#onibus-external-label').count(),0);
   }finally{await busValidCtx.close();}
   // Primeira visita por link direto não deve bloquear Festas com o seletor de RU.
   const firstVisit=await browser.newContext({serviceWorkers:'block'});

@@ -99,6 +99,9 @@ async function loadExternal(force=false){
     if(!active()||!showingExternal())return;
     if(frameReady&&!force){showMap();return}
     const frame=$('externo-frame');
+    // A página inicia oculta durante a verificação: eager evita que o
+    // navegador adie indefinidamente o evento load do iframe lazy.
+    frame.loading='eager';
     if(!frame.getAttribute('src')||force)
       frame.setAttribute('src',EXTERNO+(force?'?reload='+Date.now():''));
   }catch(e){

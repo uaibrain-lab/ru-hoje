@@ -13,12 +13,17 @@ const read=async p=>readFile(path.join(ROOT,p),'utf8');
 test('a aba Ônibus substitui Interno sem acrescentar quinta aba no Hub',async()=>{
   const html=await read('public/index.html');
   assert.match(html,/id="tab-interno"[^>]*aria-controls="interno-page"/);
-  assert.match(html,/id="onibus-filter-interno"/);
-  assert.match(html,/id="onibus-filter-externo"/);
-  assert.match(html,/id="onibus-empty-title"/);
+  assert.doesNotMatch(html,/id="onibus-filter-interno"/);
+  assert.doesNotMatch(html,/id="onibus-filter-externo"/);
   assert.match(html,/id="onibus-back-interno"/);
-  assert.match(html,/class="onibus-source-chip"/);
-  assert.match(html,/id="onibus-description"[^>]*aria-live="polite"/);
+  assert.match(html,/id="onibus-empty-title"/);
+  const interno=await read('public/interno/index.html');
+  assert.match(interno,/data-line-filter=/);
+  assert.match(interno,/\['all','Todas'\]/);
+  assert.match(interno,/\['internal','Internas'\]/);
+  assert.match(interno,/\['external','Externas'\]/);
+  assert.ok(interno.indexOf("Internos <small>")<interno.indexOf("Externos <small>"));
+  assert.match(interno,/hub:onibus:external-line/);
   assert.match(html,/<span>Ônibus<\/span>/);
   assert.equal((html.match(/id="tab-(menu|interno|festas|sobre)"/g)||[]).length,4);
   assert.match(html,/id="interno-frame"[^>]*src="\/interno"/);
@@ -31,8 +36,8 @@ test('links canônicos e legados preservam filtro sem falsificar tipo',async()=>
   assert.equal(modeFromSearch('?aba=interno'),'interno');
   assert.equal(modeFromSearch('?tipo=desconhecido'),'interno');
   const module=await read('public/assets/onibus.js');
-  assert.ok(module.includes('CHECK_AGE_MS=5*60*1000'));
-  assert.ok(module.includes("['ArrowLeft','ArrowRight','Home','End']"));
+  assert.ok(module.includes("e.data?.type==='hub:onibus:external-line'"));
+  assert.ok(module.includes("frame.loading='eager'"));
   assert.ok(module.includes("dataset?.appMode==='free-static'"));
 });
 
