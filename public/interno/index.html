@@ -639,6 +639,128 @@ function lineView(){const l=byId(view.id),o=offs(l),n=now(),live=isLive();
   <h3>Saídas de ${esc(stopName(S[l.itinerarioParadasIds[0]]))}</h3><div class="grid" style="--c:${l.corHex}">${grid}</div>
   <h3>${cap}</h3><div class="tl" style="--c:${l.corHex}">${sl}</div>${disclaimer}`}
 
+
+/* Um painel municipal dentro do Hub — a mesma busca/filtro da UFMG.
+ * O detalhamento só aparece quando o usuário escolhe uma linha ou um ponto. */
+const municipalBack='<button class="back back--icon" data-back aria-label="Voltar à lista" title="Voltar à lista">'+
+  ic('<path d="M15 18l-6-6 6-6"/>')+'</button>';
+function municipalStopView(id){
+  const p=externalStops?.[id],name=p?.[0]||'Ponto municipal';
+  return '<div class="municipal-detail-head">'+municipalBack+'<div>'+
+    '<span class="municipal-kind">Ponto municipal · Belo Horizonte</span>'+
+    '<h2 class="municipal-detail-title">'+esc(name)+'</h2>'+
+    '<small>Identificação '+esc(id)+'</small></div></div>'+
+    '<p class="municipal-detail-note">Horários programados do GTFS, sujeitos ao calendário. '+
+    'Os miniônibus no mapa indicam posições GPS recentes, não previsões de chegada.</p>'+
+    '<div class="municipal-detail-tools"><button type="button" data-municipal-list>'+
+    'Ver todas as linhas (internos primeiro)</button></div>'+
+    '<h3>Próximos horários programados</h3>'+
+    '<div id="municipal-stop-schedules" role="status" aria-live="polite">'+
+    '<p class="note">Consultando horários deste ponto…</p></div>'+
+    '<h3>Linhas que atendem ao ponto</h3>'+
+    '<div id="municipal-stop-routes" class="municipal-arrivals">'+
+    '<p class="note">Carregando linhas municipais…</p></div>';
+}
+function municipalLinePatterns(code){
+  const route=externalRoutes.find(r=>r.code.toUpperCase()===String(code).toUpperCase());
+  if(!route||!externalPatterns)return [];
+  return externalPatterns.filter(p=>String(p.route)===String(route.id)&&
+    Array.isArray(p.stops)&&p.stops.length)
+    .sort((a,b)=>(Number(b.tripCount)||0)-(Number(a.tripCount)||0));
+}
+function municipalLineView(code){
+  const route=externalRoutes.find(r=>r.code.toUpperCase()===String(code).toUpperCase());
+  const variants=municipalLinePatterns(code);
+  const selected=variants.find(p=>String(p.id)===String(view.pattern))||variants[0];
+  const active=selected?.id,stops=(selected?.stops||[]).filter(id=>externalStops?.[id]);
+  return '<div class="municipal-detail-head">'+municipalBack+'<div>'+
+    '<span class="municipal-kind">Linha municipal · Belo Horizonte</span>'+
+    '<h2 class="municipal-detail-title">'+esc(code)+' · '+esc(route?.name||'Linha municipal')+'</h2>'+
+    '</div></div>'+
+    '<p class="municipal-detail-note">Paradas e sentidos do GTFS oficial. '+
+    'Veículos GPS aparecem no mapa quando há posições recentes disponíveis.</p>'+
+    '<div class="municipal-detail-tools"><button type="button" data-municipal-list>'+
+    'Todas as linhas (internos primeiro)</button></div>'+
+    (variants.length?'<h3>Sentidos e percursos</h3><div class="municipal-direction-list" role="group" aria-label="Selecionar sentido">'+
+      variants.slice(0,12).map((p,i)=>'<button type="button" data-municipal-pattern="'+esc(p.id)+
+      '" aria-pressed="'+String(String(active)===String(p.id))+'">'+
+      esc(p.headsign||'Percurso '+(i+1))+'</button>').join('')+'</div>':'')+
+    '<h3>Pontos do percurso</h3><div class="municipal-stops-list">'+
+    (stops.length?stops.map(id=>'<button type="button" class="municipal-arrival" data-ext-stop="'+esc(id)+
+      '"><span class="map-legend-symbol map-legend-symbol--municipal" aria-hidden="true"></span>'+
+      '<span class="municipal-destination">'+esc(externalStops[id][0])+'</span>'+
+      '<span aria-hidden="true">›</span></button>').join(''):
+      '<p class="note">Os pontos deste percurso estão indisponíveis agora.</p>')+
+    '</div>';
+}
+async function populateMunicipalStop(id){
+  if(view.t!=='municipal-stop'||String(view.id)!==String(id))return;
+  await loadExternalLines();
+  const destination=document.getElementById('municipal-stop-routes');
+  if(destination&&view.t==='municipal-stop'&&String(view.id)===String(id)){
+    const ids=new Map(externalRoutes.map(r=>[String(r.id),r]));
+    const routes=new Map();
+    for(const pattern of externalPatterns||[]){
+      if(!pattern.stops?.includes(String(id)))continue;
+      const line=ids.get(String(pattern.route));
+      if(line)routes.set(line.code,line);
+    }
+    const found=[...routes.values()].sort((a,b)=>a.code.localeCompare(b.code,'pt-BR',{numeric:true}));
+    destination.innerHTML=found.length?
+      found.map(r=>'<button type="button" class="municipal-arrival" data-externo-code="'+esc(r.code)+'">'+
+        '<span class="municipal-code">'+esc(r.code)+'</span>'+
+        '<span class="municipal-destination">'+esc(r.name)+'</span>'+
+        '<span aria-hidden="true">›</span></button>').join(''):
+      '<p class="note">Linhas deste ponto indisponíveis neste momento.</p>';
+  }
+  const target=document.getElementById('municipal-stop-schedules');
+  if(!target||view.t!=='municipal-stop'||String(view.id)!==String(id))return;
+  try{
+    const {scheduledForStop}=await import('/assets/municipal-schedules.js');
+    const result=await scheduledForStop(id);
+    if(view.t!=='municipal-stop'||String(view.id)!==String(id))return;
+    const rows=result.items||[];
+    target.innerHTML=result.expired?
+      '<p class="note">A validade do GTFS terminou. Horários não exibidos.</p>':
+      rows.length?'<div class="municipal-arrivals">'+rows.slice(0,12).map(r=>
+        '<button type="button" class="municipal-arrival" data-externo-code="'+esc(r.code)+'">'+
+        '<span class="municipal-code">'+esc(r.code)+'</span>'+
+        '<span class="municipal-destination">'+esc(r.destination||'Destino não informado')+'</span>'+
+        '<span class="municipal-time">'+
+        new Date(r.at).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'})+
+        '</span></button>').join('')+'</div>':
+      '<p class="note">Nenhum horário programado nas próximas cinco horas neste ponto.</p>';
+  }catch{
+    if(view.t==='municipal-stop'&&String(view.id)===String(id))
+      target.innerHTML='<p class="note">Horários programados indisponíveis agora. '+
+        'As linhas e os pontos continuam acessíveis.</p>';
+  }
+}
+async function openMunicipal(kind,value,{announce=true}={}){
+  const id=String(value||'');
+  if(kind==='stop'){
+    if(!/^[0-9]{1,20}$/.test(id))return;
+    if(!externalStops)await loadMapMunicipal();
+    if(!externalStops?.[id])return;
+  }else if(kind==='line'){
+    if(!/^[A-Za-z0-9_.:-]{1,30}$/.test(id))return;
+    if(!externalRoutes.length)await loadExternalLines();
+    if(!externalRoutes.some(r=>r.code.toUpperCase()===id.toUpperCase()))return;
+    if(!externalStops)await loadMapMunicipal();
+  }else return;
+  if(view.t==='municipal-'+kind&&String(kind==='line'?view.code:view.id)===id)return;
+  if(mapMode==='internal')changeMapMode('all');
+  const target=kind==='stop'?{t:'municipal-stop',id}:{t:'municipal-line',code:id};
+  tab=kind==='stop'?'pontos':'linhas';
+  go(target);
+  if(announce)window.parent.postMessage({type:'hub:onibus:unified-selection',
+    kind,...(kind==='stop'?{id}:{code:id})},location.origin);
+}
+function returnToMunicipalList(){
+  hist=[];view={t:'home'};tab='linhas';apply();void loadExternalLines();
+  window.parent.postMessage({type:'hub:onibus:unified-selection',kind:'home'},location.origin);
+}
+
 function nearView(){
   if(near.s==='loading')return `${back}<h2>Buscando sua localização…</h2><small>Permita o acesso quando o navegador pedir.</small>`;
   if(near.s==='err')return `${back}<h2>Não achei sua localização</h2><p>${esc(near.m)}</p><button class="btn" data-home>Buscar ponto pelo nome</button>`;
