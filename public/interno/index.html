@@ -146,6 +146,10 @@ i{font-style:normal;font-size:14px;font-weight:400}
   border-radius:12px;background:var(--bg2);font-size:12px;font-weight:750;padding:9px 12px}
 .bus-line-search{margin:8px 0}
 .bus-line-note{font-size:11px;line-height:1.5;color:var(--mut);margin:8px 0}
+.bus-fav-row{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.bus-fav-row>.row{flex:1;min-width:0;margin:0}
+.bus-fav-row>.star{flex:none;width:44px;height:44px;border:1px solid var(--line)}
+.bus-fav-row>.star.fav{color:#d88a00}
 /* Ao entrar em Linhas, exibir os primeiros ônibus sem obrigar a expandir. */
 @media(max-width:759px){
   #sheet.lines-mode:not(.peek):not(.full):not(.detail){height:min(68dvh,560px)}
@@ -325,6 +329,15 @@ const STAR='<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 
 const back=`<button class="back back--icon" data-back aria-label="Voltar para pontos" title="Voltar para pontos">${ic('<path d="M15 18l-6-6 6-6"/>')}</button>`;
 let fav=[];try{fav=JSON.parse(localStorage.getItem('bandeco_interno_favoritos_v1')||'[]')}catch(e){}
 const saveFav=()=>{try{localStorage.setItem('bandeco_interno_favoritos_v1',JSON.stringify(fav))}catch(e){}};
+let externalFav=[];try{externalFav=JSON.parse(localStorage.getItem('hub_onibus_pontos_bh_favoritos_v1')||'[]')}catch{}
+const saveExtFav=()=>{try{localStorage.setItem('hub_onibus_pontos_bh_favoritos_v1',JSON.stringify(externalFav))}catch{}};
+function starRow(html,id,on,name,key){
+  return '<div class="bus-fav-row">'+html+'<button type="button" class="star'+(on?' fav':'')+
+    '" data-'+key+'="'+esc(id)+'" aria-pressed="'+on+'" aria-label="'+
+    esc((on?'Remover favorito: ':'Favoritar: ')+name)+'">'+ic(STAR,on?'currentColor':'none')+'</button></div>';
+}
+function repaintFavorites(){const scroll=el.scrollTop;render();el.scrollTop=scroll}
+
 const eta=t=>{const x=etaTxt(t),m=x.match(/^(\d+) min$/);return m?`<b>${m[1]}<i> min</i></b>`:`<b>${x}</b>`};
 
 function stopBody(id){const a=arrivals(id);if(!a.length)return '<p>Nenhuma linha passa aqui neste tipo de dia.</p>'+disclaimer;
@@ -353,36 +366,39 @@ function nearView(){
   <h3>Outros pontos perto</h3>${rest.map(x=>`<button class="row" data-stop="${x.p.idParada}"><span class="pin"></span><span class="info"><b>${esc(stopName(x.p))}</b><small>${fmD(x.d)} · ${walk(x.d)} min a pé</small></span></button>`).join('')}`}
 
 function stopsList(){
-  const k=norm(q.trim());let result='';
+  const term=norm(q.trim());let out='';
   if(mapMode!=='external'){
-    const internal=D.paradas.filter(p=>norm(stopName(p)).includes(k)||norm(p.nome).includes(k))
+    const internal=D.paradas.filter(p=>norm(stopName(p)).includes(term)||norm(p.nome).includes(term))
       .sort((a,b)=>Number(fav.includes(b.idParada))-Number(fav.includes(a.idParada))||
         a.nome.localeCompare(b.nome,'pt'));
-    if(mapMode==='all')result+='<h3 class="bus-line-group">Internos <small>UFMG</small></h3>';
-    result+=internal.map(p=>{
-      const c=lines().filter(l=>offs(l)[p.idParada]!==undefined).length;
-      return '<button class="row" data-stop="'+esc(p.idParada)+'"><span class="pin"></span>'+
+    if(mapMode==='all')out+='<h3 class="bus-line-group">Internos <small>UFMG</small></h3>';
+    out+=internal.map(p=>{
+      const count=lines().filter(l=>offs(l)[p.idParada]!==undefined).length;
+      const row='<button class="row" data-stop="'+esc(p.idParada)+'"><span class="pin"></span>'+
         '<span class="info"><b>'+esc(stopName(p))+'</b><small>'+
-        (c?c+(c>1?' linhas':' linha'):'Sem linhas neste tipo de dia')+
-        '</small></span></button>';
+        (count?count+(count>1?' linhas':' linha'):'Sem saídas neste dia')+'</small></span></button>';
+      return starRow(row,p.idParada,fav.includes(p.idParada),stopName(p),'fav-stop-list');
     }).join('')||'<p>Nenhum ponto interno corresponde à busca.</p>';
   }
   if(mapMode!=='internal'){
-    result+='<h3 class="bus-line-group">Externos <small>Municipais BH</small></h3>';
+    out+='<h3 class="bus-line-group">Externos <small>Municipais BH</small></h3>';
     if(externalStops){
       const center=map?.getCenter()||{lat:-19.8695,lng:-43.9675};
-      const entries=Object.entries(externalStops)
-        .filter(([id,p])=>Array.isArray(p)&&(!k||norm(p[0]+' '+id).includes(k)));
-      entries.sort((a,b)=>((+a[1][1]-center.lat)**2+(+a[1][2]-center.lng)**2)-
-        ((+b[1][1]-center.lat)**2+(+b[1][2]-center.lng)**2));
-      result+=entries.slice(0,k?70:28).map(([id,p])=>
-        '<button class="row" data-ext-stop="'+esc(id)+'"><span class="pin" style="border-color:#7556c9"></span>'+
-        '<span class="info"><b>'+esc(p[0])+'</b><small>Ponto municipal · ver horários e mapa</small>'+
-        '</span></button>').join('')||'<p>Nenhum ponto municipal corresponde à busca.</p>';
-      if(entries.length>(k?70:28))result+='<p class="bus-line-note">Use a busca para encontrar outros pontos municipais.</p>';
-    }else result+='<p class="bus-line-hint">Carregando pontos municipais ou temporariamente indisponíveis.</p>';
+      const items=Object.entries(externalStops).filter(([id,p])=>Array.isArray(p)&&
+        (!term||norm(p[0]+' '+id).includes(term)))
+        .sort((a,b)=>Number(externalFav.includes(b[0]))-Number(externalFav.includes(a[0]))||
+          ((+a[1][1]-center.lat)**2+(+a[1][2]-center.lng)**2)-
+          ((+b[1][1]-center.lat)**2+(+b[1][2]-center.lng)**2));
+      const shown=items.slice(0,term?70:28);
+      out+=shown.map(([id,p])=>starRow('<button class="row" data-ext-stop="'+esc(id)+'">'+
+        '<span class="pin" style="border-color:#7556c9"></span><span class="info"><b>'+
+        esc(p[0])+'</b><small>Municipal BH · horários e GPS</small></span></button>',
+        id,externalFav.includes(id),p[0],'fav-ext-stop')).join('')||
+        '<p>Nenhum ponto municipal corresponde à busca.</p>';
+      if(items.length>shown.length)out+='<p class="bus-line-note">Busque pelo nome para encontrar outro ponto.</p>';
+    }else out+='<p role="status" class="bus-line-hint">Pontos municipais temporariamente indisponíveis ou carregando.</p>';
   }
-  return result;
+  return out;
 }
 function combinedLineRows(){
   const search=norm(lineQuery.trim()),n=now(),live=isLive();
@@ -421,9 +437,7 @@ function linesList(){
     (lineFilter==='external'?'':catBar())+
     '<div id="bus-lines-list">'+combinedLineRows()+'</div>';
 }
-function favRows(){if(!fav.some(id=>S[id]))return '';return '<h3>Seus pontos</h3>'+fav.filter(id=>S[id]).map(id=>{const f=arrivals(id).find(x=>x.ts.length);
-  return `<button class="row" data-stop="${id}" style="--c:${f?f.l.corHex:'var(--line)'}"><span class="info"><b>${esc(stopName(S[id]))}</b><small>${f?title(f.l)+' · '+esc(variant(f.l)):'Sem saídas agora'}</small></span>${f?`<span class="eta">${eta(f.ts[0])}</span>`:''}</button>`}).join('')}
-function home(){return `${tab==='pontos'?`<label class="srch">${ic('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>')}<input id="q" type="search" placeholder="Buscar ponto pelo nome" value="${esc(q)}"></label>${favRows()}<div id="list">${stopsList()}</div>`:linesList()}${tab==='pontos'?catBar():''}${banner()}`}
+function home(){return `${tab==='pontos'?`<label class="srch">${ic('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>')}<input id="q" type="search" placeholder="Buscar ponto pelo nome" value="${esc(q)}"></label><div id="list">${stopsList()}</div>`:linesList()}${tab==='pontos'?catBar():''}${banner()}`}
 
 function render(){
   const fallback=!window.L?'<p class="note" role="status">Mapa indisponível nesta conexão. Você ainda pode pesquisar pontos e consultar horários; para exibir o mapa, conecte-se à internet.</p>':'';
@@ -664,6 +678,11 @@ el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
   else if(d.externalRetry!==undefined)void loadExternalLines(true);
   else if(d.tab){pickQuickTab(d.tab)}
   else if(d.cat){cat=d.cat;render()}
+  else if(d.favStopList){fav=fav.includes(d.favStopList)?fav.filter(x=>x!==d.favStopList):
+    [...fav,d.favStopList];saveFav();repaintFavorites()}
+  else if(d.favExtStop){externalFav=externalFav.includes(d.favExtStop)?
+    externalFav.filter(x=>x!==d.favExtStop):[...externalFav,d.favExtStop];
+    saveExtFav();repaintFavorites()}
   else if(d.fav){fav=fav.includes(d.fav)?fav.filter(x=>x!==d.fav):[...fav,d.fav];saveFav();render()}
   else if(d.info!==undefined){const content=b.parentElement.querySelector('[data-info-content]'),open=content?.hidden===true;if(content){content.hidden=!open;b.setAttribute('aria-expanded',String(open));}}
   else if(d.back!==undefined){view=hist.pop()||{t:'home'};apply()}
