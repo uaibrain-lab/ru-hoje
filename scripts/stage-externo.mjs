@@ -105,6 +105,11 @@ export async function validateExternoPackage(source,day=localServiceDay()){
     if(qa.rtTripIndexSchema!==1||!Number.isInteger(qa.rtTripIndexRows)||
        qa.rtTripIndexRows<1000||qa.rtTripIndexRows>manifest.stopTimeRows)
       throw Error('EXTERNO_RT_TRIP_QA_INVALID');
+    // Do not ship a seemingly working "live ETA" when official RT trips
+    // cannot be joined to this exact static GTFS version in live QA.
+    if(qa.liveTripJoinValidated!==true||
+       !Number.isInteger(qa.liveTripJoinMatches)||qa.liveTripJoinMatches<1)
+       throw Error('EXTERNO_RT_LIVE_TRIP_JOIN_NOT_VALIDATED');
     const rt=await json(path.join(root,'catalog/rt-trips/index.json'));
     if(rt.schema!==1||rt.buckets!==256||rt.version!==manifest.gtfsVersion||
        rt.validThrough!==manifest.feedEndDate||rt.rows!==qa.rtTripIndexRows||
