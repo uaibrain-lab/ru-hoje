@@ -87,42 +87,33 @@
     </main>
 
     <section id="interno-page" class="interno-page onibus-page" aria-labelledby="interno-heading" hidden>
-      <h2 id="interno-heading" class="sr-only">Ônibus — Interno UFMG e Externo BH</h2>
-      <div class="onibus-heading">
-        <div class="onibus-heading-copy">
-          <span class="onibus-eyebrow">MOBILIDADE</span>
-          <p class="onibus-title" aria-hidden="true">Ônibus <span>na UFMG e em BH</span></p>
-        </div>
-        <span class="onibus-source-chip" id="onibus-source-chip"><span class="onibus-source-dot" aria-hidden="true"></span><span id="onibus-source-label">Campus UFMG</span></span>
+      <div class="onibus-intro">
+        <div><span class="onibus-overline">MOBILIDADE</span><h2 id="interno-heading">Ônibus <span>UFMG + Belo Horizonte</span></h2></div>
+        <span class="onibus-intro-icon"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="5" y="3" width="14" height="16" rx="3"/><path d="M5 11h14M8 19v2m8-2v2"/><circle cx="8" cy="15" r=".6"/><circle cx="16" cy="15" r=".6"/></svg></span>
       </div>
-      <div class="onibus-filters" role="group" aria-label="Filtrar ônibus por serviço">
-        <button type="button" id="onibus-filter-interno" class="is-selected" aria-pressed="true" aria-controls="onibus-interno">
-          <span class="onibus-filter-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="16" rx="3"/><path d="M5 10h14M8 15h.01M16 15h.01M8 19v2m8-2v2"/></svg></span>
-          <span class="onibus-filter-copy"><strong>Interno</strong><small>Campus UFMG</small></span>
-        </button>
-        <button type="button" id="onibus-filter-externo" aria-pressed="false" aria-controls="onibus-externo">
-          <span class="onibus-filter-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V8l6-4v16M10 10l6-3v13M16 12l4-2v10M2 20h20M7 10h.01M7 14h.01M13 13h.01M13 17h.01"/></svg></span>
-          <span class="onibus-filter-copy"><strong>Externo</strong><small>BH e metrô</small></span>
-        </button>
-      </div>
-      <p class="onibus-description" id="onibus-description" aria-live="polite">Linhas e pontos de circulação dentro do campus UFMG.</p>
       <div class="onibus-content">
         <div class="onibus-panel" id="onibus-interno">
-          <iframe id="interno-frame" class="interno-frame" title="Interno UFMG — pontos, linhas e horários" src="/interno" loading="lazy" allow="geolocation"></iframe>
+          <iframe id="interno-frame" class="interno-frame" title="Ônibus — pontos e linhas internas e municipais" src="/interno" loading="lazy" allow="geolocation"></iframe>
         </div>
-        <div class="onibus-panel" id="onibus-externo" hidden>
-          <section class="onibus-empty" id="onibus-empty" aria-labelledby="onibus-empty-title" aria-live="polite">
-            <div class="onibus-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V8l6-4v16M10 10l6-3v13M16 12l4-2v10M2 20h20M7 10h.01M7 14h.01M13 13h.01M13 17h.01"/></svg></div>
-            <span class="onibus-empty-overline" id="onibus-empty-overline">VERIFICANDO DADOS</span>
-            <h3 id="onibus-empty-title">Preparando o Externo BH</h3>
-            <p id="onibus-externo-status">Conferindo a disponibilidade dos pontos e horários municipais.</p>
-            <div class="onibus-empty-actions">
-              <button type="button" class="onibus-action-primary" id="onibus-externo-retry" hidden>Tentar novamente</button>
-              <button type="button" class="onibus-action-secondary" id="onibus-back-interno">Ver Interno UFMG</button>
-            </div>
-            <p class="onibus-empty-note">Horários do Externo BH são programados, não previsões em tempo real.</p>
-          </section>
-          <iframe id="externo-frame" class="interno-frame externo-frame" title="Externo BH — pontos, linhas municipais e metrô" loading="lazy" allow="geolocation" hidden></iframe>
+        <div class="onibus-panel onibus-external-panel" id="onibus-externo" hidden>
+          <div class="onibus-external-bar">
+            <button type="button" id="onibus-back-interno" aria-label="Voltar à lista de linhas">← Voltar às linhas</button>
+            <span class="onibus-external-label">Externo BH <strong id="onibus-external-line"></strong></span>
+          </div>
+          <div class="onibus-external-view">
+            <section class="onibus-empty" id="onibus-empty" aria-labelledby="onibus-empty-title" aria-live="polite">
+              <div class="onibus-empty-icon" aria-hidden="true"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="5" y="3" width="14" height="16" rx="3"/><path d="M5 11h14M8 19v2m8-2v2"/><circle cx="8" cy="15" r=".6"/><circle cx="16" cy="15" r=".6"/></svg></div>
+              <span class="onibus-empty-overline" id="onibus-empty-overline">VERIFICANDO DADOS</span>
+              <h3 id="onibus-empty-title">Preparando o Externo BH</h3>
+              <p id="onibus-externo-status">Conferindo a disponibilidade dos horários municipais.</p>
+              <div class="onibus-empty-actions">
+                <button type="button" class="onibus-action-primary" id="onibus-externo-retry" hidden>Tentar novamente</button>
+                <button type="button" class="onibus-action-secondary" id="onibus-back-interno-secondary">Voltar às linhas</button>
+              </div>
+              <p class="onibus-empty-note">Horários programados; não são previsões em tempo real.</p>
+            </section>
+            <iframe id="externo-frame" class="interno-frame externo-frame" title="Externo BH — linhas municipais e metrô" loading="lazy" allow="geolocation" hidden></iframe>
+          </div>
         </div>
       </div>
     </section>
