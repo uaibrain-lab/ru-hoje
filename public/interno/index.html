@@ -1039,6 +1039,9 @@ async function populateMunicipalRealtime(id){
   }
   if(view.t!=='municipal-stop'||String(view.id)!==String(id)||!rows.isConnected)return;
   found.sort((a,b)=>a.time-b.time||a.route.code.localeCompare(b.route.code));
+  // Never replace a focused arrival button while the rider navigates with
+  // a keyboard or screen reader. A subsequent refresh will update the rows.
+  if(rows.contains(document.activeElement))return;
   if(!found.length){section.hidden=true;return;}
   section.hidden=false;
   const heading=document.getElementById('municipal-timetable-title');
