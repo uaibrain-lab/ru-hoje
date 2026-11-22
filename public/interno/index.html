@@ -194,6 +194,58 @@ i{font-style:normal;font-size:14px;font-weight:400}
   border-radius:5px;background:#fff;color:#075649;font-size:9px;
   font-weight:850;line-height:11px;overflow:hidden;text-overflow:ellipsis}
 
+
+/* UX: mapa desobstruído e ferramentas de Linhas em uma faixa única.
+ * Os alvos continuam com pelo menos 44px; conteúdo, horários e GPS inalterados. */
+#top{top:env(safe-area-inset-top,0px);padding:10px}
+#loc{min-height:44px;gap:6px;padding:8px 11px;font-size:12.5px;box-shadow:0 3px 12px #0002}
+#map-source-switch{top:calc(10px + env(safe-area-inset-top,0px));
+  left:auto;right:68px;transform:none;max-width:calc(100vw - 235px)}
+#map-filter-toggle{min-height:44px;min-width:106px;padding:8px 10px;box-shadow:0 3px 12px #0002}
+#map-data-status{top:calc(68px + env(safe-area-inset-top,0px));
+  left:12px;right:auto;transform:none;max-width:min(270px,calc(100vw - 102px));
+  font-size:10px;line-height:1.35;padding:5px 9px;
+  text-align:left;border-color:var(--line);box-shadow:0 2px 9px #0001}
+#map-basemap-notice{top:calc(109px + env(safe-area-inset-top,0px));
+  left:12px;right:auto;bottom:auto;transform:none;
+  max-width:min(238px,calc(100vw - 102px));
+  text-align:left;font-size:10px;line-height:1.35;
+  padding:5px 9px;box-shadow:0 2px 9px #0001}
+#sheet:not(.detail) .sheet-identity{display:none}
+#sheet:not(.detail) .quick-tabs{justify-content:flex-start;gap:8px}
+#sheet:not(.detail) .sheet-head{padding:4px 14px 10px;gap:10px}
+#sheet:not(.detail) .quick-tabs button{min-width:78px}
+#sheet.lines-mode #body{padding-left:15px;padding-right:15px}
+.bus-line-tools{display:flex;align-items:center;gap:10px;margin:5px 0 13px}
+.bus-line-tools .bus-line-search{display:flex;flex:1;min-width:0;
+  margin:0;height:46px;border-radius:13px;background:var(--bg2)}
+.bus-line-tools .bus-line-search input{min-width:0;font-size:15px;
+  min-height:44px;padding:9px 0}
+.bus-line-tools .bus-line-search .ic{width:18px;height:18px;flex:none}
+.bus-line-tools .bus-line-filters{flex:none;min-height:44px;margin:0}
+.bus-line-tools .bus-line-filters .filter-cycle{box-shadow:none;
+  min-height:44px;border-color:var(--line);background:var(--bg)}
+#sheet.lines-mode .bus-line-group{margin-top:17px;margin-bottom:10px}
+#sheet.lines-mode .bus-fav-row{margin-bottom:10px}
+@media(max-width:759px){
+  #sheet.lines-mode:not(.peek):not(.full):not(.detail){height:min(62dvh,520px)}
+  #map-basemap-notice{top:calc(109px + env(safe-area-inset-top,0px));
+    left:12px;transform:none;max-width:min(238px,calc(100vw - 102px))}
+}
+@media(min-width:760px){
+  #map-source-switch{right:68px}
+  #map-data-status{left:auto;right:68px;top:calc(69px + env(safe-area-inset-top,0px));
+    max-width:230px;text-align:right}
+  #map-basemap-notice{left:auto;right:68px;top:calc(109px + env(safe-area-inset-top,0px))}
+}
+@media(max-width:360px){
+  #top{padding:10px 8px}
+  #loc{padding:7px 9px;font-size:12px}
+  #map-source-switch{right:64px;max-width:calc(100vw - 205px)}
+  #map-filter-toggle{min-width:99px;padding:8px 8px;gap:5px}
+  .bus-line-tools{gap:7px}
+  .bus-line-tools .bus-line-filters .filter-cycle{padding:8px 9px;gap:4px}
+}
 </style>
 </head>
 <body>
@@ -205,8 +257,8 @@ i{font-style:normal;font-size:14px;font-weight:400}
   </button>
 </div>
 <p id="map-data-status" role="status" aria-live="polite">Carregando pontos de BH…</p>
-<p id="map-basemap-notice" role="status" hidden>Mapa-base indisponível; as paradas e linhas continuam disponíveis. Consulte os horários no painel.</p>
-<div id="top"><button class="fab" id="loc"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/></svg>Ponto perto de mim</button></div>
+<p id="map-basemap-notice" role="status" hidden>Mapa-base indisponível · horários acessíveis</p>
+<div id="top"><button class="fab" id="loc"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/></svg>Perto de mim</button></div>
 <section id="sheet" aria-label="Consulta de linhas e pontos do Interno UFMG">
   <button type="button" id="grab" aria-label="Recolher painel" aria-expanded="true" aria-controls="body"></button>
   <div class="sheet-head" id="sheet-head">
@@ -482,12 +534,14 @@ function combinedLineRows(){
   return output;
 }
 function linesList(){
-  return '<div class="bus-line-filters">'+
+  return '<div class="bus-line-tools">'+
+    '<label class="srch bus-line-search" for="line-q">'+ic('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>')+
+    '<input type="search" id="line-q" placeholder="Buscar linha" aria-label="Buscar linha por nome ou número" value="'+esc(lineQuery)+'"></label>'+
+    '<div class="bus-line-filters">'+
     '<button type="button" class="filter-cycle" data-line-filter-toggle data-current-filter="'+lineFilter+
     '" aria-label="'+filterHint('linhas',lineFilter)+'" title="'+filterHint('linhas',lineFilter)+'">'+
     FILTER_ICON+'<span>'+FILTER_LABELS[lineFilter]+'</span><span class="filter-next" aria-hidden="true">↻</span></button>'+
-    '</div><label class="srch bus-line-search" for="line-q">'+ic('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>')+
-    '<input type="search" id="line-q" placeholder="Buscar nome ou número" value="'+esc(lineQuery)+'"></label>'+
+    '</div></div>'+
     (lineFilter==='external'?'':catBar())+
     '<div id="bus-lines-list">'+combinedLineRows()+'</div>';
 }
