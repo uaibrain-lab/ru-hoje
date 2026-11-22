@@ -22,6 +22,13 @@ try {
         'A página precisa ter apenas o iframe de ônibus unificado');
       assert.equal(await page.locator('#externo-frame').count(),0,
         'A interface externa duplicada reapareceu');
+      assert.equal(await page.locator('.onibus-intro').count(),0,
+        'O cabeçalho decorativo Mobilidade/Ônibus deve ter sido removido');
+      assert.equal(await page.locator('#interno-page').getAttribute('aria-label'),
+        'Ônibus: pontos, linhas e horários');
+      const frameHeight=await page.locator('#interno-frame').evaluate(n=>n.getBoundingClientRect().height);
+      assert.ok(frameHeight>Math.min(480,900*0.48),
+        'Mapa ficou excessivamente baixo após remoção do cabeçalho: '+frameHeight);
       const frame=page.frameLocator('#interno-frame');
       await frame.locator('#map-point-legend').waitFor({timeout:30000});
       await frame.locator('.municipal-detail-title').waitFor({timeout:30000});
