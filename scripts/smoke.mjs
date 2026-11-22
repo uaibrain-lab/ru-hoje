@@ -481,22 +481,25 @@ try {
       assert.ok(ui.width<=width+1,'Rolagem horizontal na aba Ônibus: '+JSON.stringify(ui));
       assert.ok(ui.mapHeight>=320,'O mapa precisa ter espaço útil: '+JSON.stringify(ui));
       await bus.locator('#quick-linhas').click();
-      const all=bus.locator('[data-line-filter="all"]'),
-        internal=bus.locator('[data-line-filter="internal"]'),
-        external=bus.locator('[data-line-filter="external"]');
-      await all.waitFor({state:'visible'});
-      assert.equal(await all.getAttribute('aria-pressed'),'true');
-      const options=await bus.locator('.bus-line-filters button').evaluateAll(nodes=>
-        nodes.map(n=>({height:n.getBoundingClientRect().height,width:n.getBoundingClientRect().width})));
-      assert.ok(options.every(o=>o.height>=44&&o.width>=62),'Filtro Linhas pequeno: '+JSON.stringify(options));
-      const firstGroup=await bus.locator('#bus-lines-list .bus-line-group').first().innerText();
-      assert.match(firstGroup,/Internos/,'A lista deve iniciar pelos internos');
+      const cycle=bus.locator('[data-line-filter-toggle]');
+      await cycle.waitFor({state:'visible'});
+      assert.equal(await cycle.getAttribute('data-current-filter'),'all');
+      const dimensions=await cycle.evaluate(n=>({
+        height:n.getBoundingClientRect().height,width:n.getBoundingClientRect().width
+      }));
+      assert.ok(dimensions.height>=44&&dimensions.width>=90,
+        'Filtro Linhas precisa ser discreto mas tocável: '+JSON.stringify(dimensions));
+      assert.match(await bus.locator('#bus-lines-list .bus-line-group').first().innerText(),/Internos/);
       assert.equal(await bus.locator('#bus-lines-list [data-line]').count()>0,true);
-      await external.click();
-      assert.equal(await bus.locator('#bus-lines-list [data-line]').count(),0);
-      await internal.click();
+      await cycle.click();
+      assert.equal(await cycle.getAttribute('data-current-filter'),'internal');
       assert.equal(await bus.locator('#bus-lines-list [data-externo-code]').count(),0);
-      await all.click();
+      await cycle.click();
+      assert.equal(await cycle.getAttribute('data-current-filter'),'external');
+      assert.equal(await bus.locator('#bus-lines-list [data-line]').count(),0);
+      assert.match(await bus.locator('#bus-lines-list .bus-line-group').first().innerText(),/Municipais/);
+      await cycle.click();
+      assert.equal(await cycle.getAttribute('data-current-filter'),'all');
       assert.match(await bus.locator('#bus-lines-list .bus-line-group').first().innerText(),/Internos/);
       if(width===390){
         await fs.mkdir(path.resolve(ROOT,'../qa-results/menu-compact'),{recursive:true});
@@ -562,15 +565,19 @@ try {
     await combined.goto(url+'?aba=onibus',{waitUntil:'domcontentloaded'});
     await combined.locator('#restaurant-dialog').evaluate(e=>e.close());
     const sheet=combined.frameLocator('#interno-frame');
-    const showAll=sheet.locator('[data-map-mode="all"]'),
-      showInternal=sheet.locator('[data-map-mode="internal"]'),
-      showExternal=sheet.locator('[data-map-mode="external"]');
-    await showAll.waitFor({state:'visible'});
-    assert.equal(await showAll.getAttribute('aria-pressed'),'true');
-    await showExternal.click();
-    assert.equal(await showInternal.getAttribute('aria-pressed'),'false');
-    await showAll.click();
-    await sheet.locator('#map-data-status').getByText(/GPS ao vivo:/).waitFor({timeout:15000});
+    const mapFilter=sheet.locator('#map-filter-toggle');
+     await mapFilter.waitFor({state:'visible'});
+     assert.equal(await mapFilter.getAttribute('data-current-filter'),'all');
+     const target=await mapFilter.evaluate(n=>n.getBoundingClientRect().toJSON());
+     assert.ok(target.width<160&&target.height>=44,'Filtro do mapa deve ser compacto e tocável');
+     await mapFilter.click();
+     assert.equal(await mapFilter.getAttribute('data-current-filter'),'internal');
+     await mapFilter.click();
+     assert.equal(await mapFilter.getAttribute('data-current-filter'),'external');
+     assert.equal(await sheet.locator('#map-filter-label').innerText(),'Municipais');
+     await mapFilter.click();
+     assert.equal(await mapFilter.getAttribute('data-current-filter'),'all');
+     await sheet.locator('#map-data-status').getByText(/GPS ao vivo:/).waitFor({timeout:15000});
     assert.equal(await sheet.locator('.gps-bus-pin').count(),1);
     await sheet.locator('#quick-linhas').click();
     const stars=sheet.locator('#bus-lines-list [data-fav-list-line^="int:"]');
@@ -590,8 +597,8 @@ try {
     assert.equal(new URL(combined.url()).searchParams.get('linha'),'101');
     await combined.frameLocator('#externo-frame').locator('#lineTitle').getByText('101').waitFor({timeout:12000});
     await combined.locator('#onibus-back-interno').click();
-    await sheet.locator('[data-line-filter="all"]').waitFor({state:'visible'});
-    assert.equal(await sheet.locator('[data-line-filter="all"]').getAttribute('aria-pressed'),'true');
+    await sheet.locator('[data-line-filter-toggle]').waitFor({state:'visible'});
+    assert.equal(await sheet.locator('[data-line-filter-toggle]').getAttribute('data-current-filter'),'all');
     assert.match(await sheet.locator('#bus-lines-list .bus-line-group').first().innerText(),/Internos/);
     assert.equal(new URL(combined.url()).searchParams.get('tipo'),null);
     await sheet.locator('#quick-pontos').click();
