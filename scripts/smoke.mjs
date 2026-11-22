@@ -514,6 +514,49 @@ try {
       await mobile.close();
     }
   }finally{await mobileContext.close();}
+  // Integração real de eventos: clicar linha municipal na lista unificada
+  // abre a MESMA linha no iframe externo (dados 100% sintéticos do teste).
+  const combinedCtx=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
+  await combinedCtx.addInitScript(()=>{
+    try{localStorage.setItem('ruhoje:restaurant:v1','setorial-i')}catch{}
+  });
+  try{
+    const combined=await combinedCtx.newPage();
+    await combined.route('https://tile.openstreetmap.org/**',route=>route.abort());
+    await combined.route('**/externo/catalog/manifest.json',route=>route.fulfill({
+      status:200,contentType:'application/json',
+      body:JSON.stringify({gtfsVersion:'synthetic-qa',routes:2,stops:2,stopTimeRows:4,
+        feedStartDate:'20260101',feedEndDate:'20261231'})
+    }));
+    await combined.route('**/externo/catalog/routes.json',route=>route.fulfill({
+      status:200,contentType:'application/json',
+      body:JSON.stringify([{id:'R1',code:'101',name:'BH Centro'},
+        {id:'R2',code:'901',name:'BH Pampulha'}])
+    }));
+    await combined.route('**/externo/',route=>route.fulfill({
+      status:200,contentType:'text/html',
+      body:'<!doctype html><html data-app-mode="free-static"><head><title>Externo QA</title></head><body>'+
+        '<input id="lineInput"><datalist id="routeList"><option value="101"></option><option value="901"></option></datalist>'+
+        '<button id="goLine" onclick="document.getElementById(\'lineTitle\').textContent=document.getElementById(\'lineInput\').value;document.getElementById(\'lineExit\').hidden=false">Abrir linha</button>'+
+        '<button id="lineExit" hidden>Fechar</button><h3 id="lineTitle"></h3></body></html>'
+    }));
+    await combined.goto(url+'?aba=onibus',{waitUntil:'domcontentloaded'});
+    await combined.locator('#restaurant-dialog').evaluate(e=>e.close());
+    const sheet=combined.frameLocator('#interno-frame');
+    await sheet.locator('#quick-linhas').click();
+    await sheet.locator('[data-externo-code="101"]').waitFor({state:'attached',timeout:15000});
+    assert.match(await sheet.locator('#bus-lines-list .bus-line-group').first().innerText(),/Internos/);
+    await sheet.locator('[data-externo-code="101"]').click();
+    await combined.locator('#externo-frame').waitFor({state:'visible',timeout:15000});
+    assert.equal(new URL(combined.url()).searchParams.get('tipo'),'externo');
+    assert.equal(new URL(combined.url()).searchParams.get('linha'),'101');
+    await combined.frameLocator('#externo-frame').locator('#lineTitle').getByText('101').waitFor({timeout:12000});
+    await combined.locator('#onibus-back-interno').click();
+    await sheet.locator('[data-line-filter="all"]').waitFor({state:'visible'});
+    assert.equal(await sheet.locator('[data-line-filter="all"]').getAttribute('aria-pressed'),'true');
+    assert.match(await sheet.locator('#bus-lines-list .bus-line-group').first().innerText(),/Internos/);
+    assert.equal(new URL(combined.url()).searchParams.get('tipo'),null);
+  }finally{await combinedCtx.close()}
   // Pacote municipal simulado: abrir somente se manifesto e iframe estático
   // forem válidos; isso não afirma que os dados oficiais foram homologados.
   const busValidCtx=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
