@@ -15,8 +15,8 @@ test('a aba Ônibus substitui Interno sem acrescentar quinta aba no Hub',async()
   assert.match(html,/id="tab-interno"[^>]*aria-controls="interno-page"/);
   assert.doesNotMatch(html,/id="onibus-filter-interno"/);
   assert.doesNotMatch(html,/id="onibus-filter-externo"/);
-  assert.match(html,/id="onibus-back-interno"/);
-  assert.match(html,/id="onibus-empty-title"/);
+  assert.doesNotMatch(html,/id="onibus-back-interno"/);
+  assert.doesNotMatch(html,/id="onibus-empty-title"/);
   const interno=await read('public/interno/index.html');
   assert.match(interno,/data-line-filter-toggle/);
   assert.match(interno,/id="map-filter-toggle"/);
@@ -26,7 +26,11 @@ test('a aba Ônibus substitui Interno sem acrescentar quinta aba no Hub',async()
   assert.ok(interno.indexOf("Internos <small>")<interno.indexOf("Municipais <small>"));
   assert.doesNotMatch(interno,/data-map-mode="external"/);
   assert.doesNotMatch(interno,/>Externos|>Externas/);
-  assert.match(interno,/hub:onibus:external-line/);
+  assert.match(interno,/hub:onibus:unified-selection/);
+  assert.match(interno,/function municipalStopView\(/);
+  assert.match(interno,/function municipalLineView\(/);
+  assert.match(interno,/function openMunicipal\(/);
+  assert.match(interno,/id="map-point-legend"/);
   assert.match(interno,/lines-filter-in-sheet/);
   assert.match(interno,/visibility:hidden;opacity:0;pointer-events:none/);
   assert.match(interno,/Municipais BH:/);
@@ -40,8 +44,9 @@ test('a aba Ônibus substitui Interno sem acrescentar quinta aba no Hub',async()
   assert.match(html,/<span>Ônibus<\/span>/);
   assert.equal((html.match(/id="tab-(menu|interno|festas|sobre)"/g)||[]).length,4);
   assert.match(html,/id="interno-frame"[^>]*src="\/interno"/);
-  assert.match(html,/id="externo-frame"[^>]*hidden/);
-  assert.doesNotMatch(html,/id="externo-frame"[^>]*src=/);
+  assert.doesNotMatch(html,/id="externo-frame"/);
+  assert.equal((html.match(/id="interno-frame"/g)||[]).length,1);
+  assert.match(html,/id="interno-frame"[^>]*title="Ônibus — pontos e linhas internas e municipais"/);
 });
 
 test('links canônicos e legados preservam filtro sem falsificar tipo',async()=>{
@@ -49,14 +54,15 @@ test('links canônicos e legados preservam filtro sem falsificar tipo',async()=>
   assert.equal(modeFromSearch('?aba=interno'),'interno');
   assert.equal(modeFromSearch('?tipo=desconhecido'),'interno');
   const module=await read('public/assets/onibus.js');
-  assert.ok(module.includes("e.data?.type==='hub:onibus:external-line'"));
-  assert.ok(module.includes("e.data?.type==='hub:onibus:external-stop'"));
-  assert.ok(module.includes("function focusExternalStop()"));
-  assert.ok(module.includes("frame.loading='eager'"));
-  assert.ok(module.includes("dataset?.appMode==='free-static'"));
+  assert.ok(module.includes("type:FOCUS_STOP"));
+  assert.ok(module.includes("type:FOCUS_LINE"));
+  assert.ok(module.includes("hub:onibus:unified-selection"));
+  assert.ok(module.includes("if(stop&&/^[0-9]{1,20}$/.test(stop))"));
+  assert.ok(module.includes("if($('onibus-interno'))$('onibus-interno').hidden=false"));
+  assert.ok(!module.includes("frame.loading='eager'"));
 });
 
-test('manifest GTFS municipal é validado antes de montar iframe',()=>{
+test('manifest GTFS municipal é validado antes de montar o catálogo local',()=>{
   const sample={gtfsVersion:'202611161919',routes:326,stops:9925,stopTimeRows:6691004,
     feedStartDate:'20261101',feedEndDate:'20261231'};
   assert.ok(validExternoManifest(sample,'20261122'));

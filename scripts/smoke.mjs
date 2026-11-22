@@ -764,12 +764,17 @@ try {
 
     await sheet.locator('[data-externo-code="101"]').waitFor({state:'attached',timeout:15000});
     assert.match(await sheet.locator('#bus-lines-list .bus-line-group').first().innerText(),/Internos/);
+    assert.equal(await sheet.locator('input#line-q').count(),1,
+      'Hub deve oferecer apenas uma busca de linha');
     await sheet.locator('[data-externo-code="101"]').click();
-    await combined.locator('#externo-frame').waitFor({state:'visible',timeout:15000});
+    await sheet.locator('.municipal-detail-title').getByText(/101/).waitFor({timeout:15000});
+    assert.equal(await combined.locator('#externo-frame').count(),0,
+      'Selecionar municipal não deve trocar para segundo aplicativo');
     assert.equal(new URL(combined.url()).searchParams.get('tipo'),'externo');
     assert.equal(new URL(combined.url()).searchParams.get('linha'),'101');
-    await combined.frameLocator('#externo-frame').locator('#lineTitle').getByText('101').waitFor({timeout:12000});
-    await combined.locator('#onibus-back-interno').click();
+    assert.equal(await sheet.locator('.municipal-direction-list').count(),1);
+    assert.equal(await sheet.locator('[data-municipal-pattern]').count(),1);
+    await sheet.locator('[data-municipal-list]').click();
     await sheet.locator('[data-line-filter-toggle]').waitFor({state:'visible'});
     assert.equal(await sheet.locator('[data-line-filter-toggle]').getAttribute('data-current-filter'),'all');
     assert.match(await sheet.locator('#bus-lines-list .bus-line-group').first().innerText(),/Internos/);
@@ -782,34 +787,52 @@ try {
     assert.equal(await sheet.locator('#list [data-fav-stop-list]').first()
       .getAttribute('data-fav-stop-list'),stopId,'Ponto favorito deve subir sem seção especial');
     await sheet.locator('[data-ext-stop="14784087"]').click();
-    await combined.locator('#onibus-externo').waitFor({state:'visible',timeout:10000});
+    await sheet.locator('.municipal-detail-title').getByText('Av. Campus Principal').waitFor();
     assert.equal(new URL(combined.url()).searchParams.get('ponto'),'14784087');
-    assert.equal(await combined.locator('#onibus-external-line').textContent(),'· Av. Campus Principal');
-    await combined.locator('#onibus-back-interno').click();
+    assert.equal(await sheet.locator('#map-point-legend').count(),1);
     assert.equal(await sheet.locator('#map-source-switch').isVisible(),true);
+    await sheet.locator('[data-municipal-list]').click();
+    assert.match(await sheet.locator('#bus-lines-list .bus-line-group').first().innerText(),/Internos/);
   }finally{await combinedCtx.close()}
-  // Pacote municipal simulado: abrir somente se manifesto e iframe estático
-  // forem válidos; isso não afirma que os dados oficiais foram homologados.
+  // A URL municipal legada deve abrir O MESMO mapa unificado, sem segundo campo.
   const busValidCtx=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
   await busValidCtx.addInitScript(()=>{
-    try{localStorage.setItem('ruhoje:restaurant:v1','setorial-i');}catch{}
+    try{localStorage.setItem('ruhoje:restaurant:v1','setorial-i')}catch{}
   });
   try{
     const validPage=await busValidCtx.newPage();
+    await validPage.route('https://tile.openstreetmap.org/**',route=>route.abort());
     await validPage.route('**/externo/catalog/manifest.json',route=>route.fulfill({
       status:200,contentType:'application/json',
       body:JSON.stringify({gtfsVersion:'synthetic-qa',routes:2,stops:2,
         stopTimeRows:4,feedStartDate:'20260101',feedEndDate:'20261231'})
     }));
-    await validPage.route('**/externo/',route=>route.fulfill({
-      status:200,contentType:'text/html',
-      body:'<!doctype html><html data-app-mode="free-static"><head><title>Externo QA</title></head><body><main>Mapa Externo em teste</main></body></html>'
+    await validPage.route('**/externo/catalog/routes.json',route=>route.fulfill({
+      status:200,contentType:'application/json',
+      body:JSON.stringify([{id:'R1',code:'101',name:'BH Centro'}])
     }));
-    await validPage.goto(url+'?aba=onibus&tipo=externo',{waitUntil:'domcontentloaded'});
-    await validPage.locator('#externo-frame').waitFor({state:'visible',timeout:15000});
-    assert.equal(await validPage.locator('#onibus-empty').isVisible(),false);
-    assert.equal(await validPage.frameLocator('#externo-frame').locator('main').innerText(),'Mapa Externo em teste');
-    assert.equal(await validPage.locator('#onibus-external-label').count(),0);
+    await validPage.route('**/externo/catalog/stops.json',route=>route.fulfill({
+      status:200,contentType:'application/json',
+      body:JSON.stringify({'14791950':['Ponto de teste municipal',-19.870,-43.960]})
+    }));
+    await validPage.route('**/externo/catalog/patterns.json',route=>route.fulfill({
+      status:200,contentType:'application/json',
+      body:JSON.stringify([{id:'p-qa',route:'R1',headsign:'Centro',
+        stops:['14791950'],tripCount:2}])
+    }));
+    await validPage.goto(url+'?aba=onibus&tipo=externo&ponto=14791950',
+      {waitUntil:'domcontentloaded'});
+    await validPage.locator('#restaurant-dialog').evaluate(el=>el.close());
+    const inner=validPage.frameLocator('#interno-frame');
+    await inner.locator('.municipal-detail-title').getByText('Ponto de teste municipal')
+      .waitFor({timeout:15000});
+    assert.equal(await validPage.locator('#externo-frame').count(),0);
+    assert.equal(await validPage.locator('#interno-frame').isVisible(),true);
+    assert.equal(await inner.locator('#map-point-legend').count(),1);
+    await inner.locator('[data-municipal-list]').click();
+    await inner.locator('[data-line-filter-toggle]').waitFor({state:'visible'});
+    assert.match(await inner.locator('#bus-lines-list .bus-line-group').first().innerText(),/Internos/);
+    assert.equal(await inner.locator('input#line-q').count(),1);
   }finally{await busValidCtx.close();}
   // Primeira visita por link direto não deve bloquear Festas com o seletor de RU.
   const firstVisit=await browser.newContext({serviceWorkers:'block'});
