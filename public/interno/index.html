@@ -380,6 +380,24 @@ i{font-style:normal;font-size:14px;font-weight:400}
 @media(prefers-reduced-motion:reduce){
   #sheet:not(.detail) #list .row{transition:none}
 }
+
+/* Evitar controles duplicados: em Linhas aberto o filtro da lista já controla
+   o mapa; em Pontos ou com o painel recolhido o botão flutuante reaparece. */
+#map-source-switch{transition:opacity .16s ease}
+@media(max-width:759px){
+  body.lines-filter-in-sheet #map-source-switch{
+    visibility:hidden;opacity:0;pointer-events:none
+  }
+  #sheet.lines-mode .bus-line-tools{
+    position:sticky;top:-7px;z-index:4;
+    background:var(--bg);padding:10px 0 9px;margin:0 0 5px;
+  }
+}
+.filter-cycle:active{transform:scale(.98)}
+@media(prefers-reduced-motion:reduce){
+  #map-source-switch{transition:none}
+  .filter-cycle:active{transform:none}
+}
 </style>
 </head>
 <body>
@@ -698,6 +716,8 @@ function syncSheet(){
   sh.classList.toggle('detail',view.t!=='home');
   sh.classList.toggle('lines-mode',tab==='linhas'&&view.t==='home');
   const expanded=state!=='peek';
+  document.body.classList.toggle('lines-filter-in-sheet',
+    innerWidth<760&&tab==='linhas'&&view.t==='home'&&expanded);
   el.setAttribute('aria-hidden',String(!expanded));
   for(const b of [document.getElementById('grab'),document.getElementById('sheet-toggle'),...document.querySelectorAll('[data-sheet-toggle]')].filter(Boolean)){
     b.setAttribute('aria-expanded',String(expanded));
@@ -737,8 +757,8 @@ function renderTransportMap(){
     if(mapMode==='internal'&&map.hasLayer(busPins))map.removeLayer(busPins);
     else if(mapMode!=='internal'&&!map.hasLayer(busPins))busPins.addTo(map);
   }
-  if(mapMode==='internal'){mapStatus('49 pontos internos · GPS exclusivo do Externo BH');return}
-  if(!externalStops){mapStatus('Externo BH: '+(externalState==='loading'?'carregando pontos…':'dados indisponíveis'));return}
+  if(mapMode==='internal'){mapStatus('49 pontos internos · GPS disponível nos municipais');return}
+  if(!externalStops){mapStatus('Municipais BH: '+(externalState==='loading'?'carregando pontos…':'dados indisponíveis'));return}
   if(map.getZoom()<12){if(busPins)busPins.clearLayers();mapStatus('Aproxime o mapa para visualizar os pontos municipais');return}
   const bounds=map.getBounds().pad(.13),center=map.getCenter();
   const nearby=Object.entries(externalStops).filter(([id,p])=>Array.isArray(p)&&

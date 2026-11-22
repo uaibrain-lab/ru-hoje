@@ -484,6 +484,10 @@ try {
       const cycle=bus.locator('[data-line-filter-toggle]');
       await cycle.waitFor({state:'visible'});
       assert.equal(await cycle.getAttribute('data-current-filter'),'all');
+      if(width<=759){
+        assert.equal(await bus.locator('#map-source-switch').isVisible(),false,
+          'Linhas aberto não deve duplicar o filtro sobre o mapa');
+      }
       const dimensions=await cycle.evaluate(n=>({
         height:n.getBoundingClientRect().height,width:n.getBoundingClientRect().width
       }));
@@ -534,6 +538,8 @@ try {
       }
       await bus.locator('#quick-pontos').click();
       await bus.locator('#q').waitFor({state:'visible'});
+      assert.equal(await bus.locator('#map-source-switch').isVisible(),true,
+        'Em Pontos, o filtro flutuante do mapa deve estar disponível');
       assert.equal(await bus.locator('#sheet').evaluate(e=>e.classList.contains('peek')),false,
         'Busca do Interno deve abrir sem painel recolhido');
       assert.equal(menuRequests,0,'Interno não deve disparar consulta FUMP');
