@@ -90,12 +90,45 @@ async function relayOfficialApi(url,req,res,fetchFn){
   }
   return true;
 }
+// Read-only GPS relay ONLY for the 127.0.0.1 development preview.
+// The SUMOB Worker allows https://hubufmg.web.app but not local browser Origin.
+// The relay sends no user coordinates, never accepts arbitrary URLs or methods.
+async function relayLocalGps(url,req,res,fetchFn){
+  if(url.pathname!=='/__hub_gps')return false;
+  if(req.method!=='GET'){
+    send(res,405,'Somente GET.');return true;
+  }
+  const routes=(url.searchParams.get('routes')||'').split(',');
+  if(url.searchParams.size!==2||url.searchParams.get('source')!=='GTFS_RT'||
+    routes.length<1||routes.length>30||routes.some(x=>!(/^[A-Za-z0-9_.:-]{1,70}$/).test(x))||
+    new Set(routes).size!==routes.length){
+    send(res,400,'Parâmetros GPS inválidos.');return true;
+  }
+  const target=new URL('https://externo-bh-gps-free.hubufmg.workers.dev/api/gps');
+  target.searchParams.set('source','GTFS_RT');target.searchParams.set('routes',routes.join(','));
+  try{
+    const response=await fetchFn(target.href,{method:'GET',cache:'no-store',redirect:'error',
+      headers:{Accept:'application/json',Origin:'https://hubufmg.web.app'},
+      signal:AbortSignal.timeout(15000)});
+    const data=await response.text();
+    if(data.length>400000){
+      send(res,502,'Resposta GPS excede limite.');return true;
+    }
+    send(res,response.status,data,'application/json; charset=utf-8',req.method);
+  }catch(error){
+    console.error('[PREVIEW] GPS SUMOB indisponível:',error?.name||'Error');
+    send(res,502,JSON.stringify({available:false,error:'GPS_WORKER_UNAVAILABLE'}),
+      'application/json; charset=utf-8');
+  }
+  return true;
+}
 export function createPreviewServer({fetchFn=fetch}={}){
   return http.createServer(async(req,res)=>{
     let url;
     try{url=new URL(req.url,'http://127.0.0.1');}
     catch{send(res,400,'URL inválida.');return;}
     if(await relayOfficialApi(url,req,res,fetchFn))return;
+    if(await relayLocalGps(url,req,res,fetchFn))return;
     if(req.method!=='GET'&&req.method!=='HEAD'){
       send(res,405,'Somente GET e HEAD.');return;
     }

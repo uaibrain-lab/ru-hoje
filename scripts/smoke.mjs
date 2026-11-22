@@ -365,7 +365,7 @@ try {
     assert.deepEqual([...new Set(styles.map(x=>JSON.stringify(x)))],
       [JSON.stringify({fill:'#ffffff',stroke:'#334155',width:'2.5'})],
       'Os marcadores não podem ter aro azul nem variar o contorno');
-    assert.match(await bus.locator('body').evaluate(()=>document.title),/Interno/);
+    assert.match(await bus.locator('body').evaluate(()=>document.title),/Ônibus/);
     await busPage.waitForFunction(()=>!!navigator.serviceWorker.controller,null,{timeout:20000});
     await busPage.reload({waitUntil:'domcontentloaded'});
     await busPage.evaluate(()=>document.getElementById('restaurant-dialog')?.close());
