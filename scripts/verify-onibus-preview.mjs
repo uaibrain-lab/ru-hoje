@@ -22,6 +22,11 @@ const [manifest,qa,arrivals,stops,routes,patterns,hub,interno]=await Promise.all
   file('interno/index.html')
 ]);
 const today=localServiceDay();
+const legacy=await file('externo/index.html');
+assert.match(legacy,/HUB_ONIBUS_LEGACY_ALIAS/,
+  'A interface externa antiga precisa redirecionar ao Hub');
+assert.doesNotMatch(legacy,/Veículos encontrados|Escolha o sentido|GPS recente/,
+  'O antigo painel vazio não pode ser publicado');
 
 assert.ok(validExternoManifest(manifest,today),'O GTFS municipal não está válido para hoje');
 assert.equal(qa.status,'passed','O pacote municipal não passou pelo QA oficial');
@@ -44,7 +49,7 @@ assert.ok(patterns.some(p=>p.stops?.includes(stopId)&&routeIds.has(String(p.rout
 
 assert.match(hub,/id="interno-frame"/,'Iframe unificado ausente');
 assert.doesNotMatch(hub,/id="externo-frame"/,'Segunda interface não pode reaparecer');
-assert.match(interno,/data-line-filter-toggle/,'Filtro de linhas ausente');
+assert.match(interno,/data-line-filter-mode/,'Filtro de linhas ausente');
 assert.match(interno,/id="map-filter-toggle"/,'Filtro do mapa ausente');
 assert.match(interno,/id="map-point-legend"/,'Legenda visual ausente');
 assert.ok(interno.indexOf('Internos <small>')<interno.indexOf('Municipais <small>'),
