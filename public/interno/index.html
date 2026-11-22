@@ -1079,12 +1079,17 @@ async function populateMunicipalStop(id){
         '<span aria-hidden="true">›</span></button>').join(''):
       '<p class="note">Linhas deste ponto indisponíveis neste momento.</p>';
   }
+  void refreshMunicipalSchedules(id);
+}
+async function refreshMunicipalSchedules(id){
+  if(view.t!=='municipal-stop'||String(view.id)!==String(id)||document.hidden)return;
   const target=document.getElementById('municipal-stop-schedules');
   if(!target||view.t!=='municipal-stop'||String(view.id)!==String(id))return;
   try{
     const {scheduledForStop}=await import('/assets/municipal-schedules.js');
     const result=await scheduledForStop(id);
-    if(view.t!=='municipal-stop'||String(view.id)!==String(id))return;
+    if(!target.isConnected||view.t!=='municipal-stop'||String(view.id)!==String(id))return;
+    if(target.contains(document.activeElement))return;
     const rows=result.items||[];
     target.innerHTML=result.expired?
       '<p class="note">A validade do GTFS terminou. Horários não exibidos.</p>':
@@ -1097,10 +1102,11 @@ async function populateMunicipalStop(id){
         '</span></button>').join('')+'</div>':
       '<p class="note">Nenhum horário programado nas próximas cinco horas neste ponto.</p>';
   }catch{
-    if(view.t==='municipal-stop'&&String(view.id)===String(id))
+    if(target.isConnected&&view.t==='municipal-stop'&&String(view.id)===String(id))
       target.innerHTML='<p class="note">Horários programados indisponíveis agora. '+
         'As linhas e os pontos continuam acessíveis.</p>';
   }
+
 }
 async function openMunicipal(kind,value,{announce=true}={}){
   const id=String(value||'');
@@ -1563,10 +1569,27 @@ window.addEventListener('message',e=>{
 });
 document.getElementById('loc').addEventListener('click',locate);
 // Atualizar horários apenas quando necessários, preservando foco, busca e popovers.
+let lastMunicipalScheduleCheck=Date.now();
 setInterval(()=>{
   if(document.hidden || (window.frameElement && !window.frameElement.getClientRects().length))return;
-  if(el.contains(document.activeElement))return;
-  if(view.t==='home')return;
+  // Keep live arrivals and official service alerts fresh while the rider
+  // reads the stop, even if a link or a search field currently has focus.
+  // Do not rebuild the entire panel: that would discard focus and scroll.
+  if(view.t==='municipal-stop'){
+    const id=String(view.id);
+    void populateMunicipalRealtime(id);
+    void populateMunicipalAlerts();
+    if(Date.now()-lastMunicipalScheduleCheck>=120000){
+      lastMunicipalScheduleCheck=Date.now();
+      void refreshMunicipalSchedules(id);
+    }
+    return;
+  }
+  if(view.t==='municipal-line'){
+    void populateMunicipalAlerts();
+    return;
+  }
+  if(view.t==='home'||el.contains(document.activeElement))return;
   const scroll=el.scrollTop;
   render();
   el.scrollTop=scroll;
