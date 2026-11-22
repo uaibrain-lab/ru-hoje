@@ -446,6 +446,18 @@ try {
       await mobile.route('https://tile.openstreetmap.org/**',route=>route.abort());
       await mobile.goto(url+'?festas-demo=1&aba=festas',{waitUntil:'domcontentloaded'});
       await mobile.locator('.festas-page .festa-card--compact').waitFor({state:'visible'});
+      assert.equal(await mobile.locator('#festas-heading').isVisible(),true,
+        'Festas precisa de um título visível');
+      const festivalHeader=await mobile.locator('#festas-heading').evaluate(node=>{
+        const rect=node.getBoundingClientRect(),card=document.querySelector('.festa-card--compact').getBoundingClientRect();
+        return {left:rect.left,right:rect.right,bottom:rect.bottom,cardTop:card.top};
+      });
+      assert.ok(festivalHeader.bottom+10<=festivalHeader.cardTop,
+        'Respiro entre título e eventos insuficiente: '+JSON.stringify(festivalHeader));
+      if(width===390){
+        await fs.mkdir(path.resolve(ROOT,'../qa-results/menu-compact'),{recursive:true});
+        await mobile.screenshot({path:path.resolve(ROOT,'../qa-results/menu-compact/alltabs-festas-390.png')});
+      }
       assert.equal(menuRequests,0,'Festas não deve disparar consultas de cardápio no primeiro acesso');
       const layout=await mobile.evaluate(()=>{
         const card=document.querySelector('.festas-page .festa-card--compact');
@@ -467,6 +479,21 @@ try {
       assert.ok(layout.titleSize>=16,`Título pequeno em ${width}px: ${layout.titleSize}px`);
       await mobile.locator('#tab-sobre').click();
       assert.equal(new URL(mobile.url()).searchParams.get('aba'),'sobre');
+      assert.equal(await mobile.locator('.sobre-topic').count(),3,
+        'Sobre precisa de três regiões distintas');
+      const aboutLayout=await mobile.evaluate(()=>{
+        const sections=[...document.querySelectorAll('.sobre-topic')];
+        return {width:document.documentElement.scrollWidth,
+          gaps:sections.slice(1).map((n,i)=>n.getBoundingClientRect().top-
+            sections[i].getBoundingClientRect().bottom),
+          textSize:parseFloat(getComputedStyle(sections[0].querySelector('p')).fontSize)};
+      });
+      assert.ok(aboutLayout.width<=width+1,'Rolagem horizontal Sobre: '+JSON.stringify(aboutLayout));
+      assert.ok(aboutLayout.gaps.every(g=>g>=12),'Seções Sobre amontoadas: '+JSON.stringify(aboutLayout));
+      assert.ok(aboutLayout.textSize>=14,'Texto Sobre pequeno: '+JSON.stringify(aboutLayout));
+      if(width===390){
+        await mobile.screenshot({path:path.resolve(ROOT,'../qa-results/menu-compact/alltabs-sobre-390.png')});
+      }
       await mobile.goBack();
       await mobile.waitForFunction(()=>
         document.querySelector('#tab-festas')?.getAttribute('aria-current')==='page');
