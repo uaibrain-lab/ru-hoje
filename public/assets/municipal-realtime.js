@@ -6,6 +6,10 @@
 import {shardForStop,serviceActive} from './municipal-schedules.js';
 
 const ROOT='/externo/catalog/';
+// Static GTFS shards never change within a catalog version. Cache only the
+// rows for selected stops (not entire 256 buckets) to save mobile memory.
+const stopRowsCache=new Map();
+const MAX_CACHED_STOPS=12;
 const serviceDay=date=>String(date).slice(0,4)+'-'+String(date).slice(4,6)+'-'+String(date).slice(6,8);
 const dateOK=value=>{
   const text=String(value);
@@ -145,18 +149,40 @@ export async function tripDelaysForStop(stopId,updates,{fetchFn=fetch,now=Date.n
   const size=index.sizes?.[filename];
   if(!Number.isSafeInteger(size)||size<10||size>4000000)
     throw Error('TRIP_INDEX_BAD_SHARD');
-  const response=await fetchFn(ROOT+'rt-trips/'+filename+
-    '?v='+encodeURIComponent(index.version),{cache:'force-cache'});
-  if(!response.ok)throw Error('TRIP_INDEX_SHARD_HTTP_'+response.status);
-  const bytes=new Uint8Array(await response.arrayBuffer());
-  if(bytes.byteLength!==size)throw Error('TRIP_INDEX_CORRUPT_SHARD');
-  if(bytes[0]!==31||bytes[1]!==139||typeof DecompressionStream==='undefined')
-    throw Error('TRIP_INDEX_COMPRESSION_UNSUPPORTED');
-  const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
-  const decoded=JSON.parse(await new Response(stream).text());
-  if(!decoded||typeof decoded!=='object'||Array.isArray(decoded))
-    throw Error('TRIP_INDEX_BAD_FORMAT');
-  const rows=decoded[String(stopId)]||[];
-  if(!Array.isArray(rows)||rows.length>8000)throw Error('TRIP_INDEX_BAD_ROWS');
+  // Only the default network fetch uses the in-memory cache. Explicit
+  // fetchFn injection (QA or a new backend) always revalidates every file.
+  const key=index.version+'|'+String(stopId);
+  const useCache=fetchFn===fetch;
+  let cached=useCache?stopRowsCache.get(key):null;
+  if(cached&&cached.size!==size){
+    stopRowsCache.delete(key);
+    cached=null;
+  }
+  let rows=cached?.rows;
+  if(!rows){
+    const response=await fetchFn(ROOT+'rt-trips/'+filename+
+      '?v='+encodeURIComponent(index.version),{cache:'force-cache'});
+    if(!response.ok)throw Error('TRIP_INDEX_SHARD_HTTP_'+response.status);
+    const bytes=new Uint8Array(await response.arrayBuffer());
+    if(bytes.byteLength!==size)throw Error('TRIP_INDEX_CORRUPT_SHARD');
+    if(bytes[0]!==31||bytes[1]!==139||typeof DecompressionStream==='undefined')
+      throw Error('TRIP_INDEX_COMPRESSION_UNSUPPORTED');
+    const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+    const decoded=JSON.parse(await new Response(stream).text());
+    if(!decoded||typeof decoded!=='object'||Array.isArray(decoded))
+      throw Error('TRIP_INDEX_BAD_FORMAT');
+    rows=decoded[String(stopId)]||[];
+    if(!Array.isArray(rows)||rows.length>8000)throw Error('TRIP_INDEX_BAD_ROWS');
+    if(useCache){
+      // Refresh LRU order and cap memory; no vehicle/GPS data is retained.
+      stopRowsCache.delete(key);
+      stopRowsCache.set(key,{size,rows});
+      while(stopRowsCache.size>MAX_CACHED_STOPS)
+        stopRowsCache.delete(stopRowsCache.keys().next().value);
+    }
+  }else if(useCache){
+    stopRowsCache.delete(key);
+    stopRowsCache.set(key,cached);
+  }
   return projectOfficialDelays(updates,rows,{stopId,calendar,now});
 }
