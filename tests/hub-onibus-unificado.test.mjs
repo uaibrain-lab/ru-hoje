@@ -1,0 +1,112 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile,mkdtemp,rm,mkdir,writeFile,stat} from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {modeFromSearch,validExternoManifest,localServiceDay} from '../public/assets/onibus.js';
+import {validateExternoPackage} from '../scripts/stage-externo.mjs';
+const HERE=path.dirname(fileURLToPath(import.meta.url));
+const ROOT=path.resolve(HERE,'..');
+const read=async p=>readFile(path.join(ROOT,p),'utf8');
+
+test('a aba Ônibus substitui Interno sem acrescentar quinta aba no Hub',async()=>{
+  const html=await read('public/index.html');
+  assert.match(html,/id="tab-interno"[^>]*aria-controls="interno-page"/);
+  assert.match(html,/id="onibus-filter-interno"/);
+  assert.match(html,/id="onibus-filter-externo"/);
+  assert.match(html,/<span>Ônibus<\/span>/);
+  assert.equal((html.match(/id="tab-(menu|interno|festas|sobre)"/g)||[]).length,4);
+  assert.match(html,/id="interno-frame"[^>]*src="\/interno"/);
+  assert.match(html,/id="externo-frame"[^>]*hidden/);
+  assert.doesNotMatch(html,/id="externo-frame"[^>]*src=/);
+});
+
+test('links canônicos e legados preservam filtro sem falsificar tipo',()=>{
+  assert.equal(modeFromSearch('?aba=onibus&tipo=externo'),'externo');
+  assert.equal(modeFromSearch('?aba=interno'),'interno');
+  assert.equal(modeFromSearch('?tipo=desconhecido'),'interno');
+});
+
+test('manifest GTFS municipal é validado antes de montar iframe',()=>{
+  const sample={gtfsVersion:'202611161919',routes:326,stops:9925,stopTimeRows:6691004,
+    feedStartDate:'20261101',feedEndDate:'20261231'};
+  assert.ok(validExternoManifest(sample,'20261122'));
+  assert.ok(!validExternoManifest(sample,'20270101'));
+  assert.ok(!validExternoManifest({...sample,routes:0},'20261122'));
+  assert.ok(!validExternoManifest({...sample,feedEndDate:'invalid'},'20261122'));
+  assert.ok(!validExternoManifest({...sample,stopTimeRows:0},'20261122'));
+  assert.equal(localServiceDay(new Date('2026-11-23T01:00:00Z')),'20261122');
+});
+
+test('o SW do Hub não intercepta nem substitui /externo pelo RU',async()=>{
+  const sw=await read('public/service-worker.js');
+  assert.match(sw,/url\.pathname==='\/externo' \|\| url\.pathname\.startsWith\('\/externo\/'\)/);
+  assert.ok(!sw.includes("'/externo', '/index.html'"));
+  const js=await read('public/assets/festas.js');
+  assert.match(js,/activateOnibus\(\)/);
+  assert.match(js,/if\(name==='onibus'\)return 'interno'/);
+  const app=await read('public/assets/app.js');
+  assert.match(app,/!\\['interno','onibus','festas','sobre'\\]/);
+});
+
+async function fixture(action){
+  const dir=await mkdtemp(path.join(os.tmpdir(),'hub-externo-qa-'));
+  try{
+    const required=['index.html','app.js','style.css','hub-parity.css','static-bus.js',
+     'static-arrivals.js','service-worker.js','gps-config.json',
+     'catalog/manifest.json','catalog/routes.json','catalog/stops.json','catalog/patterns.json',
+     'catalog/shapes.json','catalog/metro.json','catalog/arrivals/index.json','catalog/arrivals/calendar.json'];
+    for(const relative of required){
+      const f=path.join(dir,relative);
+      await mkdir(path.dirname(f),{recursive:true});
+      await writeFile(f,'{}');
+    }
+    await writeFile(path.join(dir,'index.html'),
+      '<html data-app-mode="free-static"><button id="quick-rotas" hidden disabled>Rotas</button></html>');
+    await writeFile(path.join(dir,'gps-config.json'),'{"enabled":false}');
+    await writeFile(path.join(dir,'catalog/manifest.json'),JSON.stringify({
+      gtfsVersion:'fixture',routes:2,stops:2,stopTimeRows:4,
+      feedStartDate:'20260101',feedEndDate:'20261231'}));
+    const sizes={};
+    for(let i=0;i<256;i++){
+      const name=i.toString(16).padStart(2,'0')+'.json.gz';
+      const data=Buffer.from([31,139,8,0,0,0,0,0,0,3]);
+      await writeFile(path.join(dir,'catalog/arrivals',name),data);
+      sizes[name]=data.byteLength;
+    }
+    await writeFile(path.join(dir,'catalog/arrivals/index.json'),JSON.stringify({
+      schema:1,buckets:256,version:'fixture',validThrough:'20261231',
+      stopCount:2,sizes}));
+    return await action(dir);
+  }finally{await rm(dir,{recursive:true,force:true});}
+}
+
+test('staging aceita apenas pacote completo de homologação municipal',async()=>{
+  await fixture(async dir=>{
+    const r=await validateExternoPackage(dir,'20261122');
+    assert.equal(r.scheduledStops,2);
+    assert.equal(r.gtfsVersion,'fixture');
+  });
+});
+
+test('staging rejeita GPS ligado, arquivo ausente e GTFS vencido',async()=>{
+  await fixture(async dir=>{
+    await writeFile(path.join(dir,'gps-config.json'),'{"enabled":true}');
+    await assert.rejects(validateExternoPackage(dir,'20261122'),/GPS_NOT_APPROVED/);
+    await writeFile(path.join(dir,'gps-config.json'),'{"enabled":false}');
+    await rm(path.join(dir,'catalog/arrivals/ff.json.gz'));
+    await assert.rejects(validateExternoPackage(dir,'20261122'),/BUCKET_MISSING_OR_CORRUPT/);
+    await assert.rejects(validateExternoPackage(dir,'20270101'),/GTFS_NOT_CURRENT/);
+  });
+});
+
+test('staging rejeita versão incompatível do índice mesmo quando existem 256 arquivos',async()=>{
+  await fixture(async dir=>{
+    const location=path.join(dir,'catalog/arrivals/index.json');
+    const data=JSON.parse(await readFile(location,'utf8'));
+    data.version='stale';
+    await writeFile(location,JSON.stringify(data));
+    await assert.rejects(validateExternoPackage(dir,'20261122'),/ARRIVALS_INDEX_MISMATCH/);
+  });
+});

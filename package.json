@@ -26,7 +26,8 @@
     "test:festas:admin": "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File scripts/Test-Festas-Security-Standalone.ps1 -Suite Admin",
     "keys:festas": "node scripts/generate-festas-keys.mjs",
     "test:festas:security:legacy": "firebase emulators:exec --config firebase.emulators.json --project demo-bandeco --only auth,firestore \"node scripts/test-festas-security-emulator.mjs && node scripts/test-festas-security-adversarial.mjs && node scripts/test-festas-deletion-emulator.mjs\"",
-    "test:festas:admin:legacy": "firebase emulators:exec --config firebase.emulators.json --project demo-bandeco --only auth,firestore \"node scripts/test-festas-v253-admin-emulator.mjs && node scripts/test-festas-security-emulator.mjs\""
+    "test:festas:admin:legacy": "firebase emulators:exec --config firebase.emulators.json --project demo-bandeco --only auth,firestore \"node scripts/test-festas-v253-admin-emulator.mjs && node scripts/test-festas-security-emulator.mjs\"",
+    "stage:externo": "node scripts/stage-externo.mjs"
   },
   "dependencies": {
     "@google-cloud/firestore": "9.4.0",
