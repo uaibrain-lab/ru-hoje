@@ -29,12 +29,25 @@ if (-not (Test-Path -LiteralPath (Join-Path $workerRepo '.git'))) {
     & git.exe clone --single-branch --branch $branch --depth 1 --filter=blob:none $remote $workerRepo
     if ($LASTEXITCODE -ne 0) { throw 'Clone privado falhou: autentique seu GitHub no Git.' }
 }
+# Reuso de pasta local nao pode descartar mudancas nao salvas nem executar
+# codigo de um remoto diferente. O repositorio fixado deve estar limpo.
+$originUrl = (& git.exe -C $workerRepo remote get-url origin).Trim()
+if ($LASTEXITCODE -ne 0 -or
+    $originUrl -ne $remote) { throw 'Origem Git inesperada: checkout bloqueado.' }
+$dirty = @(& git.exe -C $workerRepo status --porcelain)
+if ($LASTEXITCODE -ne 0 -or $dirty.Count -gt 0) {
+    throw 'Worker QA possui alteracoes locais. Use uma pasta nova; nenhuma alteracao foi descartada.'
+}
 & git.exe -C $workerRepo fetch --depth 1 origin $sha
 if ($LASTEXITCODE -ne 0) { throw 'Nao foi possivel obter o commit QA fixado.' }
-& git.exe -C $workerRepo checkout --force --detach $sha
+& git.exe -C $workerRepo checkout --detach $sha
 if ($LASTEXITCODE -ne 0) { throw 'Nao foi possivel fixar a versao do Worker QA.' }
 $installed = (& git.exe -C $workerRepo rev-parse HEAD).Trim()
 if ($installed -ne $sha) { throw 'Commit do Worker difere da versao validada.' }
+$dirty = @(& git.exe -C $workerRepo status --porcelain)
+if ($LASTEXITCODE -ne 0 -or $dirty.Count -gt 0) {
+    throw 'Working tree do Worker QA nao esta limpa; publicacao bloqueada.'
+}
 
 $workerScript = Join-Path $workerRepo 'scripts\Publicar-ETA-Worker-Homologacao.ps1'
 if (-not (Test-Path -LiteralPath $workerScript -PathType Leaf)) {
