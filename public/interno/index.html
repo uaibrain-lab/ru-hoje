@@ -128,12 +128,9 @@ i{font-style:normal;font-size:14px;font-weight:400}
 .nm{flex:1}.tm{font-variant-numeric:tabular-nums;color:var(--mut)}.stp.foc .tm{color:var(--ink);font-weight:700}
 
 /* Filtro de procedência na subaba Linhas; linha interna é a primeira opção. */
-.bus-line-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;
-  border:1px solid var(--line);background:var(--bg2);padding:4px;border-radius:14px;margin:0 0 8px}
-.bus-line-filters button{background:transparent;border:1px solid transparent;border-radius:10px;
-  font-weight:750;font-size:12px;min-height:44px;padding:7px 5px;color:var(--mut)}
-.bus-line-filters button[aria-pressed="true"]{background:var(--bg);color:var(--ink);border-color:var(--line);
-  box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.bus-line-filters{display:flex;align-items:center;justify-content:flex-end;min-height:44px;margin:0 0 8px}
+.bus-line-filters .filter-cycle{background:var(--bg2);box-shadow:none;padding:8px 12px}
+
 .bus-line-group{display:flex;align-items:center;justify-content:space-between;gap:6px;
   font-size:13px;font-weight:850;margin:13px 0 9px}
 .bus-line-group small{font-size:11px;font-weight:550;color:var(--mut)}
@@ -169,13 +166,16 @@ i{font-style:normal;font-size:14px;font-weight:400}
 }
 /* Controle visível sobre o mapa: sem obrigar a abrir a lista de linhas. */
 #map-source-switch{position:fixed;z-index:485;top:calc(60px + env(safe-area-inset-top,0px));
-  left:50%;transform:translateX(-50%);width:min(275px,calc(100vw - 20px));display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;padding:4px;background:var(--bg);
-  border:1px solid var(--line);border-radius:13px;box-shadow:var(--sh)}
-#map-source-switch button{border:0;background:transparent;min-height:36px;
-  padding:6px 4px;font-size:12px;font-weight:800;color:var(--mut);border-radius:10px}
-#map-source-switch button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
-#map-source-switch button:focus-visible{outline:3px solid #2e90fa;outline-offset:2px}
+  left:50%;transform:translateX(-50%);max-width:calc(100vw - 110px)}
+.filter-cycle{display:inline-flex;justify-content:center;align-items:center;gap:7px;
+  border:1px solid var(--line);border-radius:999px;background:var(--bg);color:var(--ink);
+  min-height:44px;padding:9px 12px;box-shadow:0 3px 13px #0002;font-size:12px;
+  font-weight:750;white-space:nowrap;cursor:pointer;touch-action:manipulation}
+.filter-cycle svg{width:16px;height:16px;flex:none}
+.filter-cycle .filter-next{font-size:13px;color:var(--mut);line-height:1;margin-left:2px}
+.filter-cycle:focus-visible{outline:3px solid #2e90fa;outline-offset:2px}
+#map-filter-toggle{min-width:104px}
+
 #map-data-status{position:fixed;z-index:480;top:calc(108px + env(safe-area-inset-top,0px));
  left:50%;transform:translateX(-50%);pointer-events:none;text-align:center;
  width:max-content;max-width:min(350px,calc(100vw - 20px));margin:0;
@@ -191,10 +191,11 @@ i{font-style:normal;font-size:14px;font-weight:400}
 </head>
 <body>
 <div id="map"></div>
-<div id="map-source-switch" role="group" aria-label="Mostrar no mapa">
-  <button type="button" data-map-mode="all" aria-pressed="true">Todos</button>
-  <button type="button" data-map-mode="internal" aria-pressed="false">Internos</button>
-  <button type="button" data-map-mode="external" aria-pressed="false">Externos</button>
+<div id="map-source-switch">
+  <button type="button" id="map-filter-toggle" class="filter-cycle" data-current-filter="all"
+    aria-label="Filtrar mapa: Todos. Toque para ver Internos" title="Filtrar mapa: Todos. Toque para ver Internos">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16M7 11h10M10 17h4"/></svg><span id="map-filter-label">Todos</span><span class="filter-next" aria-hidden="true">⌄</span>
+  </button>
 </div>
 <p id="map-data-status" role="status" aria-live="polite">Carregando pontos de BH…</p>
 <p id="map-basemap-notice" role="status" hidden>Mapa-base indisponível; as paradas e linhas continuam disponíveis. Consulte os horários no painel.</p>
@@ -231,6 +232,12 @@ const walk=d=>Math.max(1,Math.round(d/80));
 
 let cat=dow()===6?'sabado':'diasUteis',tab='pontos',q='',view={t:'home'},hist=[],near={s:'loading'},sheetState=innerWidth>=760?'full':'mid';
 let mapMode='all',externalStops=null,externalPatterns=null;
+const FILTER_MODES=['all','internal','external'];
+const FILTER_LABELS={all:'Todos',internal:'Internos',external:'Municipais'};
+const FILTER_ICON="<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 5h16M7 11h10M10 17h4\"/></svg>";
+function nextFilter(mode){return FILTER_MODES[(FILTER_MODES.indexOf(mode)+1)%FILTER_MODES.length]}
+function filterHint(context,mode){return 'Filtrar '+context+': '+FILTER_LABELS[mode]+'. Toque para ver '+FILTER_LABELS[nextFilter(mode)]}
+
 let internalPins=null,municipalPins=null,busPins=null,gpsLast=0,gpsBusy=false,gpsCount=0;
 
 let lineFilter='all',lineQuery='',externalRoutes=[],externalState='idle',externalExpanded=false,
@@ -409,7 +416,7 @@ function stopsList(){
     }).join('')||'<p>Nenhum ponto interno corresponde à busca.</p>';
   }
   if(mapMode!=='internal'){
-    out+='<h3 class="bus-line-group">Externos <small>Municipais BH</small></h3>';
+    out+='<h3 class="bus-line-group">Municipais <small>Municipais BH</small></h3>';
     if(externalStops){
       const center=map?.getCenter()||{lat:-19.8695,lng:-43.9675};
       const items=Object.entries(externalStops).filter(([id,p])=>Array.isArray(p)&&
@@ -444,23 +451,23 @@ function combinedLineRows(){
     }).join('')||'<p class="bus-line-hint">Nenhuma linha interna corresponde à busca.</p>';
   }
   if(lineFilter!=='internal'){
-    output+='<h3 class="bus-line-group">Externos <small>BH · '+
+    output+='<h3 class="bus-line-group">Municipais <small>BH · '+
       (externalState==='ready'?externalRoutes.length+' linhas':'horários programados')+'</small></h3>';
     if(externalState==='ready'){
       const result=externalRoutes.filter(r=>norm(r.code+' '+r.name).includes(search))
         .sort((a,b)=>Number(lineFav.includes('ext:'+b.code))-Number(lineFav.includes('ext:'+a.code)));
       const visible=externalExpanded||search?result:result.slice(0,40);
       output+=visible.map(r=>starRow('<button class="row bus-line-external" data-externo-code="'+esc(r.code)+
-        '" aria-label="Abrir linha externa '+esc(r.code)+'"><span class="bus-code">'+esc(r.code)+'</span>'+
+        '" aria-label="Abrir linha municipal '+esc(r.code)+'"><span class="bus-code">'+esc(r.code)+'</span>'+
         '<span class="info"><b>'+esc(r.name)+'</b><small>Municipal BH · GPS e horários</small></span>'+
         '<span aria-hidden="true">›</span></button>','ext:'+r.code,lineFav.includes('ext:'+r.code),
         'linha '+r.code,'fav-list-line')).join('')||
         '<p class="bus-line-hint">Nenhuma linha municipal corresponde à busca.</p>';
       if(!externalExpanded&&!search&&result.length>40)
-        output+='<button class="bus-line-more" data-external-more>Mostrar todas as '+result.length+' linhas externas</button>';
+        output+='<button class="bus-line-more" data-external-more>Mostrar todas as '+result.length+' linhas municipais</button>';
     }else{
       output+='<p class="bus-line-hint" role="status">'+(externalState==='loading'?'Carregando linhas municipais…':
-        externalState==='expired'?'GTFS municipal fora da validade.':'Linhas externas temporariamente indisponíveis.')+'</p>';
+        externalState==='expired'?'GTFS municipal fora da validade.':'Linhas municipais temporariamente indisponíveis.')+'</p>';
       if(externalState!=='loading')output+='<button class="bus-line-more" data-external-retry>Tentar novamente</button>';
     }
     output+='<p class="bus-line-note">Posição GPS em tempo real quando disponível; horários programados.</p>';
@@ -468,9 +475,10 @@ function combinedLineRows(){
   return output;
 }
 function linesList(){
-  return '<div class="bus-line-filters" role="group" aria-label="Filtrar linhas de ônibus">'+
-    [['all','Todas'],['internal','Internas'],['external','Externas']].map(([id,text])=>
-    '<button type="button" data-line-filter="'+id+'" aria-pressed="'+(lineFilter===id)+'">'+text+'</button>').join('')+
+  return '<div class="bus-line-filters">'+
+    '<button type="button" class="filter-cycle" data-line-filter-toggle data-current-filter="'+lineFilter+
+    '" aria-label="'+filterHint('linhas',lineFilter)+'" title="'+filterHint('linhas',lineFilter)+'">'+
+    FILTER_ICON+'<span>'+FILTER_LABELS[lineFilter]+'</span><span class="filter-next" aria-hidden="true">⌄</span></button>'+
     '</div><label class="srch bus-line-search" for="line-q">'+ic('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>')+
     '<input type="search" id="line-q" placeholder="Buscar nome ou número" value="'+esc(lineQuery)+'"></label>'+
     (lineFilter==='external'?'':catBar())+
@@ -567,7 +575,7 @@ async function loadMapMunicipal(){
     externalStops=ss;externalPatterns=pp;
     renderTransportMap();
     if(tab==='pontos'&&view.t==='home')render();
-  }catch{externalStops=null;mapStatus('Pontos externos temporariamente indisponíveis')}
+  }catch{externalStops=null;mapStatus('Pontos municipais temporariamente indisponíveis')}
 }
 async function updateGpsNearMap(marked){
   if(!map||!marked.length||!externalPatterns||!externalRoutes?.length||
@@ -620,17 +628,20 @@ async function updateGpsNearMap(marked){
   finally{gpsBusy=false}
 }
 function changeMapMode(mode){
-  if(!['all','internal','external'].includes(mode))return;
-  mapMode=mode;
-  for(const b of document.querySelectorAll('[data-map-mode]'))
-    b.setAttribute('aria-pressed',String(b.dataset.mapMode===mode));
-  lineFilter=mode;renderTransportMap();
+  if(!FILTER_MODES.includes(mode))return;
+  const focusWasLine=document.activeElement?.hasAttribute('data-line-filter-toggle');
+  mapMode=mode;lineFilter=mode;
+  const button=document.getElementById('map-filter-toggle');
+  button.dataset.currentFilter=mode;button.title=filterHint('mapa',mode);
+  button.setAttribute('aria-label',button.title);
+  document.getElementById('map-filter-label').textContent=FILTER_LABELS[mode];
+  renderTransportMap();
   if(view.t==='home')render();
+  if(focusWasLine)el.querySelector('[data-line-filter-toggle]')?.focus();
   if(mode!=='internal')void loadMapMunicipal();
 }
-document.getElementById('map-source-switch').addEventListener('click',e=>{
-  const button=e.target.closest('[data-map-mode]');
-  if(button)changeMapMode(button.dataset.mapMode);
+document.getElementById('map-filter-toggle').addEventListener('click',()=>{
+  changeMapMode(nextFilter(mapMode));
 });
 if(window.L){
   map=L.map('map',{zoomControl:false}).setView([-19.8695,-43.9675],15);
@@ -723,7 +734,7 @@ el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
    else if(d.extStop)window.parent.postMessage({type:'hub:onibus:external-stop',
      id:d.extStop,name:String(externalStops?.[d.extStop]?.[0]||'')},location.origin);
   else if(d.externoCode)window.parent.postMessage({type:'hub:onibus:external-line',code:d.externoCode},window.location.origin);
-  else if(d.lineFilter){lineFilter=d.lineFilter;changeMapMode(d.lineFilter);if(lineFilter!=='internal')void loadMapMunicipal();}
+  else if(d.lineFilterToggle!==undefined){changeMapMode(nextFilter(lineFilter));}
   else if(d.externalMore!==undefined){externalExpanded=true;repaintLineList()}
   else if(d.externalRetry!==undefined)void loadExternalLines(true);
   else if(d.tab){pickQuickTab(d.tab)}
