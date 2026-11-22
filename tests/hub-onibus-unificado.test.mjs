@@ -78,15 +78,20 @@ async function fixture(action){
     }
     await writeFile(path.join(dir,'index.html'),
       '<html data-app-mode="free-static"><button id="quick-rotas" hidden disabled>Rotas</button></html>');
-    await writeFile(path.join(dir,'gps-config.json'),'{"enabled":false}');
+    await writeFile(path.join(dir,'gps-config.json'),JSON.stringify({
+      enabled:true,provider:'gtfs_rt',refreshSeconds:45,
+      endpoint:'https://externo-bh-gps-free.hubufmg.workers.dev/api/gps'}));
     await writeFile(path.join(dir,'hub-v1-build.json'),JSON.stringify({
       gtfsVersion:'fixture',validThrough:'20261231',scheduledStops:2,shards:256,
-      routingEnabled:false,metropolitanEnabled:false,gpsEnabled:false}));
+      routingEnabled:false,metropolitanEnabled:false,gpsEnabled:true}));
     await writeFile(path.join(dir,'hub-v1-qa.json'),JSON.stringify({
       schema:1,status:'passed',scope:'municipal-bh-and-metro',
       sourceSha256:'a'.repeat(64),validatedServiceDate:'20261122',
       gtfsVersion:'fixture',validThrough:'20261231',routes:2,shards:256,scheduledStops:2,
-      routingEnabled:false,metropolitanEnabled:false,gpsEnabled:false}));
+      routingEnabled:false,metropolitanEnabled:false,gpsEnabled:true,
+      gpsProvider:'gtfs_rt',gpsProbePassed:true,
+      gpsProbeCheckedAtUtc:'2026-11-22T17:00:00Z',
+      gpsRecentPositionsObserved:2}));
     await writeFile(path.join(dir,'catalog/manifest.json'),JSON.stringify({
       gtfsVersion:'fixture',routes:2,stops:2,stopTimeRows:4,
       feedStartDate:'20260101',feedEndDate:'20261231'}));
@@ -112,11 +117,13 @@ test('staging aceita apenas pacote completo de homologação municipal',async()=
   });
 });
 
-test('staging rejeita GPS ligado, arquivo ausente e GTFS vencido',async()=>{
+test('staging rejeita GPS desligado, arquivo ausente e GTFS vencido',async()=>{
   await fixture(async dir=>{
-    await writeFile(path.join(dir,'gps-config.json'),'{"enabled":true}');
-    await assert.rejects(validateExternoPackage(dir,'20261122'),/GPS_NOT_APPROVED/);
     await writeFile(path.join(dir,'gps-config.json'),'{"enabled":false}');
+    await assert.rejects(validateExternoPackage(dir,'20261122'),/LIVE_GPS_REQUIRED/);
+    await writeFile(path.join(dir,'gps-config.json'),JSON.stringify({
+      enabled:true,provider:'gtfs_rt',refreshSeconds:45,
+      endpoint:'https://externo-bh-gps-free.hubufmg.workers.dev/api/gps'}));
     await rm(path.join(dir,'catalog/arrivals/ff.json.gz'));
     await assert.rejects(validateExternoPackage(dir,'20261122'),/BUCKET_MISSING_OR_CORRUPT/);
     await assert.rejects(validateExternoPackage(dir,'20270101'),/GTFS_NOT_CURRENT/);
@@ -139,6 +146,16 @@ test('staging bloqueia pacote sem comprovação de QA oficial',async()=>{
     await rm(pathToQa);
     await assert.rejects(validateExternoPackage(dir,'20261122'),/REQUIRED_FILE_INVALID/);
     await writeFile(pathToQa,JSON.stringify({schema:1,status:'blocked',scope:'municipal-bh-and-metro'}));
+    await assert.rejects(validateExternoPackage(dir,'20261122'),/QA_NOT_APPROVED/);
+  });
+});
+
+test('staging rejeita pacote sem prova recente do feed GPS SUMOB',async()=>{
+  await fixture(async dir=>{
+    const file=path.join(dir,'hub-v1-qa.json');
+    const qa=JSON.parse(await readFile(file,'utf8'));
+    qa.gpsRecentPositionsObserved=0;
+    await writeFile(file,JSON.stringify(qa));
     await assert.rejects(validateExternoPackage(dir,'20261122'),/QA_NOT_APPROVED/);
   });
 });

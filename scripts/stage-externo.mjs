@@ -57,7 +57,12 @@ export async function validateExternoPackage(source,day=localServiceDay()){
      qa.gtfsVersion!==built.gtfsVersion||
      qa.validThrough!==built.validThrough||
      qa.routingEnabled!==false||qa.metropolitanEnabled!==false||
-     qa.gpsEnabled!==false||qa.shards!==256||built.shards!==256||
+     qa.gpsEnabled!==true||qa.gpsProvider!=='gtfs_rt'||
+     qa.gpsProbePassed!==true||
+     !Number.isInteger(qa.gpsRecentPositionsObserved)||
+     qa.gpsRecentPositionsObserved<1||
+     !qa.gpsProbeCheckedAtUtc||
+     qa.shards!==256||built.shards!==256||
      !/^[0-9]{8}$/.test(qa.validatedServiceDate||''))
     throw Error('EXTERNO_V1_QA_NOT_APPROVED');
   const html=await readFile(path.join(root,'index.html'),'utf8');
@@ -66,7 +71,9 @@ export async function validateExternoPackage(source,day=localServiceDay()){
   if(!/id="quick-rotas"[^>]*\bhidden\b[^>]*\bdisabled\b/.test(html))
     throw Error('EXTERNO_V1_ROUTES_MUST_REMAIN_HIDDEN');
   const gps=await json(path.join(root,'gps-config.json'));
-  if(gps.enabled!==false)throw Error('EXTERNO_GPS_NOT_APPROVED');
+  if(gps.enabled!==true||gps.provider!=='gtfs_rt'||
+     gps.endpoint!=='https://externo-bh-gps-free.hubufmg.workers.dev/api/gps')
+    throw Error('EXTERNO_V1_LIVE_GPS_REQUIRED');
   const manifest=await json(path.join(root,'catalog/manifest.json'));
   if(!validExternoManifest(manifest,day))throw Error('EXTERNO_GTFS_NOT_CURRENT');
   if(qa.gtfsVersion!==manifest.gtfsVersion||
@@ -92,10 +99,11 @@ export async function validateExternoPackage(source,day=localServiceDay()){
         throw Error('INVALID_BUCKET');
     }catch{throw Error('EXTERNO_ARRIVALS_BUCKET_MISSING_OR_CORRUPT: '+name);}
   }
-  if(built.routingEnabled!==false||built.metropolitanEnabled!==false||built.gpsEnabled!==false)
+  if(built.routingEnabled!==false||built.metropolitanEnabled!==false||built.gpsEnabled!==true)
     throw Error('EXTERNO_V1_DEFERRED_FEATURES_ENABLED');
   const {total,files}=await allFiles(root);
   return {sourceSha256:qa.sourceSha256,qaDate:qa.validatedServiceDate,
+    gpsEnabled:true,gpsRecentPositionsObserved:qa.gpsRecentPositionsObserved,
     gtfsVersion:manifest.gtfsVersion,feedEndDate:manifest.feedEndDate,
     routes:manifest.routes,stops:manifest.stops,scheduledStops:index.stopCount,
     bytes:total,files};

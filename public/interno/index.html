@@ -352,7 +352,7 @@ function combinedLineRows(){
       output+='<p class="bus-line-hint" role="status">'+(externalState==='loading'?'Carregando linhas municipais…':externalState==='expired'?'GTFS municipal vencido; os horários externos estão ocultos.':'As linhas externas ainda não estão disponíveis nesta prévia.')+'</p>';
       if(externalState!=='loading')output+='<button class="bus-line-more" data-external-retry>Tentar carregar linhas externas</button>';
     }
-    output+='<p class="bus-line-note">Horários programados, não previsões em tempo real.</p>';
+    output+='<p class="bus-line-note">Posições GPS em tempo real quando disponíveis; chegadas por horário programado.</p>';
   }
   return output;
 }
