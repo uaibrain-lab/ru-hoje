@@ -232,6 +232,10 @@ try {
   // Um erro pontual no D+2 também não pode impedir que o D+3 seja coletado.
   const passive=await browser.newPage({viewport:{width:390,height:844},serviceWorkers:'block'});
   await passive.addInitScript(stale=>{
+    // addInitScript runs inside same-origin transport iframes too. Restrict
+    // stale-menu fixture to the top page; otherwise a late /interno iframe
+    // can recreate deleted legacy keys after app.js has already migrated.
+    if(window.top!==window)return;
     localStorage.setItem('ruhoje:restaurant:v1','setorial-i');
     localStorage.setItem('ruhoje:menus:v1',JSON.stringify(stale));
     localStorage.setItem('ruhoje:live-menus:v1',JSON.stringify({
