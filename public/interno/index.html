@@ -350,6 +350,36 @@ i{font-style:normal;font-size:14px;font-weight:400}
 #map-feedback #map-basemap-notice:not([hidden]){
   border-top:1px solid var(--line);padding-top:6px;
 }
+
+/* Pontos: cartões tão leves quanto Linhas, com títulos longos controlados
+   sem remover a informação completa do DOM ou do leitor de tela. */
+#sheet:not(.detail) #list .bus-fav-row{gap:9px;margin:0 0 10px}
+#sheet:not(.detail) #list .row{
+  min-height:67px;padding:10px 12px;margin:0;gap:9px;
+  background:var(--bg);border:1px solid var(--line);
+  border-radius:14px;transition:background-color .14s ease,border-color .14s ease;
+}
+#sheet:not(.detail) #list .row .pin{
+  margin:0 7px;flex:none;width:13px;height:13px;border-width:3px;
+}
+#sheet:not(.detail) #list .row .info b{
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+  overflow:hidden;font-size:14px;font-weight:720;line-height:1.35;letter-spacing:-.1px;
+}
+#sheet:not(.detail) #list .row .info small{
+  display:block;margin-top:4px;font-size:12px;line-height:1.3;
+}
+#sheet:not(.detail) #list .bus-fav-row>.star{
+  background:var(--bg);border-color:var(--line);
+}
+#sheet:not(.detail) #list .row:focus-visible,
+#sheet:not(.detail) #list .star:focus-visible{outline:3px solid #2e90fa;outline-offset:2px}
+@media(hover:hover){
+  #sheet:not(.detail) #list .row:hover{background:var(--bg2);border-color:var(--mut)}
+}
+@media(prefers-reduced-motion:reduce){
+  #sheet:not(.detail) #list .row{transition:none}
+}
 </style>
 </head>
 <body>
@@ -651,7 +681,7 @@ function linesList(){
     (lineFilter==='external'?'':catBar())+
     '<div id="bus-lines-list">'+combinedLineRows()+'</div>';
 }
-function home(){return `${tab==='pontos'?`<label class="srch">${ic('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>')}<input id="q" type="search" placeholder="Buscar ponto pelo nome" value="${esc(q)}"></label><div id="list">${stopsList()}</div>`:linesList()}${tab==='pontos'?catBar():''}${banner()}`}
+function home(){return `${tab==='pontos'?`<label class="srch">${ic('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>')}<input id="q" type="search" placeholder="Buscar ponto" aria-label="Buscar ponto pelo nome" value="${esc(q)}"></label><div id="list">${stopsList()}</div>`:linesList()}${tab==='pontos'?catBar():''}${banner()}`}
 
 function render(){
   const fallback=!window.L?'<p class="note" role="status">Mapa indisponível nesta conexão. Você ainda pode pesquisar pontos e consultar horários; para exibir o mapa, conecte-se à internet.</p>':'';
