@@ -26,7 +26,7 @@ test('a aba Ônibus substitui Interno sem acrescentar quinta aba no Hub',async()
   assert.doesNotMatch(html,/id="externo-frame"[^>]*src=/);
 });
 
-test('links canônicos e legados preservam filtro sem falsificar tipo',()=>{
+test('links canônicos e legados preservam filtro sem falsificar tipo',async()=>{
   assert.equal(modeFromSearch('?aba=onibus&tipo=externo'),'externo');
   assert.equal(modeFromSearch('?aba=interno'),'interno');
   assert.equal(modeFromSearch('?tipo=desconhecido'),'interno');
