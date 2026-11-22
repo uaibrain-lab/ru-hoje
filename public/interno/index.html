@@ -201,7 +201,7 @@ i{font-style:normal;font-size:14px;font-weight:400}
 <div id="map-source-switch">
   <button type="button" id="map-filter-toggle" class="filter-cycle" data-current-filter="all"
     aria-label="Filtrar mapa: Todos. Toque para ver Internos" title="Filtrar mapa: Todos. Toque para ver Internos">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16l-6.5 8v5l-3 2v-7L4 5z"/></svg><span id="map-filter-label">Todos</span><span class="filter-next" aria-hidden="true">⌄</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16l-6.5 8v5l-3 2v-7L4 5z"/></svg><span id="map-filter-label">Todos</span><span class="filter-next" aria-hidden="true">↻</span>
   </button>
 </div>
 <p id="map-data-status" role="status" aria-live="polite">Carregando pontos de BH…</p>
@@ -423,7 +423,7 @@ function stopsList(){
     }).join('')||'<p>Nenhum ponto interno corresponde à busca.</p>';
   }
   if(mapMode!=='internal'){
-    out+='<h3 class="bus-line-group">Municipais <small>Municipais BH</small></h3>';
+    out+='<h3 class="bus-line-group">Municipais <small>Belo Horizonte</small></h3>';
     if(externalStops){
       const center=map?.getCenter()||{lat:-19.8695,lng:-43.9675};
       const items=Object.entries(externalStops).filter(([id,p])=>Array.isArray(p)&&
@@ -485,7 +485,7 @@ function linesList(){
   return '<div class="bus-line-filters">'+
     '<button type="button" class="filter-cycle" data-line-filter-toggle data-current-filter="'+lineFilter+
     '" aria-label="'+filterHint('linhas',lineFilter)+'" title="'+filterHint('linhas',lineFilter)+'">'+
-    FILTER_ICON+'<span>'+FILTER_LABELS[lineFilter]+'</span><span class="filter-next" aria-hidden="true">⌄</span></button>'+
+    FILTER_ICON+'<span>'+FILTER_LABELS[lineFilter]+'</span><span class="filter-next" aria-hidden="true">↻</span></button>'+
     '</div><label class="srch bus-line-search" for="line-q">'+ic('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>')+
     '<input type="search" id="line-q" placeholder="Buscar nome ou número" value="'+esc(lineQuery)+'"></label>'+
     (lineFilter==='external'?'':catBar())+
