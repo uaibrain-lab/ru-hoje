@@ -547,50 +547,42 @@ try {
       assert.equal(await filterAll.getAttribute('aria-pressed'),'true');
       assert.match(await bus.locator('#bus-lines-list .bus-line-group').first().innerText(),/Internos/);
       if(width===390){
-        // Recolher Linhas devolve o filtro ao mapa; reabrir devolve à lista.
+        // Legenda de camadas disponível mesmo com lista recolhida.
         const toggle=bus.locator('#sheet-toggle');
-        await toggle.click(); // painel intermediário → ampliado
-        await toggle.click(); // ampliado → recolhido
-        assert.equal(await bus.locator('#map-source-switch').isVisible(),true,
-          'Mapa não pode perder o filtro quando Linhas é recolhido');
-        await toggle.click(); // recolhido → intermediário
-        assert.equal(await bus.locator('#map-source-switch').isVisible(),false,
-          'Filtro de Linhas não deve ser duplicado sobre mapa aberto');
-        // Teste geométrico: controles no mapa e ferramentas em Linhas não se sobrepõem.
+        await toggle.click();await toggle.click();
+        assert.equal(await bus.locator('#map-point-legend').isVisible(),true);
+        await toggle.click();
+        assert.equal(await bus.locator('#map-filter-toggle').count(),0);
         const blocks=await bus.locator('body').evaluate(()=>{
           const b=selector=>{const n=document.querySelector(selector);if(!n)return null;
             const r=n.getBoundingClientRect();return {left:r.left,right:r.right,
               top:r.top,bottom:r.bottom,width:r.width,height:r.height,hidden:n.hidden};};
-          return {loc:b('#loc'),mapFilter:b('#map-filter-toggle'),
-            zoom:b('.leaflet-control-zoom'),status:b('#map-data-status'),
+          return {loc:b('#loc'),legend:b('#map-feedback'),zoom:b('.leaflet-control-zoom'),
             offline:b('#map-basemap-notice'),sheet:b('#sheet'),
             search:b('.bus-line-search'),listFilter:b('.bus-line-filters')};
         });
-        for(const key of ['loc','mapFilter','zoom','status','sheet','search','listFilter'])
-          assert.ok(blocks[key],`Layout Ônibus sem ${key}: ${JSON.stringify(blocks)}`);
-        assert.ok(blocks.loc.right+8<=blocks.mapFilter.left,
-          'Localização e filtro se sobrepõem: '+JSON.stringify(blocks));
-        assert.ok(blocks.mapFilter.right+3<=blocks.zoom.left,
-          'Filtro e zoom se sobrepõem: '+JSON.stringify(blocks));
-        assert.ok(blocks.mapFilter.bottom+8<=blocks.status.top,
-          'Filtro sobrepõe status do mapa: '+JSON.stringify(blocks));
+        for(const key of ['loc','legend','zoom','sheet','search','listFilter'])
+          assert.ok(blocks[key],`Layout ônibus sem ${key}: ${JSON.stringify(blocks)}`);
+        assert.ok(blocks.loc.top>=blocks.zoom.bottom+8,
+          'Localização abaixo do zoom: '+JSON.stringify(blocks));
+        assert.ok(blocks.legend.right+8<=blocks.zoom.left,
+          'Legenda sobrepõe zoom: '+JSON.stringify(blocks));
+        assert.ok(blocks.legend.bottom+8<=blocks.sheet.top,
+          'Legenda coberta pelo painel: '+JSON.stringify(blocks));
         assert.ok(blocks.search.bottom<=blocks.listFilter.top+3&&
           blocks.listFilter.top-blocks.search.bottom<=18&&
           blocks.listFilter.width>=blocks.search.width-8,
-          'Busca e filtros devem ocupar faixas compactas separadas, sem buscas duplicadas: '+JSON.stringify(blocks));
-        if(blocks.offline&&!blocks.offline.hidden){
-          assert.ok(blocks.status.bottom+3<=blocks.offline.top,
-            'Avisos do mapa sobrepostos: '+JSON.stringify(blocks));
+          'Busca e filtro em linhas separadas: '+JSON.stringify(blocks));
+        if(blocks.offline&&!blocks.offline.hidden)
           assert.ok(blocks.offline.bottom+12<=blocks.sheet.top,
-            'Aviso do mapa coberto pelo painel: '+JSON.stringify(blocks));
-        }
+            'Aviso de mapa-base coberto pelo painel: '+JSON.stringify(blocks));
         await fs.mkdir(path.resolve(ROOT,'../qa-results/menu-compact'),{recursive:true});
         await mobile.screenshot({path:path.resolve(ROOT,'../qa-results/menu-compact/onibus-linhas-390.png')});
       }
       await bus.locator('#quick-pontos').click();
       await bus.locator('#q').waitFor({state:'visible'});
-      assert.equal(await bus.locator('#map-source-switch').isVisible(),true,
-        'Em Pontos, o filtro flutuante do mapa deve estar disponível');
+      assert.equal(await bus.locator('#map-point-legend').isVisible(),true,
+        'Legenda disponível na aba Pontos');
       assert.equal(await bus.locator('#sheet').evaluate(e=>e.classList.contains('peek')),false,
         'Busca do Interno deve abrir sem painel recolhido');
       assert.equal(menuRequests,0,'Interno não deve disparar consulta FUMP');
@@ -730,19 +722,23 @@ try {
     await combined.goto(url+'?aba=onibus',{waitUntil:'domcontentloaded'});
     await combined.locator('#restaurant-dialog').evaluate(e=>e.close());
     const sheet=combined.frameLocator('#interno-frame');
-    const mapFilter=sheet.locator('#map-filter-toggle');
-     await mapFilter.waitFor({state:'visible'});
-     assert.equal(await mapFilter.getAttribute('data-current-filter'),'all');
-     const target=await mapFilter.evaluate(n=>n.getBoundingClientRect().toJSON());
-     assert.ok(target.width<160&&target.height>=44,'Filtro do mapa deve ser compacto e tocável');
-     await mapFilter.click();
-     assert.equal(await mapFilter.getAttribute('data-current-filter'),'internal');
-     await mapFilter.click();
-     assert.equal(await mapFilter.getAttribute('data-current-filter'),'external');
-     assert.equal(await sheet.locator('#map-filter-label').innerText(),'Municipais');
-     await mapFilter.click();
-     assert.equal(await mapFilter.getAttribute('data-current-filter'),'all');
-     await sheet.locator('#map-data-status').getByText(/GPS ao vivo:/).waitFor({timeout:15000});
+    const internalEye=sheet.locator('#toggle-internal-points');
+    const municipalEye=sheet.locator('#toggle-municipal-points');
+    await internalEye.waitFor({state:'visible'});
+    assert.equal(await internalEye.getAttribute('aria-pressed'),'true');
+    assert.equal(await municipalEye.getAttribute('aria-pressed'),'true');
+    const target=await municipalEye.evaluate(n=>n.getBoundingClientRect().toJSON());
+    assert.ok(target.height>=44&&target.width<180,'Legenda compacta e tocável');
+    await municipalEye.click();
+    assert.equal(await municipalEye.getAttribute('aria-pressed'),'false');
+    assert.equal(await internalEye.getAttribute('aria-pressed'),'true');
+    await internalEye.click();
+    assert.equal(await internalEye.getAttribute('aria-pressed'),'false');
+    await municipalEye.click();
+    assert.equal(await municipalEye.getAttribute('aria-pressed'),'true');
+    await internalEye.click();
+    assert.equal(await internalEye.getAttribute('aria-pressed'),'true');
+    await sheet.locator('.gps-bus-pin').first().waitFor({state:'attached',timeout:15000});
     assert.equal(await sheet.locator('.gps-bus-pin').count(),1);
     // Mobile compacto real: a aba deve continuar utilizável mesmo dentro do
     // iframe do Hub, que tem largura interna menor que a tela de 320 px.
@@ -751,13 +747,14 @@ try {
       const rect=q=>{const n=document.querySelector(q);if(!n)return null;
         const r=n.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width}};
       return {width:innerWidth,scrollWidth:document.documentElement.scrollWidth,
-        loc:rect('#loc'),filter:rect('#map-filter-toggle'),
-        zoom:rect('.leaflet-control-zoom')};
+        loc:rect('#loc'),legend:rect('#map-feedback'),zoom:rect('.leaflet-control-zoom')};
     });
-    assert.ok(narrow.loc&&narrow.filter&&narrow.zoom,'Faltou controle essencial em 320px');
-    assert.ok(narrow.scrollWidth<=narrow.width+1,'Rolagem horizontal interna em 320px: '+JSON.stringify(narrow));
-    assert.ok(narrow.loc.right+6<=narrow.filter.left,'Localização sobrepõe filtro em 320px: '+JSON.stringify(narrow));
-    assert.ok(narrow.filter.right+3<=narrow.zoom.left,'Filtro sobrepõe zoom em 320px: '+JSON.stringify(narrow));
+    assert.ok(narrow.loc&&narrow.legend&&narrow.zoom,'Faltou controle em 320px');
+    assert.ok(narrow.scrollWidth<=narrow.width+1,'Rolagem horizontal em 320px: '+JSON.stringify(narrow));
+    assert.ok(narrow.loc.top>=narrow.zoom.bottom+8,
+      'Localização abaixo do zoom: '+JSON.stringify(narrow));
+    assert.ok(narrow.legend.right+8<=narrow.zoom.left,
+      'Legenda sobrepõe zoom em 320px: '+JSON.stringify(narrow));
     await fs.mkdir(path.resolve(ROOT,'../qa-results/menu-compact'),{recursive:true});
     await combined.screenshot({path:path.resolve(ROOT,'../qa-results/menu-compact/onibus-320.png')});
     await combined.setViewportSize({width:390,height:844});
