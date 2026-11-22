@@ -445,6 +445,12 @@ i{font-style:normal;font-size:14px;font-weight:400}
 .map-legend-symbol--internal{width:13px;height:13px;border:3px solid #334155;background:#fff}
 .map-legend-symbol--municipal{width:13px;height:13px;border:1px solid #fff;background:#7556c9;box-shadow:0 0 0 1px #7556c9}
 @media(max-width:759px){#sheet.detail:not(.peek){height:min(62dvh,540px)}}
+/* Geolocalização compacta no canto superior direito, imediatamente abaixo
+   do controle Leaflet de zoom (topright), sem sobreposição. */
+#top{top:calc(89px + env(safe-area-inset-top,0px));right:10px;left:auto;padding:0}
+#loc{display:grid;place-items:center;min-width:44px;width:44px;height:44px;min-height:44px;
+  padding:0;gap:0;border-radius:12px;box-shadow:0 3px 12px #0002}
+#loc .ic{width:21px;height:21px}
 </style>
 </head>
 <body>
@@ -463,7 +469,7 @@ i{font-style:normal;font-size:14px;font-weight:400}
     <span id="legend-municipal"><i class="map-legend-symbol map-legend-symbol--municipal" aria-hidden="true"></i>Municipais BH</span>
   </div>
 </div>
-<div id="top"><button class="fab" id="loc" aria-label="Encontrar ponto perto de mim"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/></svg>Perto de mim</button></div>
+<div id="top"><button class="fab" id="loc" type="button" aria-label="Encontrar ponto perto de mim" title="Minha localização"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/></svg></button></div>
 <section id="sheet" aria-label="Consulta de linhas e pontos do Interno UFMG">
   <button type="button" id="grab" aria-label="Recolher painel" aria-expanded="true" aria-controls="body"></button>
   <div class="sheet-head" id="sheet-head">
