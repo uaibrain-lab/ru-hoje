@@ -156,8 +156,14 @@ try {
   const expectedSetorialIIOrder = (clockParts.hour * 60 + clockParts.minute) >= 870 ? ['Jantar','Almoço'] : ['Almoço','Jantar'];
   assert.deepEqual(await page.locator('.meal-card h3').allTextContents(),expectedSetorialIIOrder);
   assert.equal(await page.locator('.meal-card').filter({hasText:'Café indevido'}).count(),0);
-  await page.locator('.date-card').last().click();
-  await page.getByText('Cardápio ainda não divulgado').waitFor();
+  // A última data do calendário cai ocasionalmente no fim de semana:
+  // não confundir "sem atendimento regular" com "cardápio não divulgado".
+  const lastCard=page.locator('.date-card').last();
+  const noRegularService=await lastCard.getAttribute('data-no-regular-service');
+  await lastCard.click();
+  await page.getByText(noRegularService==='true'
+    ? 'Sem atendimento regular previsto'
+    : 'Cardápio ainda não divulgado').waitFor();
   // O endpoint técnico JSON da FUMP não é oferecido como link ao visitante.
   assert.equal(await page.getByRole('link',{name:/Abrir resposta oficial deste RU\/data/i}).count(),0);
   assert.equal(await page.locator('.no-menu a[href*=":3003/"]').count(),0);
