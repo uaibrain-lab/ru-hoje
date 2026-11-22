@@ -19,8 +19,13 @@ test('a aba Ônibus substitui Interno sem acrescentar quinta aba no Hub',async()
   assert.doesNotMatch(html,/id="onibus-empty-title"/);
   const interno=await read('public/interno/index.html');
   assert.match(interno,/data-line-filter-mode/);
-  assert.match(interno,/id="map-filter-toggle"/);
-  assert.match(interno,/data-current-filter="all"/);
+  assert.doesNotMatch(interno,/id="map-filter-toggle"/);
+  assert.match(interno,/id="toggle-internal-points"/);
+  assert.match(interno,/id="toggle-municipal-points"/);
+  assert.match(interno,/class="eye-closed"/);
+  assert.match(interno,/function toggleMapLayer\(source\)/);
+  assert.match(interno,/aria-label="Camadas de pontos"/);
+  assert.doesNotMatch(interno,/UFMG \+ BH ·/);
   assert.match(interno,/FILTER_MODES=\['all','internal','external'\]/);
   assert.match(interno,/external:'Municipais'/);
   assert.ok(interno.indexOf("Internos <small>")<interno.indexOf("Municipais <small>"));
@@ -39,7 +44,8 @@ test('a aba Ônibus substitui Interno sem acrescentar quinta aba no Hub',async()
   assert.match(interno,/visibility:hidden;opacity:0;pointer-events:none/);
   assert.match(interno,/Municipais BH:/);
   assert.match(interno,/class="gps-bus-shape"/);
-  assert.match(interno,/if\(mapMode==='internal'&&map\.hasLayer\(busPins\)\)map\.removeLayer\(busPins\)/);
+  assert.match(interno,/if\(busPins&&map\.hasLayer\(busPins\)\)map\.removeLayer\(busPins\)/);
+  assert.match(interno,/mapMode=internal\?\(municipal\?'all':'internal'\):\(municipal\?'external':'none'\)/);
   assert.match(interno,/Number\(v\.heading\)/);
   assert.doesNotMatch(interno,/function favRows\(/);
   assert.match(interno,/function starRow\(/);
