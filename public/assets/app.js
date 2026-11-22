@@ -585,7 +585,7 @@ function initTheme() {
  */
 function setupPwaUpdates() {
   if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
-  const releaseKey='ruhoje:sw-refresh:hub-v292-20261122-onibus-eta-real';
+  const releaseKey='ruhoje:sw-refresh:hub-v293-20261122-onibus-eta-route-code';
   const hadController=!!navigator.serviceWorker.controller;
   let reloadRequested=false;
   let reloading=false;
