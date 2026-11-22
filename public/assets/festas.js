@@ -1,6 +1,7 @@
 // Bandeco QA v2.6.0-RC1: público somente via Rules; exclusões cliente proibidas.
 // O sorteio oficial continua exclusivo do executor privado e não é autorizado em produção.
 import {backend} from './festas-backend.js';
+import {initOnibus,activateOnibus} from './onibus.js';
 import {clean,cleanRules,handle,httpsUrl,normalizeTicketUrl,maskName,normalizeTags,EVENT_TAGS,csvSafe,validateEvent,drawEligible,encryptPrivate,decryptPrivate,drawAtMs} from './festas-core.js';
 const $=id=>document.getElementById(id);
 const make=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=String(text);return n;};
@@ -53,6 +54,7 @@ function localizedDate(raw){if(!raw)return '';const [ymd,hm]=String(raw).split('
 function plural(count,singular,pluralForm){return `${count} ${count===1?singular:pluralForm}`;}
 function tabFromLocation(){
   const name=new URLSearchParams(window.location.search).get('aba');
+  if(name==='onibus')return 'interno'; // URL canônica, sem quebrar links antigos.
   return ['menu','interno','festas','sobre'].includes(name)?name:'menu';
 }
 function switchTab(tab,historyMode='push'){
@@ -67,11 +69,12 @@ function switchTab(tab,historyMode='push'){
     const button=$('tab-'+name);button.setAttribute('aria-current',name===tab?'page':'false');button.classList.toggle('is-active',name===tab);
   }
   if(tab==='festas')void refreshEvents();else stopPublicEventsListener();
-  if(tab==='interno')notifyInternoShown();
+  if(tab==='interno') {activateOnibus();if(!$('onibus-interno').hidden)notifyInternoShown();}
   if(changed && historyMode==='push'){
     const url=new URL(window.location.href);
     if(tab==='menu')url.searchParams.delete('aba');
-    else url.searchParams.set('aba',tab);
+    else url.searchParams.set('aba',tab==='interno'?'onibus':tab);
+    if(tab!=='interno')url.searchParams.delete('tipo');
     window.history.pushState({hubTab:tab},'',url);
   }
   if(changed){
@@ -697,6 +700,7 @@ function init(){
     side.classList.add('is-collapsed');collapse?.setAttribute('aria-expanded','false');
     collapse?.setAttribute('aria-label','Expandir menu lateral');
   }}catch{}
+  initOnibus();
   for(const tab of ['menu','festas','interno','sobre'])$('tab-'+tab).addEventListener('click',()=>switchTab(tab));
   window.addEventListener('popstate',()=>switchTab(tabFromLocation(),'none'));
   switchTab(tabFromLocation(),'none');

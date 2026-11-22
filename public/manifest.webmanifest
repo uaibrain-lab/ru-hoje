@@ -2,7 +2,7 @@
   "id": "/",
   "name": "Hub UFMG",
   "short_name": "Hub UFMG",
-  "description": "Cardápios, transporte interno, festas e serviços da comunidade universitária UFMG.",
+  "description": "Cardápios, ônibus internos UFMG, ônibus municipais de BH, metrô e festas.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

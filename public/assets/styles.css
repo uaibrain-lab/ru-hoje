@@ -1118,3 +1118,28 @@ dialog{background:var(--card);color:var(--ink);border-color:var(--line)}
     border-radius:20px 20px 0 0}
   .pwa-install-guide .dialog-inner{padding:23px 22px max(24px,env(safe-area-inset-bottom))}
 }
+
+/* Ônibus: Interno UFMG e Externo BH dividem uma única aba. */
+.onibus-page{min-width:0}
+.onibus-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;
+  width:min(100%,410px);padding:5px;margin:2px 0 12px;background:var(--surface-subtle);
+  border:1px solid var(--line);border-radius:15px}
+.onibus-filters button{border:0;border-radius:11px;min-height:44px;padding:10px 8px;
+  background:transparent;color:var(--muted);font:inherit;font-size:13px;font-weight:750;white-space:nowrap}
+.onibus-filters button.is-selected{color:var(--purpleDark);background:var(--card);box-shadow:0 2px 9px rgba(45,24,88,.10)}
+.onibus-filters button:focus-visible{outline:3px solid var(--purple);outline-offset:2px}
+.onibus-content{min-width:0;min-height:0}
+.onibus-panel{min-width:0;position:relative}
+.onibus-panel[hidden],.onibus-panel [hidden]{display:none!important}
+.onibus-panel .interno-frame{display:block;width:100%;height:calc(100dvh - 220px);min-height:520px}
+.onibus-status{display:grid;place-items:center;text-align:center;min-height:200px;padding:22px;margin:0;
+  border-radius:19px;background:var(--card);border:1px solid var(--line);
+  color:var(--muted);font-size:13px;line-height:1.65}
+@media(max-width:850px){
+  .site-wrap.interno-active #interno-page{height:100%;min-height:0;display:grid;
+    grid-template-rows:auto minmax(0,1fr);overflow:hidden;gap:4px}
+  .site-wrap.interno-active .onibus-filters{margin:0 0 7px;justify-self:center;align-self:start;width:min(100%,410px)}
+  .site-wrap.interno-active .onibus-content,.site-wrap.interno-active .onibus-panel{height:100%;min-height:0;overflow:hidden}
+  .site-wrap.interno-active .onibus-panel .interno-frame{height:100%;min-height:0;max-height:100%;border-radius:18px}
+}
+@media(max-width:350px){.onibus-filters button{font-size:12px;padding-inline:5px}}

@@ -621,7 +621,7 @@ function setupPwaUpdates() {
 
 function isMenuActive(){
   const initialTab=new URLSearchParams(window.location.search).get('aba');
-  return !$('bandeco-main')?.hidden && !['interno','festas','sobre'].includes(initialTab);
+  return !$('bandeco-main')?.hidden && !['interno','onibus','festas','sobre'].includes(initialTab);
 }
 function boot() {
   initTheme();

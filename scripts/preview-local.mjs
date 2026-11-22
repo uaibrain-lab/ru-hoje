@@ -100,6 +100,10 @@ export function createPreviewServer({fetchFn=fetch}={}){
       send(res,405,'Somente GET e HEAD.');return;
     }
     // Firebase Hosting usa cleanUrls. O Python http.server não implementa isso.
+    if(url.pathname==='/externo/index.html'){
+      res.writeHead(302,{Location:'/externo/'+url.search,'Cache-Control':'no-store'});
+      res.end();return;
+    }
     if(url.pathname==='/interno/index.html'){
       res.writeHead(302,{Location:'/interno'+url.search,'Cache-Control':'no-store'});
       res.end();return;
@@ -108,7 +112,8 @@ export function createPreviewServer({fetchFn=fetch}={}){
     try{
       const decoded=decodeURIComponent(url.pathname);
       const page=decoded==='/'?'/index.html':
-        (decoded==='/interno'||decoded==='/interno/')?'/interno/index.html':decoded;
+        (decoded==='/interno'||decoded==='/interno/')?'/interno/index.html':
+        (decoded==='/externo'||decoded==='/externo/')?'/externo/index.html':decoded;
       filePath=path.resolve(ROOT,'.'+page);
       if(!filePath.startsWith(ROOT+path.sep))throw new Error('Fora da pasta pública');
       const info=await stat(filePath);
