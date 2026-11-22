@@ -571,7 +571,8 @@ async function loadMapMunicipal(){
 }
 async function updateGpsNearMap(marked){
   if(!map||!marked.length||!externalPatterns||!externalRoutes?.length||
-     mapMode==='internal'||gpsBusy||document.hidden)return;
+     mapMode==='internal'||gpsBusy||document.hidden||
+     (window.frameElement&&!window.frameElement.getClientRects().length))return;
   if(Date.now()-gpsLast<40000)return;
   const near=new Set(marked.map(x=>x[0]));
   const byId=new Map(externalRoutes.map(r=>[String(r.id),r.code]));
@@ -677,6 +678,11 @@ if(window.L){
   window.addEventListener('message',e=>{
     if(e.origin!==window.location.origin || !e.data || e.data.type!=='bandeco:interno:shown')return;
     invalidateMap();
+    if(externalStops&&mapMode!=='internal'){
+      // Voltou à aba Ônibus: consultar posição atual em vez de esperar 45 s.
+      gpsLast=0;
+      requestAnimationFrame(renderTransportMap);
+    }
   });
   map.on('moveend zoomend',()=>renderTransportMap());
   window.addEventListener('resize',invalidateMap,{passive:true});
@@ -780,7 +786,8 @@ window.addEventListener('resize',syncSheet);
 apply();
 void loadMapMunicipal();
 setInterval(()=>{
-  if(!document.hidden&&mapMode!=='internal'&&externalStops&&map){
+  if(!document.hidden&&(!window.frameElement||window.frameElement.getClientRects().length)&&
+     mapMode!=='internal'&&externalStops&&map){
     gpsLast=0;
     const bounds=map.getBounds();
     const selected=Object.entries(externalStops).filter(([id,p])=>
