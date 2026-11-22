@@ -1618,6 +1618,23 @@ el.addEventListener('touchend',e=>{
   else if(delta>35)setExpanded(false);
 },{passive:true});
 window.addEventListener('resize',syncSheet);
+// Retomar previsões imediatamente quando o passageiro retorna ao aplicativo,
+// sem aguardar os próximos 30 segundos ou exibir cache antigo do feed.
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden||(window.frameElement&&
+     !window.frameElement.getClientRects().length))return;
+  if(view.t==='municipal-stop'){
+    const id=String(view.id);
+    realtimePredictionsCache.delete(id);
+    alertResultsCache.delete('stop:'+id);
+    void populateMunicipalRealtime(id);
+    void populateMunicipalAlerts();
+    void refreshMunicipalSchedules(id);
+  }else if(view.t==='municipal-line'){
+    alertResultsCache.delete('line:'+String(view.code));
+    void populateMunicipalAlerts();
+  }
+});
 apply();
 void loadMapMunicipal();
 setInterval(()=>{
