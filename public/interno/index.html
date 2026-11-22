@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Interno — Hub UFMG</title>
+<title>Ônibus — Hub UFMG</title>
 <meta name="description" content="Horários estimados, itinerários e pontos dos ônibus internos da UFMG. Não utiliza rastreamento GPS dos veículos.">
 <!--
 Dados das linhas e paradas e lógica de previsão por grade de horários derivados de https://github.com/internorotas/ufmg
@@ -163,10 +163,36 @@ i{font-style:normal;font-size:14px;font-weight:400}
     left:12px;transform:none;max-width:min(280px,calc(100vw - 100px));
   }
 }
+/* Controle visível sobre o mapa: sem obrigar a abrir a lista de linhas. */
+#map-source-switch{position:fixed;z-index:485;top:calc(60px + env(safe-area-inset-top,0px));
+  left:50%;transform:translateX(-50%);width:min(275px,calc(100vw - 20px));display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;padding:4px;background:var(--bg);
+  border:1px solid var(--line);border-radius:13px;box-shadow:var(--sh)}
+#map-source-switch button{border:0;background:transparent;min-height:36px;
+  padding:6px 4px;font-size:12px;font-weight:800;color:var(--mut);border-radius:10px}
+#map-source-switch button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+#map-source-switch button:focus-visible{outline:3px solid #2e90fa;outline-offset:2px}
+#map-data-status{position:fixed;z-index:480;top:calc(108px + env(safe-area-inset-top,0px));
+ left:50%;transform:translateX(-50%);pointer-events:none;text-align:center;
+ width:max-content;max-width:min(350px,calc(100vw - 20px));margin:0;
+ padding:5px 10px;border:1px solid var(--line);border-radius:999px;
+ background:var(--bg);color:var(--mut);font-size:10.5px;line-height:1.4;box-shadow:var(--sh)}
+@media(min-width:760px){#map-source-switch{top:12px}#map-data-status{top:61px}}
+@media(max-width:759px){#map-basemap-notice{top:calc(148px + env(safe-area-inset-top,0px))}}
+.interno-stop{transition:opacity .1s}
+.gps-bus-pin{background:#138b73;color:#fff;border:2px solid #fff;border-radius:8px;
+  font-size:11px;font-weight:850;line-height:20px;text-align:center;
+  box-shadow:0 3px 9px #0003;width:34px;height:25px}
 </style>
 </head>
 <body>
 <div id="map"></div>
+<div id="map-source-switch" role="group" aria-label="Mostrar no mapa">
+  <button type="button" data-map-mode="all" aria-pressed="true">Todos</button>
+  <button type="button" data-map-mode="internal" aria-pressed="false">Internos</button>
+  <button type="button" data-map-mode="external" aria-pressed="false">Externos</button>
+</div>
+<p id="map-data-status" role="status" aria-live="polite">Carregando pontos de BH…</p>
 <p id="map-basemap-notice" role="status" hidden>Mapa-base indisponível; as paradas e linhas continuam disponíveis. Consulte os horários no painel.</p>
 <div id="top"><button class="fab" id="loc"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/></svg>Ponto perto de mim</button></div>
 <section id="sheet" aria-label="Consulta de linhas e pontos do Interno UFMG">
@@ -200,6 +226,8 @@ const fmD=d=>d<1000?Math.max(10,Math.round(d/10)*10)+' m':(d/1000).toFixed(1).re
 const walk=d=>Math.max(1,Math.round(d/80));
 
 let cat=dow()===6?'sabado':'diasUteis',tab='pontos',q='',view={t:'home'},hist=[],near={s:'loading'},sheetState=innerWidth>=760?'full':'mid';
+let mapMode='all',externalStops=null,externalPatterns=null;
+let internalPins=null,municipalPins=null,busPins=null,gpsLast=0,gpsBusy=false,gpsCount=0;
 
 let lineFilter='all',lineQuery='',externalRoutes=[],externalState='idle',externalExpanded=false,
   externalLastCheck=0,externalInflight=null;
@@ -324,10 +352,38 @@ function nearView(){
   return `${back}<small>Ponto mais perto de você</small><h2>${esc(stopName(t.p))}</h2><small>${fmD(t.d)} de você, cerca de ${walk(t.d)} min a pé</small>${far}${banner()}<h3>Próximos ônibus aqui</h3>${stopBody(t.p.idParada)}
   <h3>Outros pontos perto</h3>${rest.map(x=>`<button class="row" data-stop="${x.p.idParada}"><span class="pin"></span><span class="info"><b>${esc(stopName(x.p))}</b><small>${fmD(x.d)} · ${walk(x.d)} min a pé</small></span></button>`).join('')}`}
 
-function stopsList(){const k=norm(q.trim());
-  return D.paradas.filter(p=>norm(stopName(p)).includes(k)||norm(p.nome).includes(k)).sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(p=>{
-    const c=lines().filter(l=>offs(l)[p.idParada]!==undefined).length;
-    return `<button class="row" data-stop="${p.idParada}"><span class="pin"></span><span class="info"><b>${esc(stopName(p))}</b><small>${c?c+(c>1?' linhas':' linha'):'Sem linhas neste tipo de dia'}</small></span></button>`}).join('')||'<p>Nenhum ponto com esse nome.</p>'}
+function stopsList(){
+  const k=norm(q.trim());let result='';
+  if(mapMode!=='external'){
+    const internal=D.paradas.filter(p=>norm(stopName(p)).includes(k)||norm(p.nome).includes(k))
+      .sort((a,b)=>Number(fav.includes(b.idParada))-Number(fav.includes(a.idParada))||
+        a.nome.localeCompare(b.nome,'pt'));
+    if(mapMode==='all')result+='<h3 class="bus-line-group">Internos <small>UFMG</small></h3>';
+    result+=internal.map(p=>{
+      const c=lines().filter(l=>offs(l)[p.idParada]!==undefined).length;
+      return '<button class="row" data-stop="'+esc(p.idParada)+'"><span class="pin"></span>'+
+        '<span class="info"><b>'+esc(stopName(p))+'</b><small>'+
+        (c?c+(c>1?' linhas':' linha'):'Sem linhas neste tipo de dia')+
+        '</small></span></button>';
+    }).join('')||'<p>Nenhum ponto interno corresponde à busca.</p>';
+  }
+  if(mapMode!=='internal'){
+    result+='<h3 class="bus-line-group">Externos <small>Municipais BH</small></h3>';
+    if(externalStops){
+      const center=map?.getCenter()||{lat:-19.8695,lng:-43.9675};
+      const entries=Object.entries(externalStops)
+        .filter(([id,p])=>Array.isArray(p)&&(!k||norm(p[0]+' '+id).includes(k)));
+      entries.sort((a,b)=>((+a[1][1]-center.lat)**2+(+a[1][2]-center.lng)**2)-
+        ((+b[1][1]-center.lat)**2+(+b[1][2]-center.lng)**2));
+      result+=entries.slice(0,k?70:28).map(([id,p])=>
+        '<button class="row" data-ext-stop="'+esc(id)+'"><span class="pin" style="border-color:#7556c9"></span>'+
+        '<span class="info"><b>'+esc(p[0])+'</b><small>Ponto municipal · ver horários e mapa</small>'+
+        '</span></button>').join('')||'<p>Nenhum ponto municipal corresponde à busca.</p>';
+      if(entries.length>(k?70:28))result+='<p class="bus-line-note">Use a busca para encontrar outros pontos municipais.</p>';
+    }else result+='<p class="bus-line-hint">Carregando pontos municipais ou temporariamente indisponíveis.</p>';
+  }
+  return result;
+}
 function combinedLineRows(){
   const search=norm(lineQuery.trim()),n=now(),live=isLive();
   let output='';
@@ -411,6 +467,112 @@ function pickQuickTab(t){
 
 // O mapa é progressivo: Leaflet local, rotas e horários disponíveis sem tiles.
 let map=null,route=null,sel=null,usr=null;
+const mapStatus=message=>{const n=document.getElementById('map-data-status');if(n)n.textContent=message};
+function renderTransportMap(){
+  if(!map||!internalPins||!municipalPins)return;
+  if(mapMode==='external')map.removeLayer(internalPins);
+  else if(!map.hasLayer(internalPins))internalPins.addTo(map);
+  municipalPins.clearLayers();
+  if(busPins)busPins.clearLayers();
+  if(mapMode==='internal'){mapStatus('49 pontos internos · GPS exclusivo do Externo BH');return}
+  if(!externalStops){mapStatus('Externo BH: '+(externalState==='loading'?'carregando pontos…':'dados indisponíveis'));return}
+  if(map.getZoom()<12){mapStatus('Aproxime o mapa para visualizar os pontos municipais');return}
+  const bounds=map.getBounds().pad(.13),center=map.getCenter();
+  const nearby=Object.entries(externalStops).filter(([id,p])=>Array.isArray(p)&&
+    Number.isFinite(+p[1])&&Number.isFinite(+p[2])&&bounds.contains([+p[1],+p[2]]));
+  nearby.sort((a,b)=>((+a[1][1]-center.lat)**2+(+a[1][2]-center.lng)**2)-
+                     ((+b[1][1]-center.lat)**2+(+b[1][2]-center.lng)**2));
+  const selected=nearby.slice(0,180);
+  for(const [id,p] of selected){
+    L.circleMarker([+p[1],+p[2]],{radius:4.5,color:'#7556c9',
+      fillColor:'#7556c9',fillOpacity:.88,weight:1.2})
+      .addTo(municipalPins).bindTooltip(String(p[0]||'Ponto municipal'))
+      .on('click',()=>window.parent.postMessage({type:'hub:onibus:external-stop',
+        id,name:String(p[0]||'')},location.origin));
+  }
+  const suffix=nearby.length>selected.length?' · amplie para ver mais pontos':'';
+  mapStatus('UFMG + BH · '+selected.length+' pontos municipais no mapa'+suffix);
+  void updateGpsNearMap(selected);
+}
+async function loadMapMunicipal(){
+  if(externalStops)return;
+  if(externalState!=='ready')await loadExternalLines();
+  if(externalState!=='ready'){renderTransportMap();return}
+  try{
+    const [stops,patterns]=await Promise.all([
+      fetch('/externo/catalog/stops.json',{cache:'force-cache'}),
+      fetch('/externo/catalog/patterns.json',{cache:'force-cache'})
+    ]);
+    if(!stops.ok||!patterns.ok)throw Error('MISSING_GTFS_POINTS');
+    const [ss,pp]=await Promise.all([stops.json(),patterns.json()]);
+    if(!ss||typeof ss!=='object'||!Array.isArray(pp))throw Error('INVALID_GTFS_POINTS');
+    externalStops=ss;externalPatterns=pp;
+    renderTransportMap();
+    if(tab==='pontos'&&view.t==='home')render();
+  }catch{externalStops=null;mapStatus('Pontos externos temporariamente indisponíveis')}
+}
+async function updateGpsNearMap(marked){
+  if(!map||!marked.length||!externalPatterns||!externalRoutes?.length||
+     mapMode==='internal'||gpsBusy||document.hidden)return;
+  if(Date.now()-gpsLast<40000)return;
+  const near=new Set(marked.map(x=>x[0]));
+  const byId=new Map(externalRoutes.map(r=>[String(r.id),r.code]));
+  const routeCodes=[];
+  for(const p of externalPatterns){
+    if(!p.stops?.some(id=>near.has(id)))continue;
+    const code=byId.get(String(p.route));
+    if(code&&/^[A-Za-z0-9_.:-]{1,70}$/.test(code)&&!routeCodes.includes(code))routeCodes.push(code);
+    if(routeCodes.length>=30)break;
+  }
+  if(!routeCodes.length){mapStatus('Pontos municipais visíveis · sem linhas GPS nesta área');return}
+  gpsBusy=true;gpsLast=Date.now();
+  try{
+    const local=['localhost','127.0.0.1'].includes(location.hostname);
+    const endpoint=local?'/__hub_gps':'https://externo-bh-gps-free.hubufmg.workers.dev/api/gps';
+    const url=new URL(endpoint,location.href);
+    url.searchParams.set('source','GTFS_RT');
+    url.searchParams.set('routes',routeCodes.join(','));
+    const response=await fetch(url,{cache:'no-store'});
+    if(!response.ok)throw Error('WORKER_UNAVAILABLE');
+    const data=await response.json();
+    if(data.available!==true||data.source!=='GTFS_RT'||!Array.isArray(data.records))
+      throw Error('GPS_UNAVAILABLE');
+    if(busPins)busPins.clearLayers();
+    gpsCount=0;const now=Date.now(),visible=new Set(routeCodes);
+    const seen=new Set();
+    for(const v of data.records){
+      const code=String(v.routeId||''),vehicle=String(v.vehicleId||'');
+      const lat=Number(v.latitude),lon=Number(v.longitude);
+      const time=Date.parse(v.lastGpsFixAt||''),age=(now-time)/1000;
+      if(!visible.has(code)||!vehicle||seen.has(code+'|'+vehicle)||
+        !Number.isFinite(time)||age< -60||age>120||
+        !Number.isFinite(lat)||!Number.isFinite(lon)||
+        lat< -20.5||lat> -19.4||lon< -44.5||lon> -43.4||
+        !map.getBounds().pad(.1).contains([lat,lon]))continue;
+      seen.add(code+'|'+vehicle);gpsCount++;
+      L.marker([lat,lon],{icon:L.divIcon({className:'',html:'<div class="gps-bus-pin">'+esc(code)+'</div>',
+        iconSize:[34,25],iconAnchor:[17,12]})}).addTo(busPins)
+        .bindTooltip('Ônibus '+code+' · GPS oficial · '+Math.round(age)+' s atrás');
+    }
+    mapStatus(gpsCount?
+      'GPS ao vivo: '+gpsCount+' ônibus próximos · atualizado agora':
+      'Sem posições GPS recentes nesta área · horários por tabela');
+  }catch{mapStatus('GPS temporariamente indisponível · pontos e horários acessíveis')}
+  finally{gpsBusy=false}
+}
+function changeMapMode(mode){
+  if(!['all','internal','external'].includes(mode))return;
+  mapMode=mode;
+  for(const b of document.querySelectorAll('[data-map-mode]'))
+    b.setAttribute('aria-pressed',String(b.dataset.mapMode===mode));
+  lineFilter=mode;renderTransportMap();
+  if(view.t==='home')render();
+  if(mode!=='internal')void loadMapMunicipal();
+}
+document.getElementById('map-source-switch').addEventListener('click',e=>{
+  const button=e.target.closest('[data-map-mode]');
+  if(button)changeMapMode(button.dataset.mapMode);
+});
 if(window.L){
   map=L.map('map',{zoomControl:false}).setView([-19.8695,-43.9675],15);
   L.control.zoom({position:'topright'}).addTo(map);
@@ -430,6 +592,7 @@ if(window.L){
     tiles.redraw();
   });
   route=L.layerGroup().addTo(map);sel=L.layerGroup().addTo(map);usr=L.layerGroup().addTo(map);
+  internalPins=L.layerGroup().addTo(map);municipalPins=L.layerGroup().addTo(map);busPins=L.layerGroup().addTo(map);
   // Todas as 49 paradas, inclusive a Escola de Música (Ida), compartilham
   // exatamente o mesmo raio e cores. A categoria não altera o desenho.
   D.paradas.forEach(p=>{
@@ -441,7 +604,7 @@ if(window.L){
       fillOpacity:1,
       opacity:1,
       className:'interno-stop'
-    }).addTo(map).bindTooltip(stopName(p)).on('click',()=>go({t:'stop',id:p.idParada}));
+    }).addTo(internalPins).bindTooltip(stopName(p)).on('click',()=>go({t:'stop',id:p.idParada}));
   });
   // O iframe pode ficar oculto ao alternar abas; recalcular somente quando seu
   // contêiner mudar de tamanho, sem recriar o mapa nem alterar o zoom.
@@ -457,6 +620,7 @@ if(window.L){
     if(e.origin!==window.location.origin || !e.data || e.data.type!=='bandeco:interno:shown')return;
     invalidateMap();
   });
+  map.on('moveend zoomend',()=>renderTransportMap());
   window.addEventListener('resize',invalidateMap,{passive:true});
   if(typeof ResizeObserver==='function')new ResizeObserver(invalidateMap).observe(document.documentElement);
 }else{
@@ -492,8 +656,10 @@ el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
   if(d.sheetToggle!==undefined){setSheetState(sh.classList.contains('peek')?'mid':sh.classList.contains('full')?'peek':'full');}
   else if(d.stop)go({t:'stop',id:d.stop});
   else if(d.line)go({t:'line',id:d.line,focus:d.focus});
+   else if(d.extStop)window.parent.postMessage({type:'hub:onibus:external-stop',
+     id:d.extStop,name:String(externalStops?.[d.extStop]?.[0]||'')},location.origin);
   else if(d.externoCode)window.parent.postMessage({type:'hub:onibus:external-line',code:d.externoCode},window.location.origin);
-  else if(d.lineFilter){lineFilter=d.lineFilter;render();if(lineFilter!=='internal')void loadExternalLines();}
+  else if(d.lineFilter){lineFilter=d.lineFilter;changeMapMode(d.lineFilter);if(lineFilter!=='internal')void loadMapMunicipal();}
   else if(d.externalMore!==undefined){externalExpanded=true;repaintLineList()}
   else if(d.externalRetry!==undefined)void loadExternalLines(true);
   else if(d.tab){pickQuickTab(d.tab)}
@@ -515,7 +681,7 @@ document.getElementById('loc').addEventListener('click',locate);
 setInterval(()=>{
   if(document.hidden || (window.frameElement && !window.frameElement.getClientRects().length))return;
   if(el.contains(document.activeElement))return;
-  if(view.t==='home' && tab==='pontos' && !fav.some(id=>S[id]))return;
+  if(view.t==='home')return;
   const scroll=el.scrollTop;
   render();
   el.scrollTop=scroll;
@@ -542,6 +708,16 @@ el.addEventListener('touchend',e=>{
 },{passive:true});
 window.addEventListener('resize',syncSheet);
 apply();
+void loadMapMunicipal();
+setInterval(()=>{
+  if(!document.hidden&&mapMode!=='internal'&&externalStops&&map){
+    gpsLast=0;
+    const bounds=map.getBounds();
+    const selected=Object.entries(externalStops).filter(([id,p])=>
+      Array.isArray(p)&&bounds.contains([+p[1],+p[2]])).slice(0,180);
+    void updateGpsNearMap(selected);
+  }
+},45000);
 })();
 </script>
 </body>
