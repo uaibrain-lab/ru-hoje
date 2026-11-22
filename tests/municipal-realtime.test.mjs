@@ -133,3 +133,46 @@ test('atrasos contraditórios na mesma parada não geram previsão inventada',()
   assert.equal(result[0].delaySeconds,240,
     'Uma observação posterior e inequívoca pode recuperar a previsão');
 });
+
+test('NO_DATA interrompe ETA até uma observação posterior com atraso confiável',()=>{
+  const times=[
+    ['T-51','562134','307679',16,19*3600+7*60,19*3600],
+    ['T-51','562134','307679',29,19*3600+25*60,19*3600]
+  ];
+  const events=[
+    upstream({observedStopSequence:12,observedStopId:'14780120',delaySeconds:120}),
+    upstream({observedStopSequence:14,observedStopId:'14780140',
+      kind:'NO_DATA',delaySeconds:undefined}),
+    upstream({observedStopSequence:20,observedStopId:'14780200',delaySeconds:360})
+  ];
+  const projected=projectOfficialDelays(events,times,{stopId:stop,calendar:cal,now});
+  assert.deepEqual(projected.map(x=>x.stopSequence),[29]);
+  assert.equal(projected[0].delaySeconds,360);
+});
+test('SKIPPED impede ETA na parada não atendida, mas não interrompe próximo destino',()=>{
+  const times=[
+    ['T-51','562134','307679',16,19*3600+7*60,19*3600],
+    ['T-51','562134','307679',29,19*3600+25*60,19*3600]
+  ];
+  const events=[
+    upstream({observedStopSequence:12,observedStopId:'14780120',delaySeconds:120}),
+    upstream({observedStopSequence:16,observedStopId:stop,
+      kind:'SKIPPED',delaySeconds:undefined})
+  ];
+  const projected=projectOfficialDelays(events,times,{stopId:stop,calendar:cal,now});
+  assert.deepEqual(projected.map(x=>x.stopSequence),[29]);
+  assert.equal(projected[0].delaySeconds,120);
+});
+test('NO_DATA no próprio ponto e conflito com delay não produzem previsão',()=>{
+  const events=[
+    upstream({observedStopSequence:12,observedStopId:'14780120',delaySeconds:120}),
+    upstream({observedStopSequence:16,observedStopId:stop,
+      kind:'NO_DATA',delaySeconds:undefined})
+  ];
+  assert.deepEqual(projectOfficialDelays(events,[row],{stopId:stop,calendar:cal,now}),[]);
+  const conflict=[
+    upstream({observedStopSequence:16,observedStopId:stop,delaySeconds:120}),
+    events[1]
+  ];
+  assert.deepEqual(projectOfficialDelays(conflict,[row],{stopId:stop,calendar:cal,now}),[]);
+});
