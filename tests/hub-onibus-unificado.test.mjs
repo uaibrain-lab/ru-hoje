@@ -198,3 +198,16 @@ test('staging rejeita pacote sem prova recente do feed GPS SUMOB',async()=>{
     await assert.rejects(validateExternoPackage(dir,'20261122'),/QA_NOT_APPROVED/);
   });
 });
+
+test('deploy completo exige Worker ETA QA validado antes do Firebase preview',async()=>{
+  const script=await read('scripts/Publicar-Onibus-ETA-Homologacao-Completa.ps1');
+  assert.match(script,/feat\/eta-tripupdates-sumob-20261122/);
+  assert.match(script,/a11b2cad98508a31be69dff6148817bef1f26004/);
+  assert.match(script,/checkout --force --detach \$sha/);
+  assert.match(script,/Publicar-ETA-Worker-Homologacao\.ps1/);
+  assert.match(script,/Worker QA nao validado\. Firebase Hosting NAO foi publicado/);
+  assert.match(script,/Publicar-Homologacao\.ps1/);
+  assert.ok(script.indexOf("& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $workerScript")<
+    script.indexOf("& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $hostingScript"));
+  assert.doesNotMatch(script,/--env production|--project\s+hubufmg-prod|hosting:deploy/);
+});
