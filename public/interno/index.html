@@ -146,6 +146,12 @@ i{font-style:normal;font-size:14px;font-weight:400}
   border-radius:12px;background:var(--bg2);font-size:12px;font-weight:750;padding:9px 12px}
 .bus-line-search{margin:8px 0}
 .bus-line-note{font-size:11px;line-height:1.5;color:var(--mut);margin:8px 0}
+/* Ao entrar em Linhas, exibir os primeiros ônibus sem obrigar a expandir. */
+@media(max-width:759px){
+  #sheet.lines-mode:not(.peek):not(.full):not(.detail){
+    height:min(68dvh,560px)
+  }
+}
 </style>
 </head>
 <body>
@@ -155,7 +161,7 @@ i{font-style:normal;font-size:14px;font-weight:400}
 <section id="sheet" aria-label="Consulta de linhas e pontos do Interno UFMG">
   <button type="button" id="grab" aria-label="Recolher painel" aria-expanded="true" aria-controls="body"></button>
   <div class="sheet-head" id="sheet-head">
-    <div class="sheet-identity"><strong>Ônibus</strong><span>UFMG + BH</span></div>
+    <div class="sheet-identity"><strong>Consulta</strong><span>PONTOS E LINHAS</span></div>
     <div class="quick-tabs" role="group" aria-label="O que consultar">
       <button type="button" id="quick-pontos" class="on" aria-pressed="true">Pontos</button>
       <button type="button" id="quick-linhas" aria-pressed="false">Linhas</button>
@@ -365,6 +371,7 @@ function syncSheet(){
   sh.classList.toggle('peek',state==='peek');
   sh.classList.toggle('full',state==='full');
   sh.classList.toggle('detail',view.t!=='home');
+  sh.classList.toggle('lines-mode',tab==='linhas'&&view.t==='home');
   const expanded=state!=='peek';
   el.setAttribute('aria-hidden',String(!expanded));
   for(const b of [document.getElementById('grab'),document.getElementById('sheet-toggle'),...document.querySelectorAll('[data-sheet-toggle]')].filter(Boolean)){
