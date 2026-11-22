@@ -496,6 +496,30 @@ i{font-style:normal;font-size:14px;font-weight:400}
 }
 #map-data-status[hidden]{display:none!important}
 
+/* Notificação contextual e discreta: não ocupa o mapa nem pede permissão de push. */
+#sheet{isolation:isolate}
+.service-alert-notification:not([hidden]){
+  display:flex;align-items:center;gap:8px;flex:none;
+  margin:0 11px 6px;padding:8px 10px;min-height:46px;
+  border:1px solid #dfbb77;border-left:3px solid #b87915;
+  border-radius:11px;background:var(--bg2);color:var(--ink);
+  box-shadow:0 4px 12px #00000012;
+}
+.service-alert-notification-icon{display:grid;place-items:center;
+  width:25px;height:25px;flex:none;border-radius:50%;
+  color:#6b4700;background:#fbe5b9;font-weight:900;font-size:13px}
+.service-alert-notification-content{flex:1;min-width:0;display:grid;gap:2px}
+.service-alert-notification-content strong{font-size:12px;line-height:1.3;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.service-alert-notification-content small{font-size:11px;color:var(--mut);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.service-alert-notification button{flex:none;min-height:38px;
+  border:0;border-radius:8px;padding:5px 8px;background:transparent;
+  color:var(--ink);font-weight:750;cursor:pointer}
+.service-alert-notification button:focus-visible{outline:2px solid #2e90fa;outline-offset:1px}
+#service-alert-notification-dismiss{font-size:20px;line-height:1}
+@media(max-width:370px){.service-alert-notification:not([hidden]){gap:4px;margin:0 7px 5px;padding:6px}
+  .service-alert-notification-content strong{max-width:140px}}
 /* Avisos oficiais só ocupam espaço quando há evento ativo no percurso ou ponto. */
 .municipal-service-alerts:not([hidden]){margin:8px 0 16px;padding:11px 12px;
   border:1px solid #deb66c;border-left:3px solid #c88e22;
@@ -554,6 +578,17 @@ i{font-style:normal;font-size:14px;font-weight:400}
       <button type="button" id="quick-linhas" aria-pressed="false">Linhas</button>
     </div>
     <button type="button" class="sheet-toggle" id="sheet-toggle" aria-label="Recolher painel" aria-expanded="true" aria-controls="body"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+  </div>
+  <div id="service-alert-notification" class="service-alert-notification" role="status"
+       aria-live="polite" aria-atomic="true" hidden>
+    <span class="service-alert-notification-icon" aria-hidden="true">!</span>
+    <span class="service-alert-notification-content">
+      <strong id="service-alert-notification-title"></strong>
+      <small id="service-alert-notification-description"></small>
+    </span>
+    <button type="button" id="service-alert-notification-view" aria-label="Ver aviso de serviço">Ver</button>
+    <button type="button" id="service-alert-notification-dismiss"
+      aria-label="Dispensar notificação de serviço" title="Dispensar">×</button>
   </div>
   <div id="body" aria-hidden="false"></div>
 </section>
@@ -800,6 +835,61 @@ function municipalLineView(code){
     '</div>';
 }
 const alertResultsCache=new Map();
+const serviceAlertNotice=document.getElementById('service-alert-notification');
+const announcedServiceAlerts=new Set();
+const SERVICE_ALERT_SESSION_KEY='hub_municipal_service_alerts_announced_v1';
+try{
+  const stored=JSON.parse(sessionStorage.getItem(SERVICE_ALERT_SESSION_KEY)||'[]');
+  if(Array.isArray(stored))for(const id of stored.slice(-80)){
+    if(typeof id==='string'&&id.length<280)announcedServiceAlerts.add(id);
+  }
+}catch{ /* Private browsing and storage restrictions must never break the map. */ }
+function currentMunicipalAlertContext(){
+  return view.t==='municipal-stop'?'stop:'+String(view.id):
+    view.t==='municipal-line'?'line:'+String(view.code):'';
+}
+function hideServiceAlertNotice(){
+  serviceAlertNotice.hidden=true;
+  serviceAlertNotice.dataset.context='';
+}
+function notifyMunicipalAlerts(key,alerts){
+  if(document.hidden||currentMunicipalAlertContext()!==key||!alerts.length)return;
+  const unseen=alerts.filter(a=>{
+    const code=key+'|'+String(a.id||a.title||'').slice(0,150)+'|'+String(a.title||'').slice(0,120);
+    return !announcedServiceAlerts.has(code);
+  });
+  if(!unseen.length)return;
+  for(const a of unseen){
+    const code=key+'|'+String(a.id||a.title||'').slice(0,150)+'|'+String(a.title||'').slice(0,120);
+    announcedServiceAlerts.add(code);
+  }
+  // A lista é limitada para não crescer indefinidamente no mesmo navegador.
+  while(announcedServiceAlerts.size>80)
+    announcedServiceAlerts.delete(announcedServiceAlerts.values().next().value);
+  try{
+    sessionStorage.setItem(SERVICE_ALERT_SESSION_KEY,
+      JSON.stringify([...announcedServiceAlerts]));
+  }catch{ /* Sem armazenamento, a deduplicação em memória continua. */ }
+  serviceAlertNotice.dataset.context=key;
+  document.getElementById('service-alert-notification-title').textContent=
+    unseen.length===1?'Aviso de serviço: '+unseen[0].title:
+      unseen.length+' avisos de serviço neste '+(key.startsWith('stop:')?'ponto':'linha');
+  document.getElementById('service-alert-notification-description').textContent=
+    'SUMOB · toque em Ver para consultar';
+  serviceAlertNotice.hidden=false;
+}
+document.getElementById('service-alert-notification-dismiss')
+  .addEventListener('click',hideServiceAlertNotice);
+document.getElementById('service-alert-notification-view').addEventListener('click',()=>{
+  if(serviceAlertNotice.hidden)return;
+  const section=document.getElementById('municipal-service-alerts');
+  if(!section||section.hidden)return hideServiceAlertNotice();
+  setSheetState('full');
+  section.tabIndex=-1;
+  section.scrollIntoView({block:'nearest',behavior:'instant'});
+  section.focus({preventScroll:true});
+  hideServiceAlertNotice();
+});
 async function populateMunicipalAlerts(){
   const isStop=view.t==='municipal-stop',isLine=view.t==='municipal-line';
   if((!isStop&&!isLine)||document.hidden)return;
@@ -844,10 +934,14 @@ async function populateMunicipalAlerts(){
     a.title.length<=450&&typeof a.description==='string'&&a.description.length<=450)
     .slice(0,4);
   section.hidden=items.length===0;
-  if(!items.length)return;
+  if(!items.length){
+    if(serviceAlertNotice.dataset.context===key)hideServiceAlertNotice();
+    return;
+  }
   list.innerHTML=items.map(a=>'<div class="municipal-service-alert">'+
     '<strong>'+esc(a.title)+'</strong>'+
     (a.description?'<p>'+esc(a.description)+'</p>':'')+'</div>').join('');
+  notifyMunicipalAlerts(key,items);
 }
 const realtimePredictionsCache=new Map();
 async function populateMunicipalRealtime(id){
@@ -1083,6 +1177,9 @@ function linesList(){
 function home(){return `${tab==='pontos'?`<label class="srch">${ic('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>')}<input id="q" type="search" placeholder="Buscar ponto" aria-label="Buscar ponto pelo nome" value="${esc(q)}"></label><div id="list">${stopsList()}</div>`:linesList()}${tab==='pontos'?catBar():''}${banner()}`}
 
 function render(){
+  if(serviceAlertNotice.dataset.context&&
+     serviceAlertNotice.dataset.context!==currentMunicipalAlertContext())
+     hideServiceAlertNotice();
   const fallback=!window.L?'<p class="note" role="status">Mapa indisponível nesta conexão. Você ainda pode pesquisar pontos e consultar horários; para exibir o mapa, conecte-se à internet.</p>':'';
   el.innerHTML=fallback+(view.t==='home'?home():view.t==='stop'?stopView(view.id):
     view.t==='line'?lineView():view.t==='municipal-stop'?municipalStopView(view.id):
