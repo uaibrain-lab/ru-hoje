@@ -156,6 +156,13 @@ i{font-style:normal;font-size:14px;font-weight:400}
   #sheet.lines-mode .chips button{flex:none;white-space:nowrap;
     padding:8px 10px;min-height:42px;font-size:12px}
 }
+/* Quando o mapa-base falhar no celular, o aviso não cobre a geolocalização. */
+@media(max-width:759px){
+  #map-basemap-notice{
+    top:calc(65px + env(safe-area-inset-top,0px));
+    left:12px;transform:none;max-width:min(280px,calc(100vw - 100px));
+  }
+}
 </style>
 </head>
 <body>
