@@ -50,7 +50,11 @@ assert.ok(patterns.some(p=>p.stops?.includes(stopId)&&routeIds.has(String(p.rout
 assert.match(hub,/id="interno-frame"/,'Iframe unificado ausente');
 assert.doesNotMatch(hub,/id="externo-frame"/,'Segunda interface não pode reaparecer');
 assert.match(interno,/data-line-filter-mode/,'Filtro de linhas ausente');
-assert.match(interno,/id="map-filter-toggle"/,'Filtro do mapa ausente');
+assert.doesNotMatch(interno,/id="map-filter-toggle"/,'Filtro flutuante antigo não pode reaparecer');
+assert.match(interno,/id="toggle-internal-points"/,'Controle de internos ausente');
+assert.match(interno,/id="toggle-municipal-points"/,'Controle de municipais ausente');
+assert.match(interno,/function toggleMapLayer\(source\)/,'Camadas não são independentes');
+assert.doesNotMatch(interno,/UFMG \+ BH ·/,'Status redundante não pode reaparecer');
 assert.match(interno,/id="map-point-legend"/,'Legenda visual ausente');
 assert.ok(interno.indexOf('Internos <small>')<interno.indexOf('Municipais <small>'),
   'Linhas internas precisam vir antes das municipais');
