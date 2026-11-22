@@ -398,6 +398,35 @@ i{font-style:normal;font-size:14px;font-weight:400}
   #map-source-switch{transition:none}
   .filter-cycle:active{transform:none}
 }
+
+/* Legenda permanente e inequívoca: círculo vazado = interno; roxo = municipal. */
+#map-point-legend{display:flex;flex-wrap:wrap;gap:6px 13px;
+  border-top:1px solid var(--line);padding-top:6px;margin-top:6px;
+  font-size:11px;color:var(--mut);line-height:1.3;font-weight:650}
+#map-point-legend>span{display:inline-flex;align-items:center;gap:5px}
+#map-point-legend>span[hidden]{display:none}
+.map-legend-symbol{flex:none;width:12px;height:12px;border-radius:50%}
+.map-legend-symbol--internal{border:2.5px solid #334155;background:#fff}
+.map-legend-symbol--municipal{background:#7556c9;border:1px solid #fff;box-shadow:0 0 0 1px #7556c9}
+.municipal-kind{display:inline-flex;align-items:center;gap:7px;color:#7556c9;font-size:12px;font-weight:750;margin-bottom:6px}
+.municipal-kind::before{content:"";width:10px;height:10px;border-radius:50%;background:#7556c9}
+.municipal-detail-title{font-size:clamp(19px,5vw,23px);line-height:1.25;letter-spacing:-.03em;margin:4px 0 11px;overflow-wrap:anywhere}
+.municipal-detail-head{display:flex;gap:10px;align-items:flex-start;margin:0 0 10px}
+.municipal-detail-head .back{flex:none;width:44px;height:44px;border:1px solid var(--line)}
+.municipal-detail-head>div{flex:1;min-width:0}
+.municipal-detail-note{font-size:12px;color:var(--mut);line-height:1.55;margin:6px 0 12px}
+.municipal-detail-tools{margin:10px 0 16px;display:flex;gap:8px;flex-wrap:wrap}
+.municipal-detail-tools button{border:1px solid var(--line);border-radius:999px;min-height:44px;padding:8px 13px;background:var(--bg2);font-size:12px;font-weight:700}
+.municipal-arrivals{display:grid;gap:8px;margin:0 0 14px}
+.municipal-arrival{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:13px;background:var(--bg);text-align:left;width:100%;min-height:54px}
+.municipal-code{flex:none;min-width:46px;border-radius:9px;padding:7px 5px;text-align:center;font-size:12px;font-weight:850;color:#fff;background:#7556c9}
+.municipal-destination{min-width:0;flex:1;overflow-wrap:anywhere;font-size:12.5px;line-height:1.35}
+.municipal-time{flex:none;font-size:14px;font-weight:850;font-variant-numeric:tabular-nums}
+.municipal-direction-list{display:flex;gap:7px;overflow:auto;max-width:100%;scrollbar-width:thin;margin:10px 0 15px}
+.municipal-direction-list button{flex:none;border:1px solid var(--line);border-radius:999px;min-height:44px;padding:8px 12px;background:var(--bg);color:var(--mut);font-size:12px}
+.municipal-direction-list button[aria-pressed="true"]{background:#7556c9;color:#fff;border-color:#7556c9}
+.municipal-stops-list{display:grid;gap:8px;margin:12px 0}
+.municipal-stops-list .municipal-arrival{border-left:3px solid #7556c9}
 </style>
 </head>
 <body>
@@ -411,6 +440,10 @@ i{font-style:normal;font-size:14px;font-weight:400}
 <div id="map-feedback" aria-label="Estado do mapa">
   <p id="map-data-status" role="status" aria-live="polite">Carregando pontos de BH…</p>
   <p id="map-basemap-notice" role="status" hidden>Mapa-base indisponível · horários acessíveis</p>
+  <div id="map-point-legend" aria-label="Legenda dos pontos">
+    <span id="legend-internal"><i class="map-legend-symbol map-legend-symbol--internal" aria-hidden="true"></i>Internos UFMG</span>
+    <span id="legend-municipal"><i class="map-legend-symbol map-legend-symbol--municipal" aria-hidden="true"></i>Municipais BH</span>
+  </div>
 </div>
 <div id="top"><button class="fab" id="loc" aria-label="Encontrar ponto perto de mim"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/></svg>Perto de mim</button></div>
 <section id="sheet" aria-label="Consulta de linhas e pontos do Interno UFMG">
@@ -703,8 +736,11 @@ function home(){return `${tab==='pontos'?`<label class="srch">${ic('<circle cx="
 
 function render(){
   const fallback=!window.L?'<p class="note" role="status">Mapa indisponível nesta conexão. Você ainda pode pesquisar pontos e consultar horários; para exibir o mapa, conecte-se à internet.</p>':'';
-  el.innerHTML=fallback+(view.t==='home'?home():view.t==='stop'?stopView(view.id):view.t==='line'?lineView():nearView());
+  el.innerHTML=fallback+(view.t==='home'?home():view.t==='stop'?stopView(view.id):
+    view.t==='line'?lineView():view.t==='municipal-stop'?municipalStopView(view.id):
+    view.t==='municipal-line'?municipalLineView(view.code):nearView());
   el.scrollTop=0;
+  if(view.t==='municipal-stop')void populateMunicipalStop(view.id);
 }
 
 // No celular a busca inicia acessível, com estados intermediário/recolhido/expandido sem recriar o mapa.
@@ -757,6 +793,8 @@ function renderTransportMap(){
     if(mapMode==='internal'&&map.hasLayer(busPins))map.removeLayer(busPins);
     else if(mapMode!=='internal'&&!map.hasLayer(busPins))busPins.addTo(map);
   }
+  document.getElementById('legend-internal').hidden=mapMode==='external';
+  document.getElementById('legend-municipal').hidden=mapMode==='internal';
   if(mapMode==='internal'){mapStatus('49 pontos internos · GPS disponível nos municipais');return}
   if(!externalStops){mapStatus('Municipais BH: '+(externalState==='loading'?'carregando pontos…':'dados indisponíveis'));return}
   if(map.getZoom()<12){if(busPins)busPins.clearLayers();mapStatus('Aproxime o mapa para visualizar os pontos municipais');return}
@@ -770,8 +808,7 @@ function renderTransportMap(){
     L.circleMarker([+p[1],+p[2]],{radius:4.5,color:'#7556c9',
       fillColor:'#7556c9',fillOpacity:.88,weight:1.2})
       .addTo(municipalPins).bindTooltip(String(p[0]||'Ponto municipal'))
-      .on('click',()=>window.parent.postMessage({type:'hub:onibus:external-stop',
-        id,name:String(p[0]||'')},location.origin));
+      .on('click',()=>{void openMunicipal('stop',id)});
   }
   const suffix=nearby.length>selected.length?' · amplie para ver mais pontos':'';
   // Não sobrescrever uma posição GPS validada ao alternar o filtro.
@@ -939,6 +976,22 @@ function apply(){if(route)route.clearLayers();if(sel)sel.clearLayers();
   if(view.t!=='home')setExpanded(true);else syncSheet();
   render();
   if(view.t==='stop'){select(view.id);focus([S[view.id].coordenadas])}
+  if(view.t==='municipal-stop'){
+    const p=externalStops?.[view.id];
+    if(p&&sel){sel.clearLayers();L.circleMarker([+p[1],+p[2]],{
+      radius:13,color:'#7556c9',weight:3,fill:false,interactive:false
+    }).addTo(sel);focus([[+p[1],+p[2]]])}
+  }
+  if(view.t==='municipal-line'){
+    const patterns=municipalLinePatterns(view.code);
+    const selected=patterns.find(p=>String(p.id)===String(view.pattern))||patterns[0];
+    const coords=(selected?.stops||[]).map(id=>externalStops?.[id])
+      .filter(Boolean).map(p=>[+p[1],+p[2]]);
+    if(sel)for(const pos of coords.slice(0,70))L.circleMarker(pos,{
+      radius:6,color:'#7556c9',weight:2,fillColor:'#fff',fillOpacity:1,interactive:false
+    }).addTo(sel);
+    if(coords.length)focus(coords)
+  }
   if(view.t==='line'){const l=byId(view.id);
     if(route){L.polyline(l.coordenadasTrajeto,{color:l.corHex,weight:6,opacity:.9}).addTo(route);
       l.itinerarioParadasIds.forEach(i=>L.circleMarker(S[i].coordenadas,{radius:5,color:l.corHex,weight:3,fillColor:'#fff',fillOpacity:1,interactive:false}).addTo(route));}
@@ -960,9 +1013,10 @@ el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
   if(d.sheetToggle!==undefined){setSheetState(sh.classList.contains('peek')?'mid':sh.classList.contains('full')?'peek':'full');}
   else if(d.stop)go({t:'stop',id:d.stop});
   else if(d.line)go({t:'line',id:d.line,focus:d.focus});
-   else if(d.extStop)window.parent.postMessage({type:'hub:onibus:external-stop',
-     id:d.extStop,name:String(externalStops?.[d.extStop]?.[0]||'')},location.origin);
-  else if(d.externoCode)window.parent.postMessage({type:'hub:onibus:external-line',code:d.externoCode},window.location.origin);
+   else if(d.extStop){void openMunicipal('stop',d.extStop)}
+  else if(d.externoCode){void openMunicipal('line',d.externoCode)}
+  else if(d.municipalPattern){view.pattern=d.municipalPattern;apply()}
+  else if(d.municipalList!==undefined){returnToMunicipalList()}
   else if(d.lineFilterToggle!==undefined){changeMapMode(nextFilter(lineFilter));}
   else if(d.externalMore!==undefined){externalExpanded=true;repaintLineList()}
   else if(d.externalRetry!==undefined)void loadExternalLines(true);
@@ -978,7 +1032,12 @@ el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
     saveExtFav();repaintFavorites()}
   else if(d.fav){fav=fav.includes(d.fav)?fav.filter(x=>x!==d.fav):[...fav,d.fav];saveFav();render()}
   else if(d.info!==undefined){const content=b.parentElement.querySelector('[data-info-content]'),open=content?.hidden===true;if(content){content.hidden=!open;b.setAttribute('aria-expanded',String(open));}}
-  else if(d.back!==undefined){view=hist.pop()||{t:'home'};apply()}
+  else if(d.back!==undefined){
+    const wasMunicipal=view.t.startsWith('municipal-');
+    view=hist.pop()||{t:'home'};apply();
+    if(wasMunicipal&&view.t==='home')
+      window.parent.postMessage({type:'hub:onibus:unified-selection',kind:'home'},location.origin);
+  }
   else if(d.home!==undefined){hist=[];view={t:'home'};tab='pontos';apply()}});
 el.addEventListener('input',e=>{
   if(e.target.id==='q'){q=e.target.value;document.getElementById('list').innerHTML=stopsList()}
@@ -986,7 +1045,11 @@ el.addEventListener('input',e=>{
 });
 window.addEventListener('message',e=>{
   if(e.origin!==window.location.origin||e.source!==window.parent)return;
-  if(e.data?.type==='hub:onibus:resume-lines'){
+  if(e.data?.type==='hub:onibus:focus-municipal-stop')
+    void openMunicipal('stop',e.data.id,{announce:false});
+  else if(e.data?.type==='hub:onibus:focus-municipal-line')
+    void openMunicipal('line',e.data.code,{announce:false});
+  else if(e.data?.type==='hub:onibus:resume-lines'){
     syncSharedExternal();
     if(tab!=='linhas')pickQuickTab('linhas');
     else if(view.t==='home')repaintFavorites();
