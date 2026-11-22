@@ -18,7 +18,7 @@ test('a aba Ônibus substitui Interno sem acrescentar quinta aba no Hub',async()
   assert.doesNotMatch(html,/id="onibus-back-interno"/);
   assert.doesNotMatch(html,/id="onibus-empty-title"/);
   const interno=await read('public/interno/index.html');
-  assert.match(interno,/data-line-filter-toggle/);
+  assert.match(interno,/data-line-filter-mode/);
   assert.match(interno,/id="map-filter-toggle"/);
   assert.match(interno,/data-current-filter="all"/);
   assert.match(interno,/FILTER_MODES=\['all','internal','external'\]/);
@@ -31,6 +31,10 @@ test('a aba Ônibus substitui Interno sem acrescentar quinta aba no Hub',async()
   assert.match(interno,/function municipalLineView\(/);
   assert.match(interno,/function openMunicipal\(/);
   assert.match(interno,/id="map-point-legend"/);
+  assert.match(interno,/role="group" aria-label="Filtrar linhas por origem"/);
+  assert.match(interno,/data-line-filter-mode/);
+  assert.match(interno,/radius:8/);
+  assert.match(interno,/radius:5.5,color:'#7556c9'/);
   assert.match(interno,/lines-filter-in-sheet/);
   assert.match(interno,/visibility:hidden;opacity:0;pointer-events:none/);
   assert.match(interno,/Municipais BH:/);
