@@ -636,6 +636,43 @@ try {
     await design.waitForTimeout(230);
     await design.screenshot({path:path.resolve(ROOT,'../qa-results/menu-compact/alltabs-cardapio-1280.png')});
   }finally{await designContext.close()}
+  // Celular estreito: avaliar as três abas públicas sem depender da FUMP.
+  const narrowDesignContext=await browser.newContext({
+    viewport:{width:320,height:740},serviceWorkers:'block'
+  });
+  await narrowDesignContext.addInitScript(()=>{
+    try{localStorage.setItem('ruhoje:restaurant:v1','setorial-i')}catch{}
+  });
+  try{
+    const narrow=await narrowDesignContext.newPage();
+    await narrow.route('https://hub-fump-proxy.hubufmg.workers.dev/**',
+      route=>route.fulfill({status:200,contentType:'application/json',
+        body:'{"id":6,"cardapios":[]}'}));
+    await narrow.goto(url+'?aba=festas&festas-demo=1',{waitUntil:'domcontentloaded'});
+    await narrow.locator('.festas-page .festa-card--compact').waitFor({state:'visible'});
+    const noHorizontal=async tab=>{
+      const info=await narrow.evaluate(()=>({
+        viewport:innerWidth,width:document.documentElement.scrollWidth,
+        navHeight:document.querySelector('#tab-menu').getBoundingClientRect().height
+      }));
+      assert.ok(info.width<=info.viewport+1,
+        tab+' causou rolagem horizontal em 320px: '+JSON.stringify(info));
+      assert.ok(info.navHeight>=44,
+        tab+' reduziu o alvo de navegação: '+JSON.stringify(info));
+    };
+    await noHorizontal('Festas');
+    await fs.mkdir(path.resolve(ROOT,'../qa-results/menu-compact'),{recursive:true});
+    await narrow.screenshot({path:path.resolve(ROOT,'../qa-results/menu-compact/alltabs-festas-320.png')});
+    await narrow.locator('#tab-sobre').click();
+    await narrow.locator('.sobre-topic').first().waitFor({state:'visible'});
+    await noHorizontal('Sobre');
+    assert.equal(await narrow.locator('.sobre-topic').count(),3);
+    await narrow.screenshot({path:path.resolve(ROOT,'../qa-results/menu-compact/alltabs-sobre-320.png')});
+    await narrow.locator('#tab-menu').click();
+    await narrow.locator('#restaurant-trigger').waitFor({state:'visible'});
+    await noHorizontal('Cardápio');
+    await narrow.screenshot({path:path.resolve(ROOT,'../qa-results/menu-compact/alltabs-cardapio-320.png')});
+  }finally{await narrowDesignContext.close()}
   // Integração real de eventos: clicar linha municipal na lista unificada
   // abre a MESMA linha no iframe externo (dados 100% sintéticos do teste).
   const combinedCtx=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
