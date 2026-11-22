@@ -10,6 +10,7 @@ on:
       - scripts/hub-legacy-externo-alias.mjs
       - scripts/verify-onibus-browser.mjs
       - scripts/smoke.mjs
+      - tests/hub-onibus-unificado.test.mjs
       - public/interno/index.html
       - public/assets/onibus.js
       - public/assets/app.js
