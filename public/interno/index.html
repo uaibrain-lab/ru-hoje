@@ -427,6 +427,8 @@ i{font-style:normal;font-size:14px;font-weight:400}
 .municipal-direction-list button[aria-pressed="true"]{background:#7556c9;color:#fff;border-color:#7556c9}
 .municipal-stops-list{display:grid;gap:8px;margin:12px 0}
 .municipal-stops-list .municipal-arrival{border-left:3px solid #7556c9}
+ .municipal-list-pin{background:#7556c9;border-color:#7556c9!important;
+  width:14px;height:14px;border-radius:50%;box-shadow:0 0 0 1px #fff}
 </style>
 </head>
 <body>
@@ -794,7 +796,7 @@ function stopsList(){
           ((+b[1][1]-center.lat)**2+(+b[1][2]-center.lng)**2));
       const shown=items.slice(0,term?70:28);
       out+=shown.map(([id,p])=>starRow('<button class="row" data-ext-stop="'+esc(id)+'">'+
-        '<span class="pin" style="border-color:#7556c9"></span><span class="info"><b>'+
+        '<span class="pin municipal-list-pin" aria-hidden="true"></span><span class="info"><b>'+
         esc(p[0])+'</b><small>Municipal BH · horários e GPS</small></span></button>',
         id,externalFav.includes(id),p[0],'fav-ext-stop')).join('')||
         '<p>Nenhum ponto municipal corresponde à busca.</p>';
