@@ -386,7 +386,7 @@ try {
         const doc=frame?.contentDocument;
         return doc && doc!==window.__previousInternoDoc &&
           doc.readyState==='complete' && !!doc.querySelector('#sheet') &&
-          /Interno/.test(doc.title) &&
+          /Ônibus/.test(doc.title) &&
           frame.contentWindow.location.pathname==='/interno';
       }catch{return false;}
     },null,{timeout:20000});
@@ -407,7 +407,7 @@ try {
         const doc=frame?.contentDocument;
         return doc && doc!==window.__beforeOfflineDoc &&
           doc.readyState==='complete' && !!doc.querySelector('#sheet') &&
-          /Interno/.test(doc.title) &&
+          /Ônibus/.test(doc.title) &&
           frame.contentWindow.location.pathname==='/interno' &&
           frame.contentWindow.L?.version==='1.9.4' &&
           doc.querySelectorAll('path.interno-stop').length===49 &&
