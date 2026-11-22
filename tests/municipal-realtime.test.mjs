@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {gzipSync} from 'node:zlib';
-import {projectOfficialDelays,tripDelaysForStop} from '../public/assets/municipal-realtime.js';
+import {projectOfficialDelays,tripDelaysForStop,normalizeTripDelayRoutes} from '../public/assets/municipal-realtime.js';
 import {shardForStop} from '../public/assets/municipal-schedules.js';
 
 const stop='14791950';
@@ -83,4 +83,22 @@ test('carrega apenas 1 shard GTFS da parada e rejeita versão inconsistente',asy
   index.version='outdated';
   await assert.rejects(()=>tripDelaysForStop(stop,[upstream()],{now,fetchFn}),
     /VERSION_MISMATCH/);
+});
+
+test('código público 51 da SUMOB corresponde somente ao route_id 562134 do GTFS',()=>{
+  const catalog=[
+    {id:'562134',code:'51',name:'Estação Pampulha / Centro'},
+    {id:'562165',code:'52',name:'Outra linha'},
+    {id:'562999',code:'51',name:'Código duplicado fora da parada'}
+  ];
+  const wanted=new Set(['562134']);
+  const mapped=normalizeTripDelayRoutes([upstream({routeId:'51'})],catalog,wanted);
+  assert.equal(mapped.length,1);
+  assert.equal(mapped[0].routeId,'562134');
+  assert.equal(projectOfficialDelays(mapped,[row],{stopId:stop,calendar:cal,now}).length,1);
+  assert.deepEqual(normalizeTripDelayRoutes([upstream({routeId:'52'})],catalog,wanted),[]);
+  assert.deepEqual(normalizeTripDelayRoutes([upstream({routeId:'999'})],catalog,wanted),[]);
+  assert.deepEqual(normalizeTripDelayRoutes([upstream({routeId:'51'})],
+    catalog,new Set(['562134','562999'])),[],
+    'Código público duplicado entre linhas atendendo o ponto não pode virar ETA');
 });
