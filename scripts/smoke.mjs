@@ -785,8 +785,8 @@ try {
     assert.equal(await sheet.locator('.municipal-direction-list').count(),1);
     assert.equal(await sheet.locator('[data-municipal-pattern]').count(),1);
     await sheet.locator('[data-municipal-list]').click();
-    await sheet.locator('[data-line-filter-toggle]').waitFor({state:'visible'});
-    assert.equal(await sheet.locator('[data-line-filter-toggle]').getAttribute('data-current-filter'),'all');
+    await sheet.locator('[data-line-filter-mode="all"]').waitFor({state:'visible'});
+    assert.equal(await sheet.locator('[data-line-filter-mode="all"]').getAttribute('aria-pressed'),'true');
     assert.match(await sheet.locator('#bus-lines-list .bus-line-group').first().innerText(),/Internos/);
     await combined.waitForFunction(()=>new URL(location.href).searchParams.get('tipo')===null,
       {timeout:10000});
@@ -842,7 +842,7 @@ try {
     assert.equal(await validPage.locator('#interno-frame').isVisible(),true);
     assert.equal(await inner.locator('#map-point-legend').count(),1);
     await inner.locator('[data-municipal-list]').click();
-    await inner.locator('[data-line-filter-toggle]').waitFor({state:'visible'});
+    await inner.locator('[data-line-filter-mode="all"]').waitFor({state:'visible'});
     assert.match(await inner.locator('#bus-lines-list .bus-line-group').first().innerText(),/Internos/);
     assert.equal(await inner.locator('input#line-q').count(),1);
   }finally{await busValidCtx.close();}
