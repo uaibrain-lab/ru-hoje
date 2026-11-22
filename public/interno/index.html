@@ -304,6 +304,26 @@ i{font-style:normal;font-size:14px;font-weight:400}
 @media(prefers-reduced-motion:reduce){
   #sheet.lines-mode #bus-lines-list .row{transition:none}
 }
+
+/* Status reais do mapa em pilha fluida: nunca duas pílulas soltas/sobrepostas. */
+#map-feedback{
+  position:fixed;z-index:480;top:calc(68px + env(safe-area-inset-top,0px));
+  left:12px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;
+  max-width:min(270px,calc(100vw - 102px));pointer-events:none;
+}
+#map-feedback #map-data-status,
+#map-feedback #map-basemap-notice{
+  position:static;inset:auto;top:auto;left:auto;right:auto;bottom:auto;
+  transform:none;width:auto;max-width:100%;margin:0;
+  border:1px solid var(--line);border-radius:12px;
+  background:var(--bg);color:var(--mut);padding:7px 10px;
+  font-size:11.5px;line-height:1.45;text-align:left;
+  box-shadow:0 2px 9px #0001;
+}
+#map-feedback #map-basemap-notice[hidden]{display:none}
+@media(min-width:760px){
+  #map-feedback{left:auto;right:68px;align-items:flex-end}
+}
 </style>
 </head>
 <body>
@@ -314,8 +334,10 @@ i{font-style:normal;font-size:14px;font-weight:400}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16l-6.5 8v5l-3 2v-7L4 5z"/></svg><span id="map-filter-label">Todos</span><span class="filter-next" aria-hidden="true">↻</span>
   </button>
 </div>
-<p id="map-data-status" role="status" aria-live="polite">Carregando pontos de BH…</p>
-<p id="map-basemap-notice" role="status" hidden>Mapa-base indisponível · horários acessíveis</p>
+<div id="map-feedback" aria-label="Estado do mapa">
+  <p id="map-data-status" role="status" aria-live="polite">Carregando pontos de BH…</p>
+  <p id="map-basemap-notice" role="status" hidden>Mapa-base indisponível · horários acessíveis</p>
+</div>
 <div id="top"><button class="fab" id="loc"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/></svg>Perto de mim</button></div>
 <section id="sheet" aria-label="Consulta de linhas e pontos do Interno UFMG">
   <button type="button" id="grab" aria-label="Recolher painel" aria-expanded="true" aria-controls="body"></button>
