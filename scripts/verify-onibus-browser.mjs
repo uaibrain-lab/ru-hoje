@@ -14,8 +14,11 @@ try {
       serviceWorkers:'block'});
     const errors=[];
     page.on('pageerror',error=>errors.push(error.message));
+    if(width===390)await page.clock.install({time:new Date()});
+    let arrivalCalls=0;
     await page.route('https://externo-bh-gps-free.hubufmg.workers.dev/api/arrivals?stop=*',
       route=>{
+        arrivalCalls++;
         if(width===1280)return route.fulfill({status:503,contentType:'application/json',
           headers:{'Access-Control-Allow-Origin':'*'},
           body:JSON.stringify({available:false,error:'ARRIVALS_UNAVAILABLE'})});
@@ -78,6 +81,18 @@ try {
         assert.match(txt,/Chegada prevista/);
         assert.match(txt,/SUMOB/);
         assert.match(await frame.locator('#municipal-timetable-title').innerText(),/tabela/);
+        // A live ETA must refresh even when a passenger has an arrival
+        // button focused; the button itself must NOT be replaced.
+        const firstETA=frame.locator('#municipal-realtime-rows .municipal-arrival').first();
+        await firstETA.focus();
+        const seen=arrivalCalls;
+        await page.clock.fastForward(31000);
+        for(let n=0;n<30&&arrivalCalls<=seen;n++)
+          await new Promise(resolve=>setTimeout(resolve,100));
+        assert.ok(arrivalCalls>seen,
+          'O painel não atualizou previsões após 30s com foco no botão');
+        assert.equal(await firstETA.evaluate(node=>node===document.activeElement),true,
+          'Atualização periódica não deve deslocar foco do botão de chegada');
       }else{
         await frame.locator('#municipal-stop-schedules .municipal-arrivals').waitFor({timeout:20000});
         assert.equal(await frame.locator('#service-alert-notification').isVisible(),false,
