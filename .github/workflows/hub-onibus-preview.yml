@@ -12,6 +12,7 @@ on:
       - public/interno/index.html
       - public/assets/onibus.js
       - public/index.html
+      - public/service-worker.js
   workflow_dispatch:
     inputs:
       source_run_id:
