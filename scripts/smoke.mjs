@@ -799,7 +799,7 @@ try {
     await combined.waitForFunction(()=>new URL(location.href).searchParams.get('ponto')==='14784087',
       {timeout:10000});
     assert.equal(await sheet.locator('#map-point-legend').count(),1);
-    assert.equal(await sheet.locator('#map-source-switch').isVisible(),true);
+    assert.equal(await sheet.locator('#map-point-legend').isVisible(),true);
     await sheet.locator('[data-municipal-list]').click();
     assert.match(await sheet.locator('#bus-lines-list .bus-line-group').first().innerText(),/Internos/);
   }finally{await combinedCtx.close()}
