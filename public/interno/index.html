@@ -126,6 +126,26 @@ i{font-style:normal;font-size:14px;font-weight:400}
 .dot{flex:none;width:18px;height:18px;border-radius:50%;background:var(--bg);border:4px solid var(--c);position:relative}
 .stp.foc .dot{background:var(--c)}.stp.foc .nm{font-weight:700}
 .nm{flex:1}.tm{font-variant-numeric:tabular-nums;color:var(--mut)}.stp.foc .tm{color:var(--ink);font-weight:700}
+
+/* Filtro de procedência na subaba Linhas; linha interna é a primeira opção. */
+.bus-line-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;
+  border:1px solid var(--line);background:var(--bg2);padding:4px;border-radius:14px;margin:0 0 8px}
+.bus-line-filters button{background:transparent;border:1px solid transparent;border-radius:10px;
+  font-weight:750;font-size:12px;min-height:44px;padding:7px 5px;color:var(--mut)}
+.bus-line-filters button[aria-pressed="true"]{background:var(--bg);color:var(--ink);border-color:var(--line);
+  box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.bus-line-group{display:flex;align-items:center;justify-content:space-between;gap:6px;
+  font-size:13px;font-weight:850;margin:13px 0 9px}
+.bus-line-group small{font-size:11px;font-weight:550;color:var(--mut)}
+.bus-line-external{--c:#695ac7;min-height:53px}
+.bus-line-external .bus-code{flex:none;min-width:52px;text-align:center;background:#695ac7;
+  color:#fff;padding:8px 6px;border-radius:11px;font-size:13px;font-weight:800}
+.bus-line-external .info small{font-size:11px;line-height:1.4}
+.bus-line-hint{font-size:12px;line-height:1.55;color:var(--mut)}
+.bus-line-more{display:block;width:100%;min-height:44px;border:1px solid var(--line);
+  border-radius:12px;background:var(--bg2);font-size:12px;font-weight:750;padding:9px 12px}
+.bus-line-search{margin:8px 0}
+.bus-line-note{font-size:11px;line-height:1.5;color:var(--mut);margin:8px 0}
 </style>
 </head>
 <body>
@@ -135,7 +155,7 @@ i{font-style:normal;font-size:14px;font-weight:400}
 <section id="sheet" aria-label="Consulta de linhas e pontos do Interno UFMG">
   <button type="button" id="grab" aria-label="Recolher painel" aria-expanded="true" aria-controls="body"></button>
   <div class="sheet-head" id="sheet-head">
-    <div class="sheet-identity"><strong>Interno</strong><span>UFMG</span></div>
+    <div class="sheet-identity"><strong>Ônibus</strong><span>UFMG + BH</span></div>
     <div class="quick-tabs" role="group" aria-label="O que consultar">
       <button type="button" id="quick-pontos" class="on" aria-pressed="true">Pontos</button>
       <button type="button" id="quick-linhas" aria-pressed="false">Linhas</button>
@@ -163,6 +183,46 @@ const fmD=d=>d<1000?Math.max(10,Math.round(d/10)*10)+' m':(d/1000).toFixed(1).re
 const walk=d=>Math.max(1,Math.round(d/80));
 
 let cat=dow()===6?'sabado':'diasUteis',tab='pontos',q='',view={t:'home'},hist=[],near={s:'loading'},sheetState=innerWidth>=760?'full':'mid';
+
+let lineFilter='all',lineQuery='',externalRoutes=[],externalState='idle',externalExpanded=false,
+  externalLastCheck=0,externalInflight=null;
+const municipalDay=()=>{
+  const z=Object.fromEntries(new Intl.DateTimeFormat('en-US',{
+    timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'
+  }).formatToParts(new Date()).map(p=>[p.type,p.value]));
+  return z.year+z.month+z.day;
+};
+function repaintLineList(){
+  if(tab!=='linhas'||view.t!=='home')return;
+  const list=document.getElementById('bus-lines-list');
+  if(list)list.innerHTML=combinedLineRows();
+}
+async function loadExternalLines(force=false){
+  if(externalInflight)return externalInflight;
+  if(!force&&externalState==='ready'&&Date.now()-externalLastCheck<300000)return;
+  externalState='loading';repaintLineList();
+  externalInflight=(async()=>{
+    try{
+      const r=await fetch('/externo/catalog/manifest.json',{cache:'no-store',headers:{Accept:'application/json'}});
+      if(!r.ok)throw Error('MISSING_CATALOG');
+      const m=await r.json(),day=municipalDay();
+      if(!m||typeof m.gtfsVersion!=='string'||!m.gtfsVersion.trim()||
+        !Number.isInteger(m.routes)||m.routes<1||!Number.isInteger(m.stops)||m.stops<1||
+        !/^[0-9]{8}$/.test(m.feedStartDate)||!/^[0-9]{8}$/.test(m.feedEndDate)||
+        day<m.feedStartDate||day>m.feedEndDate)throw Error('EXPIRED_GTFS');
+      const l=await fetch('/externo/catalog/routes.json',{cache:'no-store'});
+      if(!l.ok)throw Error('MISSING_ROUTES');
+      const data=await l.json();
+      if(!Array.isArray(data)||data.length!==m.routes||data.some(a=>!a||
+        typeof a.code!=='string'||!a.code.trim()||typeof a.name!=='string'))
+        throw Error('INVALID_ROUTES');
+      externalRoutes=data.slice().sort((a,b)=>a.code.localeCompare(b.code,'pt-BR',{numeric:true}));
+      externalState='ready';externalLastCheck=Date.now();
+    }catch(e){externalState=e.message==='EXPIRED_GTFS'?'expired':'unavailable';externalRoutes=[]}
+    finally{externalInflight=null;repaintLineList()}
+  })();
+  return externalInflight;
+}
 const isLive=()=>dow()!==0&&(cat==='sabado'?dow()===6:dow()!==6);
 const lines=()=>ALL.filter(l=>l.categoriaDia===cat);
 const byId=id=>ALL.find(l=>l.idRota===id);
@@ -251,12 +311,46 @@ function stopsList(){const k=norm(q.trim());
   return D.paradas.filter(p=>norm(stopName(p)).includes(k)||norm(p.nome).includes(k)).sort((a,b)=>a.nome.localeCompare(b.nome,'pt')).map(p=>{
     const c=lines().filter(l=>offs(l)[p.idParada]!==undefined).length;
     return `<button class="row" data-stop="${p.idParada}"><span class="pin"></span><span class="info"><b>${esc(stopName(p))}</b><small>${c?c+(c>1?' linhas':' linha'):'Sem linhas neste tipo de dia'}</small></span></button>`}).join('')||'<p>Nenhum ponto com esse nome.</p>'}
-function linesList(){const n=now(),live=isLive();
-  return lines().map(l=>{const h=l.horarios.map(hm).sort((a,b)=>a-b),nx=live?h.find(x=>x>=n):h[0];
-    return `<button class="row" style="--c:${l.corHex}" data-line="${l.idRota}"><span class="num" style="background:${l.corHex}">${l.linha}</span><span class="info"><b>${title(l)}</b><small>${esc(variant(l))}</small></span><span class="eta"><b>${nx===undefined?'—':fm(nx)}</b><small>${nx===undefined?'sem saídas':'próxima saída'}</small></span></button>`}).join('')}
+function combinedLineRows(){
+  const search=norm(lineQuery.trim()),n=now(),live=isLive();
+  let output='';
+  if(lineFilter!=='external'){
+    const internal=lines().filter(l=>norm(title(l)+' '+variant(l)).includes(search));
+    output+='<h3 class="bus-line-group">Internos <small>Campus UFMG · '+internal.length+' linhas</small></h3>';
+    output+=internal.map(l=>{
+      const hs=l.horarios.map(hm).sort((a,b)=>a-b),next=live?hs.find(x=>x>=n):hs[0];
+      return '<button class="row" style="--c:'+l.corHex+'" data-line="'+esc(l.idRota)+'"><span class="num" style="background:'+l.corHex+'">'+esc(l.linha)+'</span><span class="info"><b>'+esc(title(l))+'</b><small>'+esc(variant(l))+'</small></span><span class="eta"><b>'+(next===undefined?'—':fm(next))+'</b><small>'+(next===undefined?'sem saídas':'próxima saída')+'</small></span></button>';
+    }).join('')||'<p class="bus-line-hint">Nenhuma linha interna corresponde à busca.</p>';
+  }
+  if(lineFilter!=='internal'){
+    output+='<h3 class="bus-line-group">Externos <small>BH · '+(externalState==='ready'?externalRoutes.length+' linhas':'horários programados')+'</small></h3>';
+    if(externalState==='ready'){
+      const result=externalRoutes.filter(r=>norm(r.code+' '+r.name).includes(search));
+      const visible=externalExpanded||search?result:result.slice(0,40);
+      output+=visible.map(r=>'<button class="row bus-line-external" data-externo-code="'+esc(r.code)+'" aria-label="Abrir linha externa '+esc(r.code)+'"><span class="bus-code">'+esc(r.code)+'</span><span class="info"><b>'+esc(r.name)+'</b><small>BH municipal · pontos e horários</small></span><span aria-hidden="true">›</span></button>').join('')||
+        '<p class="bus-line-hint">Nenhuma linha externa corresponde à busca.</p>';
+      if(!externalExpanded&&!search&&result.length>40)
+        output+='<button class="bus-line-more" data-external-more>Mostrar todas as '+result.length+' linhas externas</button>';
+    }else{
+      output+='<p class="bus-line-hint" role="status">'+(externalState==='loading'?'Carregando linhas municipais…':externalState==='expired'?'GTFS municipal vencido; os horários externos estão ocultos.':'As linhas externas ainda não estão disponíveis nesta prévia.')+'</p>';
+      if(externalState!=='loading')output+='<button class="bus-line-more" data-external-retry>Tentar carregar linhas externas</button>';
+    }
+    output+='<p class="bus-line-note">Horários programados, não previsões em tempo real.</p>';
+  }
+  return output;
+}
+function linesList(){
+  return '<div class="bus-line-filters" role="group" aria-label="Filtrar linhas de ônibus">'+
+    [['all','Todas'],['internal','Internas'],['external','Externas']].map(([id,text])=>
+    '<button type="button" data-line-filter="'+id+'" aria-pressed="'+(lineFilter===id)+'">'+text+'</button>').join('')+
+    '</div><label class="srch bus-line-search" for="line-q">'+ic('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>')+
+    '<input type="search" id="line-q" placeholder="Buscar número ou nome da linha" value="'+esc(lineQuery)+'"></label>'+
+    (lineFilter==='external'?'':catBar())+
+    '<div id="bus-lines-list">'+combinedLineRows()+'</div>';
+}
 function favRows(){if(!fav.some(id=>S[id]))return '';return '<h3>Seus pontos</h3>'+fav.filter(id=>S[id]).map(id=>{const f=arrivals(id).find(x=>x.ts.length);
   return `<button class="row" data-stop="${id}" style="--c:${f?f.l.corHex:'var(--line)'}"><span class="info"><b>${esc(stopName(S[id]))}</b><small>${f?title(f.l)+' · '+esc(variant(f.l)):'Sem saídas agora'}</small></span>${f?`<span class="eta">${eta(f.ts[0])}</span>`:''}</button>`}).join('')}
-function home(){return `${tab==='pontos'?`<label class="srch">${ic('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>')}<input id="q" type="search" placeholder="Buscar ponto pelo nome" value="${esc(q)}"></label>${favRows()}<div id="list">${stopsList()}</div>`:linesList()}${catBar()}${banner()}`}
+function home(){return `${tab==='pontos'?`<label class="srch">${ic('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>')}<input id="q" type="search" placeholder="Buscar ponto pelo nome" value="${esc(q)}"></label>${favRows()}<div id="list">${stopsList()}</div>`:linesList()}${tab==='pontos'?catBar():''}${banner()}`}
 
 function render(){
   const fallback=!window.L?'<p class="note" role="status">Mapa indisponível nesta conexão. Você ainda pode pesquisar pontos e consultar horários; para exibir o mapa, conecte-se à internet.</p>':'';
@@ -294,6 +388,7 @@ function pickQuickTab(t){
   if(view.t!=='home'){hist=[];view={t:'home'};apply();}
   else render();
   setExpanded(true);
+  if(t==='linhas')void loadExternalLines();
 }
 
 // O mapa é progressivo: Leaflet local, rotas e horários disponíveis sem tiles.
@@ -379,13 +474,24 @@ el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
   if(d.sheetToggle!==undefined){setSheetState(sh.classList.contains('peek')?'mid':sh.classList.contains('full')?'peek':'full');}
   else if(d.stop)go({t:'stop',id:d.stop});
   else if(d.line)go({t:'line',id:d.line,focus:d.focus});
+  else if(d.externoCode)window.parent.postMessage({type:'hub:onibus:external-line',code:d.externoCode},window.location.origin);
+  else if(d.lineFilter){lineFilter=d.lineFilter;render();if(lineFilter!=='internal')void loadExternalLines();}
+  else if(d.externalMore!==undefined){externalExpanded=true;repaintLineList()}
+  else if(d.externalRetry!==undefined)void loadExternalLines(true);
   else if(d.tab){pickQuickTab(d.tab)}
   else if(d.cat){cat=d.cat;render()}
   else if(d.fav){fav=fav.includes(d.fav)?fav.filter(x=>x!==d.fav):[...fav,d.fav];saveFav();render()}
   else if(d.info!==undefined){const content=b.parentElement.querySelector('[data-info-content]'),open=content?.hidden===true;if(content){content.hidden=!open;b.setAttribute('aria-expanded',String(open));}}
   else if(d.back!==undefined){view=hist.pop()||{t:'home'};apply()}
   else if(d.home!==undefined){hist=[];view={t:'home'};tab='pontos';apply()}});
-el.addEventListener('input',e=>{if(e.target.id==='q'){q=e.target.value;document.getElementById('list').innerHTML=stopsList()}});
+el.addEventListener('input',e=>{
+  if(e.target.id==='q'){q=e.target.value;document.getElementById('list').innerHTML=stopsList()}
+  else if(e.target.id==='line-q'){lineQuery=e.target.value;externalExpanded=false;repaintLineList()}
+});
+window.addEventListener('message',e=>{
+  if(e.origin!==window.location.origin||e.source!==window.parent)return;
+  if(e.data?.type==='hub:onibus:resume-lines'&&tab!=='linhas')pickQuickTab('linhas');
+});
 document.getElementById('loc').addEventListener('click',locate);
 // Atualizar horários apenas quando necessários, preservando foco, busca e popovers.
 setInterval(()=>{
