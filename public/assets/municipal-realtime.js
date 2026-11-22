@@ -19,6 +19,32 @@ const startTimeSeconds=text=>{
   const s=Number(m[1])*3600+Number(m[2])*60+Number(m[3]);
   return s<48*3600?s:null;
 };
+/**
+ * SUMOB route_id is the public route short name, while the official
+ * GTFS stop timetable uses numeric route_id. Only a UNIQUE alias can
+ * be normalized; duplicates and unrelated municipal routes fail closed.
+ */
+export function normalizeTripDelayRoutes(updates,catalogRoutes,servingRouteIds){
+  if(!Array.isArray(updates)||updates.length>250||
+     !Array.isArray(catalogRoutes)||!servingRouteIds)return [];
+  const allowed=new Set([...servingRouteIds].map(String));
+  const aliases=new Map();
+  for(const r of catalogRoutes){
+    const id=String(r?.id||''),code=String(r?.code||'').trim();
+    if(!allowed.has(id)||!/^[A-Za-z0-9_.:-]{1,70}$/.test(id)||
+       !/^[A-Za-z0-9_.:-]{1,70}$/.test(code))continue;
+    for(const alias of [id,code]){
+      if(aliases.has(alias)&&aliases.get(alias)!==id)aliases.set(alias,null);
+      else if(!aliases.has(alias))aliases.set(alias,id);
+    }
+  }
+  return updates.flatMap(update=>{
+    const id=aliases.get(String(update?.routeId||''));
+    if(!id)return [];
+    return [{...update,routeId:id}];
+  });
+}
+
 export function projectOfficialDelays(relativeUpdates,rows,{stopId,calendar,now=Date.now()}={}){
   if(!Array.isArray(relativeUpdates)||!Array.isArray(rows)||
      !/^[0-9]{1,20}$/.test(String(stopId||''))||!calendar||
