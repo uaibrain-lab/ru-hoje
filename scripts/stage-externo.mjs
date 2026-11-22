@@ -99,6 +99,26 @@ export async function validateExternoPackage(source,day=localServiceDay()){
         throw Error('INVALID_BUCKET');
     }catch{throw Error('EXTERNO_ARRIVALS_BUCKET_MISSING_OR_CORRUPT: '+name);}
   }
+  // ETA via GTFS-RT só pode ser ativado com a mesma versão do GTFS estático.
+  // Pacotes V1 antigos sem índice continuam utilizáveis, com horários de tabela.
+  if(qa.rtTripIndexSchema!==undefined){
+    if(qa.rtTripIndexSchema!==1||!Number.isInteger(qa.rtTripIndexRows)||
+       qa.rtTripIndexRows<1000||qa.rtTripIndexRows>manifest.stopTimeRows)
+      throw Error('EXTERNO_RT_TRIP_QA_INVALID');
+    const rt=await json(path.join(root,'catalog/rt-trips/index.json'));
+    if(rt.schema!==1||rt.buckets!==256||rt.version!==manifest.gtfsVersion||
+       rt.validThrough!==manifest.feedEndDate||rt.rows!==qa.rtTripIndexRows||
+       !rt.sizes||Object.keys(rt.sizes).length!==256)
+      throw Error('EXTERNO_RT_TRIP_INDEX_VERSION_MISMATCH');
+    for(let n=0;n<256;n++){
+      const file=n.toString(16).padStart(2,'0')+'.json.gz';
+      const size=rt.sizes[file];
+      if(!Number.isInteger(size)||size<10||size>4*1024*1024)
+        throw Error('EXTERNO_RT_TRIP_SHARD_BAD_SIZE: '+file);
+      if((await stat(path.join(root,'catalog/rt-trips',file))).size!==size)
+        throw Error('EXTERNO_RT_TRIP_SHARD_MISSING: '+file);
+    }
+  }
   if(built.routingEnabled!==false||built.metropolitanEnabled!==false||built.gpsEnabled!==true)
     throw Error('EXTERNO_V1_DEFERRED_FEATURES_ENABLED');
   const {total,files}=await allFiles(root);
