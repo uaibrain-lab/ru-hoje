@@ -506,6 +506,15 @@ try {
       assert.equal(await cycle.getAttribute('data-current-filter'),'all');
       assert.match(await bus.locator('#bus-lines-list .bus-line-group').first().innerText(),/Internos/);
       if(width===390){
+        // Recolher Linhas devolve o filtro ao mapa; reabrir devolve à lista.
+        const toggle=bus.locator('#sheet-toggle');
+        await toggle.click(); // painel intermediário → ampliado
+        await toggle.click(); // ampliado → recolhido
+        assert.equal(await bus.locator('#map-source-switch').isVisible(),true,
+          'Mapa não pode perder o filtro quando Linhas é recolhido');
+        await toggle.click(); // recolhido → intermediário
+        assert.equal(await bus.locator('#map-source-switch').isVisible(),false,
+          'Filtro de Linhas não deve ser duplicado sobre mapa aberto');
         // Teste geométrico: controles no mapa e ferramentas em Linhas não se sobrepõem.
         const blocks=await bus.locator('body').evaluate(()=>{
           const b=selector=>{const n=document.querySelector(selector);if(!n)return null;
