@@ -27,6 +27,9 @@ test('a aba Ônibus substitui Interno sem acrescentar quinta aba no Hub',async()
   assert.doesNotMatch(interno,/data-map-mode="external"/);
   assert.doesNotMatch(interno,/>Externos|>Externas/);
   assert.match(interno,/hub:onibus:external-line/);
+  assert.match(interno,/class="gps-bus-shape"/);
+  assert.match(interno,/if\(mapMode==='internal'&&map\.hasLayer\(busPins\)\)map\.removeLayer\(busPins\)/);
+  assert.match(interno,/Number\(v\.heading\)/);
   assert.doesNotMatch(interno,/function favRows\(/);
   assert.match(interno,/function starRow\(/);
   assert.match(interno,/hub_onibus_linhas_favoritas_v1/);
