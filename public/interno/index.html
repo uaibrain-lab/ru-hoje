@@ -429,6 +429,22 @@ i{font-style:normal;font-size:14px;font-weight:400}
 .municipal-stops-list .municipal-arrival{border-left:3px solid #7556c9}
  .municipal-list-pin{background:#7556c9;border-color:#7556c9!important;
   width:14px;height:14px;border-radius:50%;box-shadow:0 0 0 1px #fff}
+
+/* Filtro explícito e tabs acessíveis também na consulta de um ponto. */
+#sheet.detail .sheet-head{display:flex}
+#sheet.detail .sheet-identity{display:none}
+#sheet.detail .quick-tabs{display:flex;justify-content:flex-start}
+#sheet.detail .sheet-head{padding:4px 14px 8px}
+.bus-line-tools{display:flex;flex-direction:column;align-items:stretch;gap:8px;margin:3px 0 12px}
+.bus-line-tools .bus-line-search{flex:none;width:100%;min-height:46px}
+.bus-line-tools .bus-line-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;gap:5px;margin:0}
+.bus-line-tools .bus-line-filters .filter-option{display:flex;align-items:center;justify-content:center;gap:4px;min-width:0;min-height:42px;padding:7px 4px;border:1px solid var(--line);border-radius:10px;background:var(--bg2);color:var(--mut);font-size:clamp(11px,2.9vw,13px);font-weight:750;line-height:1.2}
+.bus-line-tools .bus-line-filters .filter-option[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.bus-line-tools .bus-line-filters .filter-option:focus-visible{outline:3px solid #2e90fa;outline-offset:2px}
+#sheet.lines-mode .bus-line-tools{position:sticky;top:-8px;z-index:4;background:var(--bg);padding:8px 0 10px}
+.map-legend-symbol--internal{width:13px;height:13px;border:3px solid #334155;background:#fff}
+.map-legend-symbol--municipal{width:13px;height:13px;border:1px solid #fff;background:#7556c9;box-shadow:0 0 0 1px #7556c9}
+@media(max-width:759px){#sheet.detail:not(.peek){height:min(62dvh,540px)}}
 </style>
 </head>
 <body>
@@ -576,7 +592,7 @@ function arrRow(a,id,hero){const {l,ts}=a,live=isLive(),has=ts.length;
   const more=ts.slice(1,4).map(fm).join(' · ');
   return `<button class="${hero?'next':'row'}" style="--c:${l.corHex}" data-line="${l.idRota}" data-focus="${id}"><span class="num" style="background:${l.corHex}">${l.linha}</span><span class="info"><b>${title(l)}</b><small>${esc(variant(l))}${more?'<br>Depois: '+more:''}</small></span><span class="eta">${has?eta(ts[0]):'<b style="font-size:15px">Sem saídas</b>'}<small>${sub}</small></span></button>`}
 
-const banner=()=>dow()===0?'<p class="note">Hoje é domingo e os dados não têm linhas internas. Escolha outro tipo de dia para ver horários.</p>':(!isLive()?`<p class="note">Mostrando horários de ${CATS.find(c=>c[0]===cat)[1].toLowerCase()}, sem previsão para agora.</p>`:'');
+const banner=()=>dow()===0?'<p class="note">Domingo: as linhas internas não operam hoje. Os horários abaixo são para consulta dos dias selecionados.</p>':(!isLive()?`<p class="note">Mostrando horários de ${CATS.find(c=>c[0]===cat)[1].toLowerCase()}, sem previsão para agora.</p>`:'');
 const catBar=()=>`<div class="chips">${CATS.map(c=>`<button data-cat="${c[0]}" class="${c[0]===cat?'on':''}">${c[1]}</button>`).join('')}</div>`;
 const disclaimer='<p class="note">Previsão estimada pela grade de horários e pelo tempo entre pontos. Não usa GPS, então atrasos e trânsito não entram.</p>';
 const ic=(p,f)=>`<svg class="ic" viewBox="0 0 24 24" fill="${f||'none'}" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
@@ -847,11 +863,11 @@ function combinedLineRows(){
 function linesList(){
   return '<div class="bus-line-tools">'+
     '<label class="srch bus-line-search" for="line-q">'+ic('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>')+
-    '<input type="search" id="line-q" placeholder="Buscar linha" aria-label="Buscar linha por nome ou número" value="'+esc(lineQuery)+'"></label>'+
-    '<div class="bus-line-filters">'+
-    '<button type="button" class="filter-cycle" data-line-filter-toggle data-current-filter="'+lineFilter+
-    '" aria-label="'+filterHint('linhas',lineFilter)+'" title="'+filterHint('linhas',lineFilter)+'">'+
-    FILTER_ICON+'<span>'+FILTER_LABELS[lineFilter]+'</span><span class="filter-next" aria-hidden="true">↻</span></button>'+
+    '<input type="search" id="line-q" placeholder="Buscar linha (nome ou número)" aria-label="Buscar linha por nome ou número" value="'+esc(lineQuery)+'"></label>'+
+    '<div class="bus-line-filters" role="group" aria-label="Filtrar linhas por origem">'+
+    FILTER_MODES.map(mode=>'<button type="button" class="filter-option" data-line-filter-mode="'+mode+'"'+
+      ' aria-pressed="'+String(lineFilter===mode)+'" title="Exibir '+FILTER_LABELS[mode]+'">'+
+      (mode==='all'?'Todas':FILTER_LABELS[mode])+'</button>').join('')+
     '</div></div>'+
     (lineFilter==='external'?'':catBar())+
     '<div id="bus-lines-list">'+combinedLineRows()+'</div>';
@@ -929,7 +945,7 @@ function renderTransportMap(){
                      ((+b[1][1]-center.lat)**2+(+b[1][2]-center.lng)**2));
   const selected=nearby.slice(0,180);
   for(const [id,p] of selected){
-    L.circleMarker([+p[1],+p[2]],{radius:4.5,color:'#7556c9',
+    L.circleMarker([+p[1],+p[2]],{radius:5.5,color:'#7556c9',
       fillColor:'#7556c9',fillOpacity:.88,weight:1.2})
       .addTo(municipalPins).bindTooltip(String(p[0]||'Ponto municipal'))
       .on('click',()=>{void openMunicipal('stop',id)});
@@ -1019,7 +1035,7 @@ async function updateGpsNearMap(marked){
 }
 function changeMapMode(mode){
   if(!FILTER_MODES.includes(mode))return;
-  const focusWasLine=document.activeElement?.hasAttribute('data-line-filter-toggle');
+  const focusMode=document.activeElement?.getAttribute('data-line-filter-mode');
   mapMode=mode;lineFilter=mode;
   const button=document.getElementById('map-filter-toggle');
   button.dataset.currentFilter=mode;button.title=filterHint('mapa',mode);
@@ -1027,7 +1043,7 @@ function changeMapMode(mode){
   document.getElementById('map-filter-label').textContent=FILTER_LABELS[mode];
   renderTransportMap();
   if(view.t==='home')render();
-  if(focusWasLine)el.querySelector('[data-line-filter-toggle]')?.focus();
+  if(focusMode!==null)el.querySelector('[data-line-filter-mode="'+mode+'"]')?.focus();
   if(mode!=='internal')void loadMapMunicipal();
 }
 document.getElementById('map-filter-toggle').addEventListener('click',()=>{
@@ -1057,7 +1073,7 @@ if(window.L){
   // exatamente o mesmo raio e cores. A categoria não altera o desenho.
   D.paradas.forEach(p=>{
     L.circleMarker(p.coordenadas,{
-      radius:7,
+      radius:8,
       color:'#334155',
       weight:2.5,
       fillColor:'#ffffff',
@@ -1141,7 +1157,7 @@ el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
   else if(d.externoCode){void openMunicipal('line',d.externoCode)}
   else if(d.municipalPattern){view.pattern=d.municipalPattern;apply()}
   else if(d.municipalList!==undefined){returnToMunicipalList()}
-  else if(d.lineFilterToggle!==undefined){changeMapMode(nextFilter(lineFilter));}
+  else if(d.lineFilterMode!==undefined){changeMapMode(d.lineFilterMode);}
   else if(d.externalMore!==undefined){externalExpanded=true;repaintLineList()}
   else if(d.externalRetry!==undefined)void loadExternalLines(true);
   else if(d.tab){pickQuickTab(d.tab)}
