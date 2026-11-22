@@ -494,6 +494,7 @@ i{font-style:normal;font-size:14px;font-weight:400}
 @media(min-width:760px){
   #map-feedback{left:12px;right:auto;align-items:stretch}
 }
+#map-data-status[hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -531,7 +532,7 @@ i{font-style:normal;font-size:14px;font-weight:400}
   </div>
   <p id="map-basemap-notice" role="status" hidden>Mapa-base indisponível · horários acessíveis</p>
 </div>
-<p id="map-data-status" class="map-sr-only" role="status" aria-live="polite"></p>
+<p id="map-data-status" hidden></p>
 <div id="top"><button class="fab" id="loc" type="button" aria-label="Encontrar ponto perto de mim" title="Minha localização"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/></svg></button></div>
 <section id="sheet" aria-label="Consulta de linhas e pontos do Interno UFMG">
   <button type="button" id="grab" aria-label="Recolher painel" aria-expanded="true" aria-controls="body"></button>
