@@ -8,7 +8,7 @@
  *
  * The Hub stays on a draft branch; promotion requires V1 QA gates separately.
  */
-import {readFile,stat,readdir,cp,mkdir,rm,rename,lstat} from 'node:fs/promises';
+import {readFile,stat,readdir,cp,rm,rename} from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {localServiceDay,validExternoManifest} from '../public/assets/onibus.js';
@@ -45,7 +45,8 @@ export async function validateExternoPackage(source,day=localServiceDay()){
   const root=path.resolve(source);
   if(!(await stat(root)).isDirectory())throw Error('EXTERNO_SOURCE_NOT_DIRECTORY');
   for(const p of REQUIRED){
-    if(!(await stat(path.join(root,p))).isFile())throw Error('EXTERNO_REQUIRED_FILE_INVALID: '+p);
+    try{if(!(await stat(path.join(root,p))).isFile())throw Error('INVALID');}
+    catch{throw Error('EXTERNO_REQUIRED_FILE_INVALID: '+p);}
   }
   const html=await readFile(path.join(root,'index.html'),'utf8');
   if(!html.includes('data-app-mode="free-static"'))
@@ -68,8 +69,10 @@ export async function validateExternoPackage(source,day=localServiceDay()){
     const expected=index.sizes[name];
     if(!Number.isInteger(expected)||expected<=0||expected>4*1024*1024)
       throw Error('EXTERNO_ARRIVALS_BUCKET_BAD_SIZE: '+name);
-    if((await stat(path.join(root,'catalog/arrivals',name))).size!==expected)
-      throw Error('EXTERNO_ARRIVALS_BUCKET_MISSING_OR_CORRUPT: '+name);
+    try{
+      if((await stat(path.join(root,'catalog/arrivals',name))).size!==expected)
+        throw Error('INVALID_BUCKET');
+    }catch{throw Error('EXTERNO_ARRIVALS_BUCKET_MISSING_OR_CORRUPT: '+name);}
   }
   const {total,files}=await allFiles(root);
   return {gtfsVersion:manifest.gtfsVersion,feedEndDate:manifest.feedEndDate,

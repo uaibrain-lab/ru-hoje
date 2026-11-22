@@ -47,7 +47,7 @@ test('o SW do Hub não intercepta nem substitui /externo pelo RU',async()=>{
   assert.match(js,/activateOnibus\(\)/);
   assert.match(js,/if\(name==='onibus'\)return 'interno'/);
   const app=await read('public/assets/app.js');
-  assert.match(app,/!\\['interno','onibus','festas','sobre'\\]/);
+  assert.ok(app.includes("!['interno','onibus','festas','sobre'].includes(initialTab)"));
 });
 
 async function fixture(action){
