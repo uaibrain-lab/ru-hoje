@@ -69,7 +69,8 @@ async function fixture(action){
     const required=['index.html','app.js','style.css','hub-parity.css','static-bus.js',
      'static-arrivals.js','service-worker.js','gps-config.json',
      'catalog/manifest.json','catalog/routes.json','catalog/stops.json','catalog/patterns.json',
-     'catalog/shapes.json','catalog/metro.json','catalog/arrivals/index.json','catalog/arrivals/calendar.json'];
+     'catalog/shapes.json','catalog/metro.json','catalog/arrivals/index.json','catalog/arrivals/calendar.json',
+     'hub-v1-build.json','hub-v1-qa.json'];
     for(const relative of required){
       const f=path.join(dir,relative);
       await mkdir(path.dirname(f),{recursive:true});
@@ -78,6 +79,14 @@ async function fixture(action){
     await writeFile(path.join(dir,'index.html'),
       '<html data-app-mode="free-static"><button id="quick-rotas" hidden disabled>Rotas</button></html>');
     await writeFile(path.join(dir,'gps-config.json'),'{"enabled":false}');
+    await writeFile(path.join(dir,'hub-v1-build.json'),JSON.stringify({
+      gtfsVersion:'fixture',validThrough:'20261231',scheduledStops:2,shards:256,
+      routingEnabled:false,metropolitanEnabled:false,gpsEnabled:false}));
+    await writeFile(path.join(dir,'hub-v1-qa.json'),JSON.stringify({
+      schema:1,status:'passed',scope:'municipal-bh-and-metro',
+      sourceSha256:'a'.repeat(64),validatedServiceDate:'20261122',
+      gtfsVersion:'fixture',validThrough:'20261231',routes:2,shards:256,scheduledStops:2,
+      routingEnabled:false,metropolitanEnabled:false,gpsEnabled:false}));
     await writeFile(path.join(dir,'catalog/manifest.json'),JSON.stringify({
       gtfsVersion:'fixture',routes:2,stops:2,stopTimeRows:4,
       feedStartDate:'20260101',feedEndDate:'20261231'}));
@@ -121,5 +130,15 @@ test('staging rejeita versão incompatível do índice mesmo quando existem 256 
     data.version='stale';
     await writeFile(location,JSON.stringify(data));
     await assert.rejects(validateExternoPackage(dir,'20261122'),/ARRIVALS_INDEX_MISMATCH/);
+  });
+});
+
+test('staging bloqueia pacote sem comprovação de QA oficial',async()=>{
+  await fixture(async dir=>{
+    const pathToQa=path.join(dir,'hub-v1-qa.json');
+    await rm(pathToQa);
+    await assert.rejects(validateExternoPackage(dir,'20261122'),/REQUIRED_FILE_INVALID/);
+    await writeFile(pathToQa,JSON.stringify({schema:1,status:'blocked',scope:'municipal-bh-and-metro'}));
+    await assert.rejects(validateExternoPackage(dir,'20261122'),/QA_NOT_APPROVED/);
   });
 });

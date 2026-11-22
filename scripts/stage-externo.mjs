@@ -21,7 +21,8 @@ const REQUIRED=[
   'static-arrivals.js','service-worker.js','gps-config.json',
   'catalog/manifest.json','catalog/routes.json','catalog/stops.json',
   'catalog/patterns.json','catalog/shapes.json','catalog/metro.json',
-  'catalog/arrivals/index.json','catalog/arrivals/calendar.json'
+  'catalog/arrivals/index.json','catalog/arrivals/calendar.json',
+  'hub-v1-build.json','hub-v1-qa.json'
 ];
 
 async function json(p){return JSON.parse(await readFile(p,'utf8'));}
@@ -48,6 +49,17 @@ export async function validateExternoPackage(source,day=localServiceDay()){
     try{if(!(await stat(path.join(root,p))).isFile())throw Error('INVALID');}
     catch{throw Error('EXTERNO_REQUIRED_FILE_INVALID: '+p);}
   }
+  const qa=await json(path.join(root,'hub-v1-qa.json'));
+  const built=await json(path.join(root,'hub-v1-build.json'));
+  if(qa.schema!==1||qa.status!=='passed'||
+     qa.scope!=='municipal-bh-and-metro'||
+     !/^[0-9a-f]{64}$/.test(qa.sourceSha256||'')||
+     qa.gtfsVersion!==built.gtfsVersion||
+     qa.validThrough!==built.validThrough||
+     qa.routingEnabled!==false||qa.metropolitanEnabled!==false||
+     qa.gpsEnabled!==false||qa.shards!==256||built.shards!==256||
+     !/^[0-9]{8}$/.test(qa.validatedServiceDate||''))
+    throw Error('EXTERNO_V1_QA_NOT_APPROVED');
   const html=await readFile(path.join(root,'index.html'),'utf8');
   if(!html.includes('data-app-mode="free-static"'))
     throw Error('EXTERNO_NOT_STATIC_BUILD');
@@ -57,6 +69,12 @@ export async function validateExternoPackage(source,day=localServiceDay()){
   if(gps.enabled!==false)throw Error('EXTERNO_GPS_NOT_APPROVED');
   const manifest=await json(path.join(root,'catalog/manifest.json'));
   if(!validExternoManifest(manifest,day))throw Error('EXTERNO_GTFS_NOT_CURRENT');
+  if(qa.gtfsVersion!==manifest.gtfsVersion||
+     qa.validThrough!==manifest.feedEndDate||
+     qa.routes!==manifest.routes||
+     qa.scheduledStops!==built.scheduledStops||
+     qa.validatedServiceDate>day)
+    throw Error('EXTERNO_V1_QA_MANIFEST_MISMATCH');
   const index=await json(path.join(root,'catalog/arrivals/index.json'));
   if(index.schema!==1 || index.buckets!==256 ||
      index.version!==manifest.gtfsVersion ||
@@ -74,8 +92,11 @@ export async function validateExternoPackage(source,day=localServiceDay()){
         throw Error('INVALID_BUCKET');
     }catch{throw Error('EXTERNO_ARRIVALS_BUCKET_MISSING_OR_CORRUPT: '+name);}
   }
+  if(built.routingEnabled!==false||built.metropolitanEnabled!==false||built.gpsEnabled!==false)
+    throw Error('EXTERNO_V1_DEFERRED_FEATURES_ENABLED');
   const {total,files}=await allFiles(root);
-  return {gtfsVersion:manifest.gtfsVersion,feedEndDate:manifest.feedEndDate,
+  return {sourceSha256:qa.sourceSha256,qaDate:qa.validatedServiceDate,
+    gtfsVersion:manifest.gtfsVersion,feedEndDate:manifest.feedEndDate,
     routes:manifest.routes,stops:manifest.stops,scheduledStops:index.stopCount,
     bytes:total,files};
 }
