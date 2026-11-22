@@ -28,7 +28,9 @@ try {
       assert.equal(await frame.locator('#map-point-legend').count(),1);
       assert.equal(await frame.locator('.map-legend-symbol--internal').count(),1);
       assert.equal(await frame.locator('.map-legend-symbol--municipal').count(),1);
-      await frame.locator('[data-municipal-list]').click();
+      assert.equal(await frame.locator('#quick-linhas').isVisible(),true,
+        'Linhas deve ser acessível mesmo com um ponto selecionado');
+      await frame.locator('#quick-linhas').click();
       await frame.locator('#line-q').waitFor({timeout:15000});
       assert.equal(await frame.locator('#line-q').count(),1,
         'Existe mais de uma busca de linhas');
@@ -37,14 +39,31 @@ try {
       const firstGroup=await frame.locator('.bus-line-group').first().textContent();
       assert.match(firstGroup||'',/Internos/,
         'Linhas internas precisam aparecer no topo');
-      const filter=frame.locator('[data-line-filter-toggle]');
-      assert.equal(await filter.count(),1,'O filtro de linhas precisa estar visível');
-      assert.equal(await filter.getAttribute('data-current-filter'),'all');
-      await filter.click();
-      assert.equal(await frame.locator('[data-line-filter-toggle]')
-        .getAttribute('data-current-filter'),'internal');
+      const filters=frame.locator('[data-line-filter-mode]');
+      assert.equal(await filters.count(),3,
+        'O filtro explícito deve oferecer Todas, Internos e Municipais');
+      assert.equal(await frame.locator('[data-line-filter-mode="all"]')
+        .getAttribute('aria-pressed'),'true');
+      await frame.locator('[data-line-filter-mode="internal"]').click();
+      assert.equal(await frame.locator('[data-line-filter-mode="internal"]')
+        .getAttribute('aria-pressed'),'true');
+      assert.match(await frame.locator('.bus-line-group').first().textContent()||'',/Internos/);
+      await frame.locator('[data-line-filter-mode="external"]').click();
+      assert.equal(await frame.locator('[data-line-filter-mode="external"]')
+        .getAttribute('aria-pressed'),'true');
+      assert.match(await frame.locator('.bus-line-group').first().textContent()||'',/Municipais/);
+      await frame.locator('[data-line-filter-mode="all"]').click();
+      assert.match(await frame.locator('.bus-line-group').first().textContent()||'',/Internos/);
+      await frame.locator('#quick-pontos').click();
+      assert.equal(await frame.locator('#q').count(),1);
+      assert.equal(await frame.locator('#line-q').count(),0);
       assert.deepEqual(errors,[],
         'Erros JS impediram carregar a interface unificada');
+      await page.goto(new URL('/externo/?ponto=14791950',base).href,
+        {waitUntil:'domcontentloaded',timeout:30000});
+      await page.waitForURL(/aba=onibus.*tipo=externo.*ponto=14791950/,{timeout:15000});
+      assert.equal(await page.locator('#interno-frame').count(),1,
+        'Link legado não pode abrir a interface municipal duplicada');
       console.log('HUB_ONIBUS_BROWSER_OK width='+width);
     }finally{await page.close();}
   }
