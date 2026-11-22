@@ -1170,3 +1170,148 @@ dialog{background:var(--card);color:var(--ink);border-color:var(--line)}
   .site-wrap.interno-active .onibus-empty{min-height:0;height:100%;padding:13px;border-radius:17px}
 }
 @media(max-width:360px){.onibus-intro h2 span{font-size:10px}.onibus-empty-actions button{width:100%}}
+
+
+/* Design system 2026: Cardápio, Festas, Sobre.
+   Componentes harmonizados sem refazer o mapa ou a composição dos cartazes. */
+:root{
+  --ui-space-1:4px;--ui-space-2:8px;--ui-space-3:12px;
+  --ui-space-4:16px;--ui-space-5:24px;--ui-space-6:32px;
+  --ui-radius-card:18px;--ui-radius-control:13px;
+  --ui-transition:background-color .16s ease,border-color .16s ease,color .16s ease;
+}
+#bandeco-main,#festas-page,#sobre-page{min-width:0}
+#bandeco-main .restaurant-picker,
+#bandeco-main .date-card,
+#bandeco-main .today-link,
+#bandeco-main .dish-trigger,
+.festas-page .festa-action,
+.sobre-page .pwa-install-manual{
+  transition:var(--ui-transition);
+}
+#bandeco-main .restaurant-picker:focus-visible,
+#bandeco-main .date-card:focus-visible,
+#bandeco-main .today-link:focus-visible,
+.festas-page .festa-action:focus-visible,
+.festas-page .festa-poster-trigger:focus-visible,
+.sobre-page .pwa-install-manual:focus-visible{
+  outline:3px solid var(--purple);outline-offset:3px;
+}
+#bandeco-main .section-heading,
+#bandeco-main .menu-heading-row{gap:var(--ui-space-3);margin-bottom:var(--ui-space-3)}
+#bandeco-main .section-heading h2,
+#bandeco-main .menu-heading-row h2{
+  font-size:clamp(18px,3.9vw,21px);font-weight:780;
+  letter-spacing:-.025em;line-height:1.27;
+}
+#bandeco-main .restaurant-picker{border-radius:var(--ui-radius-card)}
+#bandeco-main .picker-copy strong{letter-spacing:-.015em;line-height:1.3}
+#bandeco-main .picker-copy small{line-height:1.4}
+#bandeco-main .date-strip{scroll-snap-type:x proximity;overscroll-behavior-inline:contain}
+#bandeco-main .date-card{scroll-snap-align:start;border-radius:var(--ui-radius-control)}
+#bandeco-main .menu-disclaimer{
+  display:flex;gap:var(--ui-space-3);align-items:flex-start;
+  border-radius:var(--ui-radius-control);
+  padding:var(--ui-space-4);
+}
+#bandeco-main .menu-disclaimer p{
+  font-size:12.5px;line-height:1.6;overflow-wrap:anywhere;
+}
+#bandeco-main .update-line{font-size:11.5px;line-height:1.55}
+.festas-section-header,.sobre-header{
+  display:flex;flex-direction:column;align-items:flex-start;
+  gap:6px;margin:2px 0 var(--ui-space-5);min-width:0;
+}
+.festas-section-header .section-overline,
+.sobre-header .section-overline{
+  margin:0;line-height:1.4;letter-spacing:.1em;font-size:10.5px;
+}
+.festas-section-header h2,.sobre-header h2{
+  margin:0;font-size:clamp(24px,4.8vw,32px);
+  letter-spacing:-.04em;font-weight:790;line-height:1.14;
+}
+.festas-section-header p,.sobre-header .sobre-lead{
+  margin:1px 0 0;max-width:60ch;
+  color:var(--muted);font-size:13.5px;line-height:1.5;
+}
+.festas-page{padding-bottom:var(--ui-space-6)}
+.festas-page .festas-list{row-gap:var(--ui-space-4);column-gap:var(--ui-space-4)}
+.festas-page .festas-status:not(:empty){
+  margin:0 0 var(--ui-space-4);font-size:13px;line-height:1.5;
+}
+.festas-page .festas-empty{
+  padding:28px 22px;border:1px dashed var(--line);
+  border-radius:var(--ui-radius-card);background:var(--card);
+  font-size:14px;line-height:1.6;color:var(--muted);
+}
+.festas-page .festa-card--compact{
+  border-radius:var(--ui-radius-card);box-shadow:0 7px 26px rgba(18,14,34,.11);
+}
+.sobre-page{padding-bottom:var(--ui-space-6)}
+.sobre-content{
+  display:grid;gap:var(--ui-space-4);
+  background:none;border:0;border-radius:0;box-shadow:none;
+  padding:0;max-width:760px;
+}
+.sobre-topic{
+  min-width:0;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--ui-radius-card);
+  padding:var(--ui-space-5);
+  box-shadow:0 3px 15px rgba(30,24,56,.035);
+}
+.sobre-content .sobre-topic h3{
+  margin:0 0 var(--ui-space-3);
+  font-size:17px;line-height:1.35;
+  letter-spacing:-.02em;font-weight:780;
+}
+.sobre-content .sobre-topic p{
+  max-width:70ch;margin:0;
+  font-size:14.5px;line-height:1.72;
+  color:var(--ink);overflow-wrap:anywhere;
+}
+.sobre-content .sobre-topic p+p{margin-top:var(--ui-space-3)}
+.sobre-page .pwa-install-manual-wrap{
+  margin-top:var(--ui-space-5);border-radius:var(--ui-radius-card);
+}
+.bandeco-tabs button:not(.sidebar-collapse):focus-visible{
+  outline:3px solid var(--purple);outline-offset:-2px;
+}
+@media(max-width:850px){
+  .site-wrap:has(#festas-page:not([hidden])) .festas-section-header{
+    width:100%;max-width:var(--festas-card-max-width);margin-inline:auto;
+  }
+  .festas-section-header,.sobre-header{gap:5px;margin-bottom:var(--ui-space-4)}
+  .festas-section-header h2,.sobre-header h2{font-size:24px}
+  .festas-section-header p,.sobre-header .sobre-lead{font-size:12.5px}
+  .sobre-topic{padding:19px 18px}
+  .sobre-content .sobre-topic p{font-size:14px;line-height:1.7}
+}
+@media(max-width:350px){
+  .festas-section-header,.sobre-header{margin-bottom:var(--ui-space-3)}
+  .sobre-topic{padding:17px 15px}
+  #bandeco-main .menu-disclaimer{padding:12px}
+}
+@media(prefers-reduced-motion:reduce){
+  #bandeco-main .restaurant-picker,
+  #bandeco-main .date-card,
+  #bandeco-main .today-link,
+  #bandeco-main .dish-trigger,
+  .festas-page .festa-action,
+  .sobre-page .pwa-install-manual{transition:none}
+}
+
+/* Páginas curtas com rodapé no fim útil da viewport, não no meio da tela.
+   O mapa mantém seu layout próprio; Cardápio segue altura natural. */
+.site-wrap:has(#festas-page:not([hidden])),
+.site-wrap:has(#sobre-page:not([hidden])){
+  display:flex;flex-direction:column;min-height:100dvh;
+}
+.site-wrap:has(#festas-page:not([hidden]))>.footer,
+.site-wrap:has(#sobre-page:not([hidden]))>.footer{
+  margin-top:auto;padding-top:var(--ui-space-6);
+}
+@media(hover:none){
+  .bandeco-tabs button:not([aria-current="page"]):hover{
+    background:transparent;color:var(--muted);box-shadow:none
+  }
+}
