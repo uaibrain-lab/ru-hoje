@@ -31,13 +31,13 @@ for(const name of [
   'Salada de Jiló','Sopa de fubá com couve','Torta colorida'
 ])entries.set(normalize(name),name);
 
-test('todo nome conhecido como vegetariano ou proteína prevalece sobre os tipos genéricos da FUMP',()=>{
+test('todos os 217 nomes conhecidos prevalecem sobre os tipos genéricos da FUMP',()=>{
   assert.equal(entries.size,217,'Todo nome do catálogo deve entrar no teste de prioridade');
-  let mains=0,vegetarians=0;
+  const groups=new Set();
   for(const name of entries.values()){
     const expected=knownDishCategory(name);
-    if(expected!=='proteina'&&expected!=='vegetariana')continue;
-    if(expected==='proteina')mains++;else vegetarians++;
+    assert.ok(expected,name+' sem categoria');
+    groups.add(expected);
     for(const sourceType of TYPES){
       assert.equal(categoryFromSourceType(sourceType,name),expected,
         name+' / '+sourceType+' (parser)');
@@ -47,19 +47,18 @@ test('todo nome conhecido como vegetariano ou proteína prevalece sobre os tipos
       }
     }
   }
-  assert.ok(mains>=45,'Pratos principais historicamente catalogados precisam ser abrangidos');
-  assert.ok(vegetarians>=20,'Opções vegetarianas catalogadas precisam ser abrangidas');
+  assert.equal(groups.size,8,'Todas as oito categorias devem ser abrangidas');
 });
 
-test('outras categorias catalogadas continuam auxiliares se a FUMP informar tipo válido',()=>{
+test('outras categorias catalogadas também corrigem tipos FUMP conflitantes',()=>{
   assert.equal(knownDishCategory('Salada Síria'),'salada');
-  assert.equal(categoryFromSourceType('Acompanhamento 2','Salada Síria'),'acompanhamento');
-  assert.equal(publishedCategory('salada','Salada Síria','Acompanhamento 2'),'acompanhamento');
+  assert.equal(categoryFromSourceType('Acompanhamento 2','Salada Síria'),'salada');
+  assert.equal(publishedCategory('salada','Salada Síria','Acompanhamento 2'),'salada');
   assert.equal(knownDishCategory('Molho Verde'),'molho');
-  assert.equal(categoryFromSourceType('Entrada 2','Molho Verde'),'salada');
+  assert.equal(categoryFromSourceType('Entrada 2','Molho Verde'),'molho');
   assert.equal(categoryFromSourceType('Tipo de item não cadastrado','Molho Verde'),'molho');
   assert.equal(knownDishCategory('Banana Prata'),'sobremesa');
-  assert.equal(categoryFromSourceType('Bebidas','Banana Prata'),'bebida');
+  assert.equal(categoryFromSourceType('Bebidas','Banana Prata'),'sobremesa');
 });
 
 test('não extrapolar categoria do catálogo para nomes inéditos ou parecidos',()=>{
@@ -83,8 +82,37 @@ test('os quatro RUs usam o mesmo parser e conservam o tipo de origem',()=>{
       data:'2026-11-17',refeicoes:[{tipoRefeicao:'Almoço',pratos:input}]
     }]},{iso:'2026-11-17',sourceId:id});
     assert.deepEqual(res.meals.almoco.items.map(x=>x.category),
-      ['vegetariana','proteina','proteina','vegetariana','sobremesa']);
+      ['vegetariana','proteina','proteina','vegetariana','salada']);
     assert.deepEqual(res.meals.almoco.items.map(x=>x.sourceType),
       input.map(x=>x.tipoPrato));
   }
+});
+
+test('regressão Setorial I: Salada de Alface não aparece como prato principal',()=>{
+  for(const type of TYPES){
+    assert.equal(categoryFromSourceType(type,' SALADA DE ALFACE '),'salada');
+    assert.equal(publishedCategory('proteina','Salada de Alface',type),'salada');
+  }
+  const parsed=parseMenuJson({id:6,cardapios:[{data:'2026-11-27',refeicoes:[
+    {tipoRefeicao:'Almoço',pratos:[
+      {tipoPrato:'Prato protéico 1',descricaoPrato:'Salada de Alface'},
+      {tipoPrato:'Prato protéico 2',descricaoPrato:'Frango grelhado'}
+    ]}
+  ]}]},{iso:'2026-11-27',sourceId:'6'});
+  assert.deepEqual(parsed.meals.almoco.items,[
+    {name:'Salada de Alface',category:'salada',sourceType:'Prato protéico 1'},
+    {name:'Frango grelhado',category:'proteina',sourceType:'Prato protéico 2'}
+  ]);
+});
+
+test('nomes inéditos não ganham categoria por substring nem por tipo explicitamente desconhecido',()=>{
+  for(const name of ['Strogonoff surpresa','Salada de alface com preparação inédita','constructor','__proto__']){
+    assert.equal(knownDishCategory(name),'');
+    assert.equal(categoryFromSourceType('Tipo de item não cadastrado',name),'');
+    assert.equal(categoryFromSourceType('',name),'');
+    assert.equal(publishedCategory('proteina',name,'Tipo de item não cadastrado'),'');
+    assert.equal(publishedCategory('proteina',name,'Tipo inédito'),'');
+    assert.equal(categoryFromSourceType('Entrada 1',name),'salada');
+  }
+  assert.equal(publishedCategory('proteina','Prato legado sem tipo'),'proteina');
 });

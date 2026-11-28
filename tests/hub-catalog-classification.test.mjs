@@ -55,7 +55,7 @@ test('o histórico inclui mais 76 nomes além do catálogo de ingredientes, sem 
   assert.equal(historyOnly,76,'Nenhum nome do histórico pode ficar sem categoria');
 });
 
-test('pratos principais/vegetarianos catalogados prevalecem; demais categorias seguem FUMP',()=>{
+test('todas as categorias catalogadas prevalecem sobre a FUMP',()=>{
   assert.equal(knownDishCategory('Charuto de repolho'),'vegetariana');
   assert.equal(categoryFromSourceType('Prato protéico 1','Charuto de repolho'),'vegetariana');
   assert.equal(publishedCategory('vegetariana','Charuto de repolho','Prato protéico 1'),'vegetariana');
@@ -64,11 +64,11 @@ test('pratos principais/vegetarianos catalogados prevalecem; demais categorias s
   assert.equal(publishedCategory('outros','Molho de manjericão','Tipo de item não cadastrado'),'molho');
   assert.equal(publishedCategory('outros','Molho de salsão',''),'molho');
   assert.equal(publishedCategory('outros','Escondidinho de frango',''),'proteina');
-  assert.equal(categoryFromSourceType('Entrada 1','Salada de legumes'),'salada');
+  assert.equal(categoryFromSourceType('Entrada 1','Salada de legumes'),'guarnicao');
   assert.equal(categoryFromSourceType('Tipo de item não cadastrado','Salada de legumes'),'guarnicao');
 });
 
-test('a FUMP continua prioritária para grupos auxiliares e pratos desconhecidos',()=>{
+test('o catálogo prevalece também sobre grupos auxiliares',()=>{
   assert.equal(categoryFromSourceType('Prato protéico 1','Assado de Grão-de-Bico'),'vegetariana');
   assert.equal(publishedCategory('proteina','Assado de Grão-de-Bico','Prato protéico 1'),'vegetariana');
   assert.equal(categoryFromSourceType('Entrada 2','Frango Xadrez'),'proteina');
